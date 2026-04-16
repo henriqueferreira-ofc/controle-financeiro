@@ -127,7 +127,7 @@ function RegistrosPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as categorias</SelectItem>
-                  {state.categories.map((c) => (
+                  {categories.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -146,12 +146,12 @@ function RegistrosPage() {
                 <div>
                   <p className="font-medium">Nenhum registro encontrado</p>
                   <p className="text-sm text-muted-foreground">
-                    {state.transactions.length === 0
+                    {transactions.length === 0
                       ? "Comece adicionando sua primeira movimentação."
                       : "Ajuste os filtros para visualizar mais resultados."}
                   </p>
                 </div>
-                {state.transactions.length === 0 && (
+                {transactions.length === 0 && (
                   <Button onClick={() => setCreateOpen(true)}>
                     <Plus className="mr-1 h-4 w-4" /> Adicionar primeiro registro
                   </Button>
