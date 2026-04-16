@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_app/registros")({
 });
 
 function RegistrosPage() {
-  const { state, filters, setFilters, deleteTransaction } = useFinwise();
+  const { transactions, categories, filters, setFilters, deleteTransaction } = useFinwise();
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [viewing, setViewing] = useState<Transaction | null>(null);
@@ -54,7 +54,7 @@ function RegistrosPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    return state.transactions
+    return transactions
       .filter((t) => {
         if (filters.type !== "all" && t.type !== filters.type) return false;
         if (filters.categoryId !== "all" && t.categoryId !== filters.categoryId) return false;
@@ -65,17 +65,21 @@ function RegistrosPage() {
         return true;
       })
       .sort((a, b) => b.date.localeCompare(a.date));
-  }, [state.transactions, filters]);
+  }, [transactions, filters]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.length > 50 ? filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) : filtered;
 
-  const getCategoryName = (id?: string) => state.categories.find((c) => c.id === id)?.name || "—";
+  const getCategoryName = (id?: string) => categories.find((c) => c.id === id)?.name || "—";
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!confirmDelete) return;
-    deleteTransaction(confirmDelete.id);
-    toast.success("Registro removido.");
+    try {
+      await deleteTransaction(confirmDelete.id);
+      toast.success("Registro removido.");
+    } catch {
+      // toast already shown
+    }
     setConfirmDelete(null);
   };
 
@@ -123,7 +127,7 @@ function RegistrosPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as categorias</SelectItem>
-                  {state.categories.map((c) => (
+                  {categories.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -142,12 +146,12 @@ function RegistrosPage() {
                 <div>
                   <p className="font-medium">Nenhum registro encontrado</p>
                   <p className="text-sm text-muted-foreground">
-                    {state.transactions.length === 0
+                    {transactions.length === 0
                       ? "Comece adicionando sua primeira movimentação."
                       : "Ajuste os filtros para visualizar mais resultados."}
                   </p>
                 </div>
-                {state.transactions.length === 0 && (
+                {transactions.length === 0 && (
                   <Button onClick={() => setCreateOpen(true)}>
                     <Plus className="mr-1 h-4 w-4" /> Adicionar primeiro registro
                   </Button>

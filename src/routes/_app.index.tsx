@@ -69,16 +69,17 @@ function ChartTooltip({ active, payload, label }: any) {
 }
 
 function DashboardPage() {
-  const { state, filters, setFilters } = useFinwise();
-  const [loading, setLoading] = useState(false);
+  const { transactions, categories, filters, setFilters, loading: dataLoading } = useFinwise();
+  const [transitionLoading, setTransitionLoading] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    const t = setTimeout(() => setLoading(false), 350);
+    setTransitionLoading(true);
+    const t = setTimeout(() => setTransitionLoading(false), 350);
     return () => clearTimeout(t);
   }, [filters.period, filters.categoryId]);
 
-  const data = dashboardData(state, filters);
+  const loading = transitionLoading || dataLoading;
+  const data = dashboardData(transactions, categories, filters);
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 md:px-8 md:py-8">
@@ -103,7 +104,7 @@ function DashboardPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as categorias</SelectItem>
-              {state.categories.map((c) => (
+              {categories.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
                   {c.name}
                 </SelectItem>

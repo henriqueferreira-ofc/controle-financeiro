@@ -43,7 +43,7 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
   const availableCategories = state.categories.filter((c) => c.kind === type);
   const numericAmount = Number(amount.replace(",", "."));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errors: string[] = [];
     if (!description.trim()) errors.push("Descrição é obrigatória.");
@@ -63,14 +63,18 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
       amount: numericAmount,
     };
 
-    if (mode === "edit" && initial) {
-      updateTransaction(initial.id, payload);
-      toast.success("Registro atualizado com sucesso.");
-    } else {
-      addTransaction(payload);
-      toast.success("Registro criado com sucesso.");
+    try {
+      if (mode === "edit" && initial) {
+        await updateTransaction(initial.id, payload);
+        toast.success("Registro atualizado com sucesso.");
+      } else {
+        await addTransaction(payload);
+        toast.success("Registro criado com sucesso.");
+      }
+      onOpenChange(false);
+    } catch {
+      // toast already shown by store
     }
-    onOpenChange(false);
   };
 
   return (

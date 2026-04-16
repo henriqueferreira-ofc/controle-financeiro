@@ -1,4 +1,4 @@
-import type { AppState, Filters, Transaction } from "./types";
+import type { Filters, Transaction, Category } from "./types";
 
 export const periodDays = (period: Filters["period"]) =>
   period === "7d" ? 7 : period === "30d" ? 30 : 0;
@@ -25,9 +25,9 @@ export function getDateRange(period: Filters["period"], txs: Transaction[]) {
   return { start, end, days };
 }
 
-export function applyFilters(state: AppState, filters: Filters): Transaction[] {
-  const { start, end } = getDateRange(filters.period, state.transactions);
-  return state.transactions.filter((t) => {
+export function applyFilters(transactions: Transaction[], filters: Filters): Transaction[] {
+  const { start, end } = getDateRange(filters.period, transactions);
+  return transactions.filter((t) => {
     const d = new Date(t.date + "T12:00:00");
     if (d < start || d > end) return false;
     if (filters.categoryId !== "all" && t.categoryId !== filters.categoryId) return false;
@@ -40,9 +40,9 @@ export function applyFilters(state: AppState, filters: Filters): Transaction[] {
   });
 }
 
-export function dashboardData(state: AppState, filters: Filters) {
-  const filtered = applyFilters(state, { ...filters, search: "", type: "all" });
-  const { start, end, days } = getDateRange(filters.period, state.transactions);
+export function dashboardData(transactions: Transaction[], categories: Category[], filters: Filters) {
+  const filtered = applyFilters(transactions, { ...filters, search: "", type: "all" });
+  const { start, days } = getDateRange(filters.period, transactions);
 
   const entradas = filtered.filter((t) => t.type === "entrada");
   const despesas = filtered.filter((t) => t.type === "despesa");
@@ -61,15 +61,14 @@ export function dashboardData(state: AppState, filters: Filters) {
   if (byCategory.size > 0) {
     const entries = [...byCategory.entries()].sort((a, b) => {
       if (b[1] !== a[1]) return b[1] - a[1];
-      const an = state.categories.find((c) => c.id === a[0])?.name || "";
-      const bn = state.categories.find((c) => c.id === b[0])?.name || "";
+      const an = categories.find((c) => c.id === a[0])?.name || a[0];
+      const bn = categories.find((c) => c.id === b[0])?.name || b[0];
       return an.localeCompare(bn);
     });
     const [id, total] = entries[0];
-    topCat = { id, name: state.categories.find((c) => c.id === id)?.name || "—", total };
+    topCat = { id, name: categories.find((c) => c.id === id)?.name || id, total };
   }
 
-  // Per day
   const dayMap = new Map<string, number>();
   for (let i = 0; i < days; i++) {
     const d = new Date(start);
@@ -89,12 +88,11 @@ export function dashboardData(state: AppState, filters: Filters) {
   const perCategory = [...byCategory.entries()]
     .map(([id, total]) => ({
       id,
-      name: state.categories.find((c) => c.id === id)?.name || "—",
+      name: categories.find((c) => c.id === id)?.name || id,
       total: Number(total.toFixed(2)),
     }))
     .sort((a, b) => b.total - a.total);
 
-  // Insights
   const insights: { title: string; text: string }[] = [];
   if (topCat && totalSaidas > 0) {
     const pct = (topCat.total / totalSaidas) * 100;
@@ -113,10 +111,9 @@ export function dashboardData(state: AppState, filters: Filters) {
     }
   }
   if (topCat && topCat.total > 0) {
-    const economy = topCat.total * 0.1;
     insights.push({
       title: "Economia potencial",
-      text: `Reduzindo 10% em ${topCat.name}, você economiza cerca de R$ ${economy.toFixed(2)} neste período.`,
+      text: `Reduzindo 10% em ${topCat.name}, você economiza cerca de R$ ${(topCat.total * 0.1).toFixed(2)} neste período.`,
     });
   }
   if (totalEntradas > 0 && totalSaidas > 0) {
