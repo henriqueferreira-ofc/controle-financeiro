@@ -108,7 +108,13 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
 
   const updateTransaction = React.useCallback(
     async (id: string, patch: Partial<Omit<Transaction, "id">>) => {
-      const dbPatch: Record<string, unknown> = {};
+      const dbPatch: {
+        type?: "entrada" | "despesa";
+        date?: string;
+        description?: string;
+        category?: string | null;
+        amount?: number;
+      } = {};
       if (patch.type !== undefined) dbPatch.type = patch.type;
       if (patch.date !== undefined) dbPatch.date = patch.date;
       if (patch.description !== undefined) dbPatch.description = patch.description;
