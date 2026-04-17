@@ -2,7 +2,10 @@ export type Category = {
   id: string;
   name: string;
   kind: "despesa" | "entrada";
-  color?: string;
+  icon: string;
+  color: string;
+  isGlobal: boolean;
+  userId?: string | null;
 };
 
 export type Transaction = {
@@ -12,6 +15,8 @@ export type Transaction = {
   description: string;
   categoryId?: string;
   amount: number;
+  essential: boolean;
+  fixed: boolean;
 };
 
 export type Filters = {
@@ -22,7 +27,6 @@ export type Filters = {
 };
 
 export type AppState = {
-  categories: Category[];
   transactions: Transaction[];
   preferences: {
     persistLocal: boolean;

@@ -8,13 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KpiCard } from "@/components/KpiCard";
 import { brl } from "@/lib/format";
-import { ArrowDownRight, ArrowUpRight, CalendarDays, Lightbulb, PiggyBank, Plus, Trophy } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, CalendarDays, Lightbulb, PiggyBank, Plus, Trophy, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
+  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -58,12 +60,18 @@ function PeriodButtons({ value, onChange }: { value: Filters["period"]; onChange
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-lg">
       <div className="font-medium text-foreground">{label}</div>
-      <div className="mt-1 text-primary">{brl(payload[0].value)}</div>
+      {payload.map((p: { name: string; value: number; color: string }, i: number) => (
+        <div key={i} className="mt-1 flex items-center gap-2" style={{ color: p.color }}>
+          <span className="font-medium">{p.name}:</span>
+          <span>{brl(p.value)}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -116,26 +124,34 @@ function DashboardPage() {
 
       {/* KPIs */}
       {loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-[110px] w-full rounded-xl" />
           ))}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <KpiCard
+            label="Saldo atual"
+            value={brl(data.saldo)}
+            hint={data.saldo >= 0 ? "Positivo" : "Negativo"}
+            icon={Wallet}
+            tone={data.saldo >= 0 ? "success" : "destructive"}
+            delay={0}
+          />
           <KpiCard
             label="Total Entradas"
             value={brl(data.totalEntradas)}
             icon={ArrowUpRight}
             tone="success"
-            delay={0}
+            delay={0.05}
           />
           <KpiCard
             label="Total Saídas"
             value={brl(data.totalSaidas)}
             icon={ArrowDownRight}
             tone="destructive"
-            delay={0.05}
+            delay={0.1}
           />
           <KpiCard
             label="Gasto Médio Diário"
@@ -143,20 +159,20 @@ function DashboardPage() {
             hint={`Período de ${data.days} dia${data.days > 1 ? "s" : ""}`}
             icon={CalendarDays}
             tone="warning"
-            delay={0.1}
+            delay={0.15}
           />
           <KpiCard
-            label="Maior gasto por categoria"
+            label="Maior gasto/categoria"
             value={data.topCat ? brl(data.topCat.total) : brl(0)}
             hint={data.topCat ? data.topCat.name : "Sem dados"}
             icon={Trophy}
             tone="default"
-            delay={0.15}
+            delay={0.2}
           />
         </div>
       )}
 
-      {/* Charts */}
+      {/* Charts row 1 */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="border-border/60 shadow-[var(--shadow-card)]">
           <CardHeader>
@@ -177,10 +193,11 @@ function DashboardPage() {
                     <Tooltip content={<ChartTooltip />} />
                     <Line
                       type="monotone"
-                      dataKey="total"
-                      stroke="oklch(0.78 0.16 165)"
+                      dataKey="despesa"
+                      name="Despesa"
+                      stroke="oklch(0.65 0.21 25)"
                       strokeWidth={2.5}
-                      dot={{ r: 3, fill: "oklch(0.78 0.16 165)" }}
+                      dot={{ r: 3 }}
                       activeDot={{ r: 5 }}
                     />
                   </LineChart>
@@ -207,7 +224,72 @@ function DashboardPage() {
                     <XAxis dataKey="name" stroke="oklch(0.7 0.015 250)" fontSize={11} />
                     <YAxis stroke="oklch(0.7 0.015 250)" fontSize={12} />
                     <Tooltip content={<ChartTooltip />} cursor={{ fill: "oklch(0.3 0.02 250 / 0.4)" }} />
-                    <Bar dataKey="total" fill="oklch(0.7 0.18 230)" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="total" name="Total" radius={[6, 6, 0, 0]}>
+                      {data.perCategory.map((c) => (
+                        <Cell key={c.id} fill={c.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts row 2 */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="border-border/60 shadow-[var(--shadow-card)]">
+          <CardHeader>
+            <CardTitle className="text-base">Saldo acumulado</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <Skeleton className="h-[260px] w-full" />
+            ) : data.cumulative.length === 0 ? (
+              <EmptyChart />
+            ) : (
+              <div className="h-[260px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={data.cumulative} margin={{ top: 10, right: 12, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.014 250)" />
+                    <XAxis dataKey="label" stroke="oklch(0.7 0.015 250)" fontSize={12} />
+                    <YAxis stroke="oklch(0.7 0.015 250)" fontSize={12} />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Line
+                      type="monotone"
+                      dataKey="saldo"
+                      name="Saldo"
+                      stroke="oklch(0.78 0.16 165)"
+                      strokeWidth={2.5}
+                      dot={{ r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/60 shadow-[var(--shadow-card)]">
+          <CardHeader>
+            <CardTitle className="text-base">Mês atual vs mês anterior</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <Skeleton className="h-[260px] w-full" />
+            ) : (
+              <div className="h-[260px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.monthCompare} margin={{ top: 10, right: 12, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.014 250)" />
+                    <XAxis dataKey="label" stroke="oklch(0.7 0.015 250)" fontSize={12} />
+                    <YAxis stroke="oklch(0.7 0.015 250)" fontSize={12} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: "oklch(0.3 0.02 250 / 0.4)" }} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="entrada" name="Entradas" fill="oklch(0.78 0.16 165)" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="despesa" name="Despesas" fill="oklch(0.65 0.21 25)" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

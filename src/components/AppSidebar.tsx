@@ -1,11 +1,12 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Link, useLocation } from "@tanstack/react-router";
-import { LayoutDashboard, ListChecks, User, Wallet } from "lucide-react";
+import { LayoutDashboard, ListChecks, Tags, User, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Meus Registros", url: "/registros", icon: ListChecks },
+  { title: "Categorias", url: "/categorias", icon: Tags },
 ];
 
 export function AppSidebar() {

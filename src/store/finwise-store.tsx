@@ -1,7 +1,7 @@
 import * as React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
-import { SEED } from "./seed";
+import { SEED_TRANSACTIONS } from "./seed";
 import type { Transaction, Filters, Category } from "./types";
 import { toast } from "sonner";
 
@@ -16,16 +16,42 @@ type DBTransaction = {
   payment_method: string | null;
   tags: string[];
   recurring: boolean;
+  essential: boolean;
+  fixed: boolean;
   created_at: string;
 };
 
-const toClient = (r: DBTransaction): Transaction => ({
+type DBCategory = {
+  id: string;
+  user_id: string | null;
+  name: string;
+  kind: "entrada" | "despesa";
+  icon: string;
+  color: string;
+  is_global: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+const toClientTx = (r: DBTransaction): Transaction => ({
   id: r.id,
   type: r.type,
   date: r.date,
   description: r.description,
   categoryId: r.category || undefined,
   amount: Number(r.amount),
+  essential: r.essential,
+  fixed: r.fixed,
+});
+
+const toClientCat = (r: DBCategory): Category => ({
+  id: r.id,
+  name: r.name,
+  kind: r.kind,
+  icon: r.icon,
+  color: r.color,
+  isGlobal: r.is_global,
+  userId: r.user_id,
 });
 
 type Ctx = {
@@ -37,6 +63,9 @@ type Ctx = {
   addTransaction: (t: Omit<Transaction, "id">) => Promise<void>;
   updateTransaction: (id: string, patch: Partial<Omit<Transaction, "id">>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  addCategory: (c: Omit<Category, "id" | "isGlobal" | "userId">) => Promise<void>;
+  updateCategory: (id: string, patch: Partial<Omit<Category, "id" | "isGlobal" | "userId">>) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
   reseed: () => Promise<void>;
   exportJSON: () => void;
   importJSON: (file: File) => Promise<void>;
@@ -48,6 +77,7 @@ const FinwiseContext = React.createContext<Ctx | null>(null);
 export function FinwiseProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
+  const [categories, setCategories] = React.useState<Category[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [filters, setFilters] = React.useState<Filters>({
     period: "30d",
@@ -56,24 +86,29 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     type: "all",
   });
 
-  const categories = SEED.categories;
-
   const refresh = React.useCallback(async () => {
     if (!user) {
       setTransactions([]);
+      setCategories([]);
       setLoading(false);
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("*")
-      .order("date", { ascending: false });
-    if (error) {
-      toast.error("Erro ao carregar registros: " + error.message);
+    const [txRes, catRes] = await Promise.all([
+      supabase.from("transactions").select("*").order("date", { ascending: false }),
+      supabase.from("categories").select("*").order("name", { ascending: true }),
+    ]);
+    if (txRes.error) {
+      toast.error("Erro ao carregar registros: " + txRes.error.message);
       setTransactions([]);
     } else {
-      setTransactions((data as DBTransaction[]).map(toClient));
+      setTransactions((txRes.data as unknown as DBTransaction[]).map(toClientTx));
+    }
+    if (catRes.error) {
+      toast.error("Erro ao carregar categorias: " + catRes.error.message);
+      setCategories([]);
+    } else {
+      setCategories((catRes.data as unknown as DBCategory[]).map(toClientCat));
     }
     setLoading(false);
   }, [user]);
@@ -94,6 +129,8 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
           description: t.description,
           category: t.categoryId ?? null,
           amount: t.amount,
+          essential: t.essential,
+          fixed: t.fixed,
         })
         .select()
         .single();
@@ -101,7 +138,7 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
         toast.error("Erro ao criar registro: " + error.message);
         throw error;
       }
-      setTransactions((prev) => [toClient(data as DBTransaction), ...prev]);
+      setTransactions((prev) => [toClientTx(data as unknown as DBTransaction), ...prev]);
     },
     [user],
   );
@@ -114,12 +151,16 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
         description?: string;
         category?: string | null;
         amount?: number;
+        essential?: boolean;
+        fixed?: boolean;
       } = {};
       if (patch.type !== undefined) dbPatch.type = patch.type;
       if (patch.date !== undefined) dbPatch.date = patch.date;
       if (patch.description !== undefined) dbPatch.description = patch.description;
       if (patch.categoryId !== undefined) dbPatch.category = patch.categoryId ?? null;
       if (patch.amount !== undefined) dbPatch.amount = patch.amount;
+      if (patch.essential !== undefined) dbPatch.essential = patch.essential;
+      if (patch.fixed !== undefined) dbPatch.fixed = patch.fixed;
 
       const { data, error } = await supabase
         .from("transactions")
@@ -131,7 +172,7 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
         toast.error("Erro ao atualizar: " + error.message);
         throw error;
       }
-      const updated = toClient(data as DBTransaction);
+      const updated = toClientTx(data as unknown as DBTransaction);
       setTransactions((prev) => prev.map((t) => (t.id === id ? updated : t)));
     },
     [],
@@ -146,15 +187,78 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     setTransactions((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  const addCategory = React.useCallback(
+    async (c: Omit<Category, "id" | "isGlobal" | "userId">) => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from("categories")
+        .insert({
+          user_id: user.id,
+          name: c.name,
+          kind: c.kind,
+          icon: c.icon,
+          color: c.color,
+          is_global: false,
+        })
+        .select()
+        .single();
+      if (error) {
+        toast.error("Erro ao criar categoria: " + error.message);
+        throw error;
+      }
+      setCategories((prev) => [...prev, toClientCat(data as unknown as DBCategory)].sort((a, b) => a.name.localeCompare(b.name)));
+    },
+    [user],
+  );
+
+  const updateCategory = React.useCallback(
+    async (id: string, patch: Partial<Omit<Category, "id" | "isGlobal" | "userId">>) => {
+      const dbPatch: { name?: string; kind?: "entrada" | "despesa"; icon?: string; color?: string } = {};
+      if (patch.name !== undefined) dbPatch.name = patch.name;
+      if (patch.kind !== undefined) dbPatch.kind = patch.kind;
+      if (patch.icon !== undefined) dbPatch.icon = patch.icon;
+      if (patch.color !== undefined) dbPatch.color = patch.color;
+
+      const { data, error } = await supabase
+        .from("categories")
+        .update(dbPatch)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) {
+        toast.error("Erro ao atualizar categoria: " + error.message);
+        throw error;
+      }
+      const updated = toClientCat(data as unknown as DBCategory);
+      setCategories((prev) => prev.map((c) => (c.id === id ? updated : c)).sort((a, b) => a.name.localeCompare(b.name)));
+    },
+    [],
+  );
+
+  const deleteCategory = React.useCallback(async (id: string) => {
+    const { error } = await supabase.from("categories").delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir categoria: " + error.message);
+      throw error;
+    }
+    setCategories((prev) => prev.filter((c) => c.id !== id));
+  }, []);
+
   const reseed = React.useCallback(async () => {
     if (!user) return;
-    const rows = SEED.transactions.map((t) => ({
+    // Resolve category names against current categories list
+    const byNameKind = new Map<string, string>();
+    for (const c of categories) byNameKind.set(`${c.kind}:${c.name.toLowerCase()}`, c.id);
+
+    const rows = SEED_TRANSACTIONS.map((t) => ({
       user_id: user.id,
       type: t.type,
       date: t.date,
       description: t.description,
-      category: t.categoryId ?? null,
+      category: t.categoryName ? byNameKind.get(`${t.type}:${t.categoryName.toLowerCase()}`) ?? null : null,
       amount: t.amount,
+      essential: t.essential,
+      fixed: t.fixed,
     }));
     const { error } = await supabase.from("transactions").insert(rows);
     if (error) {
@@ -162,7 +266,7 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
       throw error;
     }
     await refresh();
-  }, [user, refresh]);
+  }, [user, categories, refresh]);
 
   const exportJSON = React.useCallback(() => {
     const payload = { exported_at: new Date().toISOString(), transactions };
@@ -198,6 +302,8 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
           description: t.description as string,
           category: t.categoryId ?? null,
           amount: t.amount as number,
+          essential: t.essential ?? true,
+          fixed: t.fixed ?? false,
         }));
       if (rows.length === 0) {
         toast.error("Nenhum registro válido no arquivo.");
@@ -223,6 +329,9 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    addCategory,
+    updateCategory,
+    deleteCategory,
     reseed,
     exportJSON,
     importJSON,
