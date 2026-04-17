@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useFinwise } from "@/store/finwise-store";
 import type { Category } from "@/store/types";
 import { Card, CardContent } from "@/components/ui/card";
@@ -68,11 +68,7 @@ function CategoriesPage() {
           title="Suas categorias personalizadas"
           subtitle={customs.length === 0 ? "Você ainda não criou categorias personalizadas." : undefined}
         >
-          <CategoryGrid
-            items={customs}
-            onEdit={setEditing}
-            onDelete={setConfirmDelete}
-          />
+          <CategoryGrid items={customs} onEdit={setEditing} onDelete={setConfirmDelete} />
         </Section>
 
         <Section title="Categorias padrão" subtitle="Disponíveis para todos os usuários e não podem ser editadas.">
@@ -211,7 +207,8 @@ function CategoryDialog({
   const [kind, setKind] = useState<"entrada" | "despesa">("despesa");
   const [color, setColor] = useState(PALETTE[0]);
 
-  useResetOnOpen(open, () => {
+  useEffect(() => {
+    if (!open) return;
     if (initial) {
       setName(initial.name);
       setKind(initial.kind);
@@ -221,7 +218,7 @@ function CategoryDialog({
       setKind("despesa");
       setColor(PALETTE[0]);
     }
-  });
+  }, [open, initial]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -284,16 +281,4 @@ function CategoryDialog({
       </DialogContent>
     </Dialog>
   );
-}
-
-function useResetOnOpen(open: boolean, fn: () => void) {
-  const ref = useRef(false);
-  useEffect(() => {
-    if (open && !ref.current) {
-      ref.current = true;
-      fn();
-    } else if (!open) {
-      ref.current = false;
-    }
-  }, [open, fn]);
 }

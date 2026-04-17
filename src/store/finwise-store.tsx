@@ -145,7 +145,15 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
 
   const updateTransaction = React.useCallback(
     async (id: string, patch: Partial<Omit<Transaction, "id">>) => {
-      const dbPatch: Record<string, unknown> = {};
+      const dbPatch: {
+        type?: "entrada" | "despesa";
+        date?: string;
+        description?: string;
+        category?: string | null;
+        amount?: number;
+        essential?: boolean;
+        fixed?: boolean;
+      } = {};
       if (patch.type !== undefined) dbPatch.type = patch.type;
       if (patch.date !== undefined) dbPatch.date = patch.date;
       if (patch.description !== undefined) dbPatch.description = patch.description;
@@ -205,7 +213,7 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
 
   const updateCategory = React.useCallback(
     async (id: string, patch: Partial<Omit<Category, "id" | "isGlobal" | "userId">>) => {
-      const dbPatch: Record<string, unknown> = {};
+      const dbPatch: { name?: string; kind?: "entrada" | "despesa"; icon?: string; color?: string } = {};
       if (patch.name !== undefined) dbPatch.name = patch.name;
       if (patch.kind !== undefined) dbPatch.kind = patch.kind;
       if (patch.icon !== undefined) dbPatch.icon = patch.icon;
