@@ -1,4 +1,5 @@
-import { createFileRoute, Outlet, redirect, Link, useLocation } from "@tanstack/react-router";
+import * as React from "react";
+import { createFileRoute, Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { FinwiseProvider } from "@/store/finwise-store";
@@ -13,8 +14,15 @@ export const Route = createFileRoute("/_app")({
 function AppLayout() {
   const { user, loading, signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  if (loading) {
+  React.useEffect(() => {
+    if (!loading && !user) {
+      navigate({ to: "/auth", search: { redirect: location.pathname } });
+    }
+  }, [loading, user, navigate, location.pathname]);
+
+  if (loading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -22,9 +30,6 @@ function AppLayout() {
     );
   }
 
-  if (!user) {
-    throw redirect({ to: "/auth", search: { redirect: location.pathname } });
-  }
 
   return (
     <FinwiseProvider>
