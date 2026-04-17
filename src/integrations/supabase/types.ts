@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          color: string
+          created_at: string
+          icon: string
+          id: string
+          is_global: boolean
+          kind: string
+          name: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          is_global?: boolean
+          kind: string
+          name: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          is_global?: boolean
+          kind?: string
+          name?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -51,6 +87,8 @@ export type Database = {
           created_at: string
           date: string
           description: string
+          essential: boolean
+          fixed: boolean
           id: string
           payment_method: string | null
           recurring: boolean
@@ -64,6 +102,8 @@ export type Database = {
           created_at?: string
           date: string
           description: string
+          essential?: boolean
+          fixed?: boolean
           id?: string
           payment_method?: string | null
           recurring?: boolean
@@ -77,6 +117,8 @@ export type Database = {
           created_at?: string
           date?: string
           description?: string
+          essential?: boolean
+          fixed?: boolean
           id?: string
           payment_method?: string | null
           recurring?: boolean
