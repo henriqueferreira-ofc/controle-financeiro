@@ -17,7 +17,7 @@ interface TransactionDialogProps {
 }
 
 export function TransactionDialog({ open, onOpenChange, initial, mode }: TransactionDialogProps) {
-  const { state, addTransaction, updateTransaction } = useFinwise();
+  const { categories, addTransaction, updateTransaction } = useFinwise();
   const [type, setType] = React.useState<"entrada" | "despesa">("despesa");
   const [date, setDate] = React.useState(todayISO());
   const [categoryId, setCategoryId] = React.useState<string>("");
@@ -40,7 +40,7 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
     }
   }, [open, initial]);
 
-  const availableCategories = state.categories.filter((c) => c.kind === type);
+  const availableCategories = categories.filter((c) => c.kind === type);
   const numericAmount = Number(amount.replace(",", "."));
 
   const handleSubmit = async (e: React.FormEvent) => {
