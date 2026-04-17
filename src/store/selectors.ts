@@ -40,6 +40,13 @@ export function applyFilters(transactions: Transaction[], filters: Filters): Tra
   });
 }
 
+function ymd(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}
+
 export function dashboardData(transactions: Transaction[], categories: Category[], filters: Filters) {
   const filtered = applyFilters(transactions, { ...filters, search: "", type: "all" });
   const { start, days } = getDateRange(filters.period, transactions);
@@ -49,6 +56,7 @@ export function dashboardData(transactions: Transaction[], categories: Category[
 
   const totalEntradas = entradas.reduce((a, b) => a + b.amount, 0);
   const totalSaidas = despesas.reduce((a, b) => a + b.amount, 0);
+  const saldo = totalEntradas - totalSaidas;
   const gastoMedioDiario = days > 0 ? totalSaidas / days : 0;
 
   const byCategory = new Map<string, number>();
@@ -57,7 +65,7 @@ export function dashboardData(transactions: Transaction[], categories: Category[
     byCategory.set(d.categoryId, (byCategory.get(d.categoryId) || 0) + d.amount);
   }
 
-  let topCat: { id: string; name: string; total: number } | null = null;
+  let topCat: { id: string; name: string; total: number; color: string } | null = null;
   if (byCategory.size > 0) {
     const entries = [...byCategory.entries()].sort((a, b) => {
       if (b[1] !== a[1]) return b[1] - a[1];
@@ -66,32 +74,76 @@ export function dashboardData(transactions: Transaction[], categories: Category[
       return an.localeCompare(bn);
     });
     const [id, total] = entries[0];
-    topCat = { id, name: categories.find((c) => c.id === id)?.name || id, total };
+    const cat = categories.find((c) => c.id === id);
+    topCat = { id, name: cat?.name || id, total, color: cat?.color || "#64748b" };
   }
 
-  const dayMap = new Map<string, number>();
+  // Series per day (despesas + entradas + saldo acumulado)
+  const dayTpl: { date: string; label: string; despesa: number; entrada: number }[] = [];
   for (let i = 0; i < days; i++) {
     const d = new Date(start);
     d.setDate(start.getDate() + i);
-    const key = d.toISOString().slice(0, 10);
-    dayMap.set(key, 0);
+    const key = ymd(d);
+    dayTpl.push({
+      date: key,
+      label: key.slice(8, 10) + "/" + key.slice(5, 7),
+      despesa: 0,
+      entrada: 0,
+    });
   }
-  for (const d of despesas) {
-    if (dayMap.has(d.date)) dayMap.set(d.date, (dayMap.get(d.date) || 0) + d.amount);
+  const idxByDate = new Map(dayTpl.map((d, i) => [d.date, i]));
+  for (const t of filtered) {
+    const i = idxByDate.get(t.date);
+    if (i === undefined) continue;
+    if (t.type === "despesa") dayTpl[i].despesa += t.amount;
+    else dayTpl[i].entrada += t.amount;
   }
-  const perDay = [...dayMap.entries()].map(([date, total]) => ({
-    date,
-    label: date.slice(8, 10) + "/" + date.slice(5, 7),
-    total: Number(total.toFixed(2)),
-  }));
+  const perDay = dayTpl.map((d) => ({ ...d, despesa: Number(d.despesa.toFixed(2)), entrada: Number(d.entrada.toFixed(2)), total: Number(d.despesa.toFixed(2)) }));
+
+  let acc = 0;
+  const cumulative = perDay.map((d) => {
+    acc += d.entrada - d.despesa;
+    return { date: d.date, label: d.label, saldo: Number(acc.toFixed(2)) };
+  });
 
   const perCategory = [...byCategory.entries()]
-    .map(([id, total]) => ({
-      id,
-      name: categories.find((c) => c.id === id)?.name || id,
-      total: Number(total.toFixed(2)),
-    }))
+    .map(([id, total]) => {
+      const c = categories.find((x) => x.id === id);
+      return {
+        id,
+        name: c?.name || id,
+        color: c?.color || "#64748b",
+        total: Number(total.toFixed(2)),
+      };
+    })
     .sort((a, b) => b.total - a.total);
+
+  // Comparativo mês atual vs mês anterior (independente do filtro de período)
+  const now = new Date();
+  const yCur = now.getFullYear();
+  const mCur = now.getMonth();
+  const prev = new Date(yCur, mCur - 1, 1);
+  const yPrev = prev.getFullYear();
+  const mPrev = prev.getMonth();
+
+  const monthAgg = (y: number, m: number) => {
+    let despesa = 0;
+    let entrada = 0;
+    for (const t of transactions) {
+      const d = new Date(t.date + "T12:00:00");
+      if (d.getFullYear() === y && d.getMonth() === m) {
+        if (t.type === "despesa") despesa += t.amount;
+        else entrada += t.amount;
+      }
+    }
+    return { despesa: Number(despesa.toFixed(2)), entrada: Number(entrada.toFixed(2)) };
+  };
+  const cur = monthAgg(yCur, mCur);
+  const prv = monthAgg(yPrev, mPrev);
+  const monthCompare = [
+    { label: "Mês anterior", entrada: prv.entrada, despesa: prv.despesa },
+    { label: "Mês atual", entrada: cur.entrada, despesa: cur.despesa },
+  ];
 
   const insights: { title: string; text: string }[] = [];
   if (topCat && totalSaidas > 0) {
@@ -102,11 +154,11 @@ export function dashboardData(transactions: Transaction[], categories: Category[
     });
   }
   if (perDay.length > 0) {
-    const peak = perDay.reduce((a, b) => (b.total > a.total ? b : a));
-    if (peak.total > 0) {
+    const peak = perDay.reduce((a, b) => (b.despesa > a.despesa ? b : a));
+    if (peak.despesa > 0) {
       insights.push({
         title: "Pico de gasto",
-        text: `Seu maior gasto diário foi de R$ ${peak.total.toFixed(2)} em ${peak.label}.`,
+        text: `Seu maior gasto diário foi de R$ ${peak.despesa.toFixed(2)} em ${peak.label}.`,
       });
     }
   }
@@ -127,10 +179,13 @@ export function dashboardData(transactions: Transaction[], categories: Category[
   return {
     totalEntradas,
     totalSaidas,
+    saldo,
     gastoMedioDiario,
     topCat,
     perDay,
     perCategory,
+    cumulative,
+    monthCompare,
     insights,
     days,
     hasData: filtered.length > 0,

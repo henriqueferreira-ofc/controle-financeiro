@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFinwise } from "@/store/finwise-store";
 import type { Transaction } from "@/store/types";
@@ -23,6 +24,8 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
   const [categoryId, setCategoryId] = React.useState<string>("");
   const [description, setDescription] = React.useState("");
   const [amount, setAmount] = React.useState<string>("");
+  const [essential, setEssential] = React.useState(true);
+  const [fixed, setFixed] = React.useState(false);
 
   React.useEffect(() => {
     if (open && initial) {
@@ -31,12 +34,16 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
       setCategoryId(initial.categoryId || "");
       setDescription(initial.description);
       setAmount(String(initial.amount));
+      setEssential(initial.essential);
+      setFixed(initial.fixed);
     } else if (open) {
       setType("despesa");
       setDate(todayISO());
       setCategoryId("");
       setDescription("");
       setAmount("");
+      setEssential(true);
+      setFixed(false);
     }
   }, [open, initial]);
 
@@ -61,6 +68,8 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
       description: description.trim(),
       categoryId: categoryId || undefined,
       amount: numericAmount,
+      essential,
+      fixed,
     };
 
     try {
@@ -116,7 +125,10 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
               <SelectContent>
                 {availableCategories.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                    {c.name}
+                    <span className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.color }} />
+                      {c.name}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -140,6 +152,23 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
             {numericAmount > 0 && (
               <span className="text-xs text-muted-foreground">Preview: {brl(numericAmount)}</span>
             )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 rounded-lg border border-border/60 bg-muted/30 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <Label htmlFor="essential" className="cursor-pointer">Essencial</Label>
+                <p className="text-xs text-muted-foreground">Necessária para o seu dia a dia</p>
+              </div>
+              <Switch id="essential" checked={essential} onCheckedChange={setEssential} />
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <Label htmlFor="fixed" className="cursor-pointer">Fixa</Label>
+                <p className="text-xs text-muted-foreground">Repete todo período</p>
+              </div>
+              <Switch id="fixed" checked={fixed} onCheckedChange={setFixed} />
+            </div>
           </div>
 
           <DialogFooter>

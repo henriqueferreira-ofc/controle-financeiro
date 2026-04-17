@@ -15,6 +15,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppRegistrosRouteImport } from './routes/_app.registros'
 import { Route as AppPerfilRouteImport } from './routes/_app.perfil'
+import { Route as AppCategoriasRouteImport } from './routes/_app.categorias'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -45,17 +46,24 @@ const AppPerfilRoute = AppPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCategoriasRoute = AppCategoriasRouteImport.update({
+  id: '/categorias',
+  path: '/categorias',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/categorias': typeof AppCategoriasRoute
   '/perfil': typeof AppPerfilRoute
   '/registros': typeof AppRegistrosRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/categorias': typeof AppCategoriasRoute
   '/perfil': typeof AppPerfilRoute
   '/registros': typeof AppRegistrosRoute
   '/': typeof AppIndexRoute
@@ -65,20 +73,34 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_app/categorias': typeof AppCategoriasRoute
   '/_app/perfil': typeof AppPerfilRoute
   '/_app/registros': typeof AppRegistrosRoute
   '/_app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/reset-password' | '/perfil' | '/registros'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/categorias'
+    | '/perfil'
+    | '/registros'
   fileRoutesByTo: FileRoutesByTo
-  to: '/auth' | '/reset-password' | '/perfil' | '/registros' | '/'
+  to:
+    | '/auth'
+    | '/reset-password'
+    | '/categorias'
+    | '/perfil'
+    | '/registros'
+    | '/'
   id:
     | '__root__'
     | '/_app'
     | '/auth'
     | '/reset-password'
+    | '/_app/categorias'
     | '/_app/perfil'
     | '/_app/registros'
     | '/_app/'
@@ -134,16 +156,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPerfilRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/categorias': {
+      id: '/_app/categorias'
+      path: '/categorias'
+      fullPath: '/categorias'
+      preLoaderRoute: typeof AppCategoriasRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppCategoriasRoute: typeof AppCategoriasRoute
   AppPerfilRoute: typeof AppPerfilRoute
   AppRegistrosRoute: typeof AppRegistrosRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppCategoriasRoute: AppCategoriasRoute,
   AppPerfilRoute: AppPerfilRoute,
   AppRegistrosRoute: AppRegistrosRoute,
   AppIndexRoute: AppIndexRoute,
@@ -159,3 +190,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
