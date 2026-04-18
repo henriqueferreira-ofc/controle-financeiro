@@ -14,7 +14,10 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppRegistrosRouteImport } from './routes/_app.registros'
+import { Route as AppRecorrentesRouteImport } from './routes/_app.recorrentes'
 import { Route as AppPerfilRouteImport } from './routes/_app.perfil'
+import { Route as AppOrcamentosRouteImport } from './routes/_app.orcamentos'
+import { Route as AppMetasRouteImport } from './routes/_app.metas'
 import { Route as AppCategoriasRouteImport } from './routes/_app.categorias'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -41,9 +44,24 @@ const AppRegistrosRoute = AppRegistrosRouteImport.update({
   path: '/registros',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRecorrentesRoute = AppRecorrentesRouteImport.update({
+  id: '/recorrentes',
+  path: '/recorrentes',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPerfilRoute = AppPerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOrcamentosRoute = AppOrcamentosRouteImport.update({
+  id: '/orcamentos',
+  path: '/orcamentos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMetasRoute = AppMetasRouteImport.update({
+  id: '/metas',
+  path: '/metas',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCategoriasRoute = AppCategoriasRouteImport.update({
@@ -57,14 +75,20 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/categorias': typeof AppCategoriasRoute
+  '/metas': typeof AppMetasRoute
+  '/orcamentos': typeof AppOrcamentosRoute
   '/perfil': typeof AppPerfilRoute
+  '/recorrentes': typeof AppRecorrentesRoute
   '/registros': typeof AppRegistrosRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/categorias': typeof AppCategoriasRoute
+  '/metas': typeof AppMetasRoute
+  '/orcamentos': typeof AppOrcamentosRoute
   '/perfil': typeof AppPerfilRoute
+  '/recorrentes': typeof AppRecorrentesRoute
   '/registros': typeof AppRegistrosRoute
   '/': typeof AppIndexRoute
 }
@@ -74,7 +98,10 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_app/categorias': typeof AppCategoriasRoute
+  '/_app/metas': typeof AppMetasRoute
+  '/_app/orcamentos': typeof AppOrcamentosRoute
   '/_app/perfil': typeof AppPerfilRoute
+  '/_app/recorrentes': typeof AppRecorrentesRoute
   '/_app/registros': typeof AppRegistrosRoute
   '/_app/': typeof AppIndexRoute
 }
@@ -85,14 +112,20 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/categorias'
+    | '/metas'
+    | '/orcamentos'
     | '/perfil'
+    | '/recorrentes'
     | '/registros'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
     | '/reset-password'
     | '/categorias'
+    | '/metas'
+    | '/orcamentos'
     | '/perfil'
+    | '/recorrentes'
     | '/registros'
     | '/'
   id:
@@ -101,7 +134,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_app/categorias'
+    | '/_app/metas'
+    | '/_app/orcamentos'
     | '/_app/perfil'
+    | '/_app/recorrentes'
     | '/_app/registros'
     | '/_app/'
   fileRoutesById: FileRoutesById
@@ -149,11 +185,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRegistrosRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/recorrentes': {
+      id: '/_app/recorrentes'
+      path: '/recorrentes'
+      fullPath: '/recorrentes'
+      preLoaderRoute: typeof AppRecorrentesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/perfil': {
       id: '/_app/perfil'
       path: '/perfil'
       fullPath: '/perfil'
       preLoaderRoute: typeof AppPerfilRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/orcamentos': {
+      id: '/_app/orcamentos'
+      path: '/orcamentos'
+      fullPath: '/orcamentos'
+      preLoaderRoute: typeof AppOrcamentosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/metas': {
+      id: '/_app/metas'
+      path: '/metas'
+      fullPath: '/metas'
+      preLoaderRoute: typeof AppMetasRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/categorias': {
@@ -168,14 +225,20 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppCategoriasRoute: typeof AppCategoriasRoute
+  AppMetasRoute: typeof AppMetasRoute
+  AppOrcamentosRoute: typeof AppOrcamentosRoute
   AppPerfilRoute: typeof AppPerfilRoute
+  AppRecorrentesRoute: typeof AppRecorrentesRoute
   AppRegistrosRoute: typeof AppRegistrosRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppCategoriasRoute: AppCategoriasRoute,
+  AppMetasRoute: AppMetasRoute,
+  AppOrcamentosRoute: AppOrcamentosRoute,
   AppPerfilRoute: AppPerfilRoute,
+  AppRecorrentesRoute: AppRecorrentesRoute,
   AppRegistrosRoute: AppRegistrosRoute,
   AppIndexRoute: AppIndexRoute,
 }
@@ -190,12 +253,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

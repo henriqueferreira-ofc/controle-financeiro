@@ -2,7 +2,7 @@ import * as React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { SEED_TRANSACTIONS } from "./seed";
-import type { Transaction, Filters, Category } from "./types";
+import type { Transaction, Filters, Category, Budget, Goal, Recurring, RecurringFrequency } from "./types";
 import { toast } from "sonner";
 
 type DBTransaction = {
@@ -33,6 +33,42 @@ type DBCategory = {
   updated_at: string;
 };
 
+type DBBudget = {
+  id: string;
+  user_id: string;
+  category_id: string;
+  amount: number;
+  period: "monthly" | "weekly";
+};
+
+type DBGoal = {
+  id: string;
+  user_id: string;
+  name: string;
+  target_amount: number;
+  current_amount: number;
+  target_date: string | null;
+  icon: string;
+  color: string;
+  completed: boolean;
+};
+
+type DBRecurring = {
+  id: string;
+  user_id: string;
+  type: "entrada" | "despesa";
+  description: string;
+  amount: number;
+  category: string | null;
+  frequency: RecurringFrequency;
+  start_date: string;
+  end_date: string | null;
+  next_run: string;
+  essential: boolean;
+  fixed: boolean;
+  active: boolean;
+};
+
 const toClientTx = (r: DBTransaction): Transaction => ({
   id: r.id,
   type: r.type,
@@ -54,9 +90,45 @@ const toClientCat = (r: DBCategory): Category => ({
   userId: r.user_id,
 });
 
+const toClientBudget = (r: DBBudget): Budget => ({
+  id: r.id,
+  categoryId: r.category_id,
+  amount: Number(r.amount),
+  period: r.period,
+});
+
+const toClientGoal = (r: DBGoal): Goal => ({
+  id: r.id,
+  name: r.name,
+  targetAmount: Number(r.target_amount),
+  currentAmount: Number(r.current_amount),
+  targetDate: r.target_date,
+  icon: r.icon,
+  color: r.color,
+  completed: r.completed,
+});
+
+const toClientRecurring = (r: DBRecurring): Recurring => ({
+  id: r.id,
+  type: r.type,
+  description: r.description,
+  amount: Number(r.amount),
+  categoryId: r.category,
+  frequency: r.frequency,
+  startDate: r.start_date,
+  endDate: r.end_date,
+  nextRun: r.next_run,
+  essential: r.essential,
+  fixed: r.fixed,
+  active: r.active,
+});
+
 type Ctx = {
   transactions: Transaction[];
   categories: Category[];
+  budgets: Budget[];
+  goals: Goal[];
+  recurrings: Recurring[];
   loading: boolean;
   filters: Filters;
   setFilters: React.Dispatch<React.SetStateAction<Filters>>;
@@ -66,6 +138,16 @@ type Ctx = {
   addCategory: (c: Omit<Category, "id" | "isGlobal" | "userId">) => Promise<void>;
   updateCategory: (id: string, patch: Partial<Omit<Category, "id" | "isGlobal" | "userId">>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
+  addBudget: (b: Omit<Budget, "id">) => Promise<void>;
+  updateBudget: (id: string, patch: Partial<Omit<Budget, "id">>) => Promise<void>;
+  deleteBudget: (id: string) => Promise<void>;
+  addGoal: (g: Omit<Goal, "id" | "completed">) => Promise<void>;
+  updateGoal: (id: string, patch: Partial<Omit<Goal, "id">>) => Promise<void>;
+  deleteGoal: (id: string) => Promise<void>;
+  addRecurring: (r: Omit<Recurring, "id" | "nextRun"> & { nextRun?: string }) => Promise<void>;
+  updateRecurring: (id: string, patch: Partial<Omit<Recurring, "id">>) => Promise<void>;
+  deleteRecurring: (id: string) => Promise<void>;
+  applyRecurringNow: () => Promise<number>;
   reseed: () => Promise<void>;
   exportJSON: () => void;
   importJSON: (file: File) => Promise<void>;
@@ -78,6 +160,9 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
   const [categories, setCategories] = React.useState<Category[]>([]);
+  const [budgets, setBudgets] = React.useState<Budget[]>([]);
+  const [goals, setGoals] = React.useState<Goal[]>([]);
+  const [recurrings, setRecurrings] = React.useState<Recurring[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [filters, setFilters] = React.useState<Filters>({
     period: "30d",
@@ -90,26 +175,40 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     if (!user) {
       setTransactions([]);
       setCategories([]);
+      setBudgets([]);
+      setGoals([]);
+      setRecurrings([]);
       setLoading(false);
       return;
     }
     setLoading(true);
-    const [txRes, catRes] = await Promise.all([
+
+    // Apply due recurring first
+    await supabase.rpc("apply_due_recurring_transactions", { _user_id: user.id });
+
+    const [txRes, catRes, budRes, goalRes, recRes] = await Promise.all([
       supabase.from("transactions").select("*").order("date", { ascending: false }),
       supabase.from("categories").select("*").order("name", { ascending: true }),
+      supabase.from("budgets").select("*"),
+      supabase.from("goals").select("*").order("created_at", { ascending: false }),
+      supabase.from("recurring_transactions").select("*").order("next_run", { ascending: true }),
     ]);
-    if (txRes.error) {
-      toast.error("Erro ao carregar registros: " + txRes.error.message);
-      setTransactions([]);
-    } else {
-      setTransactions((txRes.data as unknown as DBTransaction[]).map(toClientTx));
-    }
-    if (catRes.error) {
-      toast.error("Erro ao carregar categorias: " + catRes.error.message);
-      setCategories([]);
-    } else {
-      setCategories((catRes.data as unknown as DBCategory[]).map(toClientCat));
-    }
+
+    if (txRes.error) toast.error("Erro ao carregar registros: " + txRes.error.message);
+    else setTransactions((txRes.data as unknown as DBTransaction[]).map(toClientTx));
+
+    if (catRes.error) toast.error("Erro ao carregar categorias: " + catRes.error.message);
+    else setCategories((catRes.data as unknown as DBCategory[]).map(toClientCat));
+
+    if (budRes.error) toast.error("Erro ao carregar orçamentos: " + budRes.error.message);
+    else setBudgets((budRes.data as unknown as DBBudget[]).map(toClientBudget));
+
+    if (goalRes.error) toast.error("Erro ao carregar metas: " + goalRes.error.message);
+    else setGoals((goalRes.data as unknown as DBGoal[]).map(toClientGoal));
+
+    if (recRes.error) toast.error("Erro ao carregar recorrentes: " + recRes.error.message);
+    else setRecurrings((recRes.data as unknown as DBRecurring[]).map(toClientRecurring));
+
     setLoading(false);
   }, [user]);
 
@@ -117,6 +216,7 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     refresh();
   }, [refresh]);
 
+  // Transactions
   const addTransaction = React.useCallback(
     async (t: Omit<Transaction, "id">) => {
       if (!user) return;
@@ -187,26 +287,22 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     setTransactions((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  // Categories
   const addCategory = React.useCallback(
     async (c: Omit<Category, "id" | "isGlobal" | "userId">) => {
       if (!user) return;
       const { data, error } = await supabase
         .from("categories")
-        .insert({
-          user_id: user.id,
-          name: c.name,
-          kind: c.kind,
-          icon: c.icon,
-          color: c.color,
-          is_global: false,
-        })
+        .insert({ user_id: user.id, name: c.name, kind: c.kind, icon: c.icon, color: c.color, is_global: false })
         .select()
         .single();
       if (error) {
         toast.error("Erro ao criar categoria: " + error.message);
         throw error;
       }
-      setCategories((prev) => [...prev, toClientCat(data as unknown as DBCategory)].sort((a, b) => a.name.localeCompare(b.name)));
+      setCategories((prev) =>
+        [...prev, toClientCat(data as unknown as DBCategory)].sort((a, b) => a.name.localeCompare(b.name)),
+      );
     },
     [user],
   );
@@ -244,9 +340,209 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     setCategories((prev) => prev.filter((c) => c.id !== id));
   }, []);
 
+  // Budgets
+  const addBudget = React.useCallback(
+    async (b: Omit<Budget, "id">) => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from("budgets")
+        .insert({ user_id: user.id, category_id: b.categoryId, amount: b.amount, period: b.period })
+        .select()
+        .single();
+      if (error) {
+        toast.error("Erro ao criar orçamento: " + error.message);
+        throw error;
+      }
+      setBudgets((prev) => [...prev, toClientBudget(data as unknown as DBBudget)]);
+    },
+    [user],
+  );
+
+  const updateBudget = React.useCallback(async (id: string, patch: Partial<Omit<Budget, "id">>) => {
+    const dbPatch: { category_id?: string; amount?: number; period?: "monthly" | "weekly" } = {};
+    if (patch.categoryId !== undefined) dbPatch.category_id = patch.categoryId;
+    if (patch.amount !== undefined) dbPatch.amount = patch.amount;
+    if (patch.period !== undefined) dbPatch.period = patch.period;
+
+    const { data, error } = await supabase.from("budgets").update(dbPatch).eq("id", id).select().single();
+    if (error) {
+      toast.error("Erro ao atualizar orçamento: " + error.message);
+      throw error;
+    }
+    const updated = toClientBudget(data as unknown as DBBudget);
+    setBudgets((prev) => prev.map((b) => (b.id === id ? updated : b)));
+  }, []);
+
+  const deleteBudget = React.useCallback(async (id: string) => {
+    const { error } = await supabase.from("budgets").delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir orçamento: " + error.message);
+      throw error;
+    }
+    setBudgets((prev) => prev.filter((b) => b.id !== id));
+  }, []);
+
+  // Goals
+  const addGoal = React.useCallback(
+    async (g: Omit<Goal, "id" | "completed">) => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from("goals")
+        .insert({
+          user_id: user.id,
+          name: g.name,
+          target_amount: g.targetAmount,
+          current_amount: g.currentAmount,
+          target_date: g.targetDate ?? null,
+          icon: g.icon,
+          color: g.color,
+        })
+        .select()
+        .single();
+      if (error) {
+        toast.error("Erro ao criar meta: " + error.message);
+        throw error;
+      }
+      setGoals((prev) => [toClientGoal(data as unknown as DBGoal), ...prev]);
+    },
+    [user],
+  );
+
+  const updateGoal = React.useCallback(async (id: string, patch: Partial<Omit<Goal, "id">>) => {
+    const dbPatch: {
+      name?: string;
+      target_amount?: number;
+      current_amount?: number;
+      target_date?: string | null;
+      icon?: string;
+      color?: string;
+      completed?: boolean;
+    } = {};
+    if (patch.name !== undefined) dbPatch.name = patch.name;
+    if (patch.targetAmount !== undefined) dbPatch.target_amount = patch.targetAmount;
+    if (patch.currentAmount !== undefined) dbPatch.current_amount = patch.currentAmount;
+    if (patch.targetDate !== undefined) dbPatch.target_date = patch.targetDate ?? null;
+    if (patch.icon !== undefined) dbPatch.icon = patch.icon;
+    if (patch.color !== undefined) dbPatch.color = patch.color;
+    if (patch.completed !== undefined) dbPatch.completed = patch.completed;
+
+    const { data, error } = await supabase.from("goals").update(dbPatch).eq("id", id).select().single();
+    if (error) {
+      toast.error("Erro ao atualizar meta: " + error.message);
+      throw error;
+    }
+    const updated = toClientGoal(data as unknown as DBGoal);
+    setGoals((prev) => prev.map((g) => (g.id === id ? updated : g)));
+  }, []);
+
+  const deleteGoal = React.useCallback(async (id: string) => {
+    const { error } = await supabase.from("goals").delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir meta: " + error.message);
+      throw error;
+    }
+    setGoals((prev) => prev.filter((g) => g.id !== id));
+  }, []);
+
+  // Recurrings
+  const addRecurring = React.useCallback(
+    async (r: Omit<Recurring, "id" | "nextRun"> & { nextRun?: string }) => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from("recurring_transactions")
+        .insert({
+          user_id: user.id,
+          type: r.type,
+          description: r.description,
+          amount: r.amount,
+          category: r.categoryId ?? null,
+          frequency: r.frequency,
+          start_date: r.startDate,
+          end_date: r.endDate ?? null,
+          next_run: r.nextRun ?? r.startDate,
+          essential: r.essential,
+          fixed: r.fixed,
+          active: r.active,
+        })
+        .select()
+        .single();
+      if (error) {
+        toast.error("Erro ao criar recorrência: " + error.message);
+        throw error;
+      }
+      setRecurrings((prev) => [...prev, toClientRecurring(data as unknown as DBRecurring)]);
+    },
+    [user],
+  );
+
+  const updateRecurring = React.useCallback(async (id: string, patch: Partial<Omit<Recurring, "id">>) => {
+    const dbPatch: {
+      type?: "entrada" | "despesa";
+      description?: string;
+      amount?: number;
+      category?: string | null;
+      frequency?: RecurringFrequency;
+      start_date?: string;
+      end_date?: string | null;
+      next_run?: string;
+      essential?: boolean;
+      fixed?: boolean;
+      active?: boolean;
+    } = {};
+    if (patch.type !== undefined) dbPatch.type = patch.type;
+    if (patch.description !== undefined) dbPatch.description = patch.description;
+    if (patch.amount !== undefined) dbPatch.amount = patch.amount;
+    if (patch.categoryId !== undefined) dbPatch.category = patch.categoryId ?? null;
+    if (patch.frequency !== undefined) dbPatch.frequency = patch.frequency;
+    if (patch.startDate !== undefined) dbPatch.start_date = patch.startDate;
+    if (patch.endDate !== undefined) dbPatch.end_date = patch.endDate ?? null;
+    if (patch.nextRun !== undefined) dbPatch.next_run = patch.nextRun;
+    if (patch.essential !== undefined) dbPatch.essential = patch.essential;
+    if (patch.fixed !== undefined) dbPatch.fixed = patch.fixed;
+    if (patch.active !== undefined) dbPatch.active = patch.active;
+
+    const { data, error } = await supabase
+      .from("recurring_transactions")
+      .update(dbPatch)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) {
+      toast.error("Erro ao atualizar recorrência: " + error.message);
+      throw error;
+    }
+    const updated = toClientRecurring(data as unknown as DBRecurring);
+    setRecurrings((prev) => prev.map((r) => (r.id === id ? updated : r)));
+  }, []);
+
+  const deleteRecurring = React.useCallback(async (id: string) => {
+    const { error } = await supabase.from("recurring_transactions").delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir recorrência: " + error.message);
+      throw error;
+    }
+    setRecurrings((prev) => prev.filter((r) => r.id !== id));
+  }, []);
+
+  const applyRecurringNow = React.useCallback(async () => {
+    if (!user) return 0;
+    const { data, error } = await supabase.rpc("apply_due_recurring_transactions", { _user_id: user.id });
+    if (error) {
+      toast.error("Erro ao aplicar recorrências: " + error.message);
+      return 0;
+    }
+    const n = (data as unknown as number) ?? 0;
+    if (n > 0) {
+      toast.success(`${n} transação(ões) recorrente(s) aplicada(s).`);
+      await refresh();
+    } else {
+      toast.info("Nenhuma recorrência pendente.");
+    }
+    return n;
+  }, [user, refresh]);
+
   const reseed = React.useCallback(async () => {
     if (!user) return;
-    // Resolve category names against current categories list
     const byNameKind = new Map<string, string>();
     for (const c of categories) byNameKind.set(`${c.kind}:${c.name.toLowerCase()}`, c.id);
 
@@ -323,6 +619,9 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
   const value: Ctx = {
     transactions,
     categories,
+    budgets,
+    goals,
+    recurrings,
     loading,
     filters,
     setFilters,
@@ -332,6 +631,16 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     addCategory,
     updateCategory,
     deleteCategory,
+    addBudget,
+    updateBudget,
+    deleteBudget,
+    addGoal,
+    updateGoal,
+    deleteGoal,
+    addRecurring,
+    updateRecurring,
+    deleteRecurring,
+    applyRecurringNow,
     reseed,
     exportJSON,
     importJSON,
