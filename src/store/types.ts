@@ -26,6 +26,41 @@ export type Filters = {
   type: "all" | "entrada" | "despesa";
 };
 
+export type Budget = {
+  id: string;
+  categoryId: string;
+  amount: number;
+  period: "monthly" | "weekly";
+};
+
+export type Goal = {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate?: string | null;
+  icon: string;
+  color: string;
+  completed: boolean;
+};
+
+export type RecurringFrequency = "daily" | "weekly" | "monthly" | "yearly";
+
+export type Recurring = {
+  id: string;
+  type: "entrada" | "despesa";
+  description: string;
+  amount: number;
+  categoryId?: string | null;
+  frequency: RecurringFrequency;
+  startDate: string;
+  endDate?: string | null;
+  nextRun: string;
+  essential: boolean;
+  fixed: boolean;
+  active: boolean;
+};
+
 export type AppState = {
   transactions: Transaction[];
   preferences: {
