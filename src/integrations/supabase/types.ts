@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      budgets: {
+        Row: {
+          amount: number
+          category_id: string
+          created_at: string
+          id: string
+          period: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category_id: string
+          created_at?: string
+          id?: string
+          period?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string
+          created_at?: string
+          id?: string
+          period?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           color: string
@@ -50,6 +80,48 @@ export type Database = {
         }
         Relationships: []
       }
+      goals: {
+        Row: {
+          color: string
+          completed: boolean
+          created_at: string
+          current_amount: number
+          icon: string
+          id: string
+          name: string
+          target_amount: number
+          target_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          completed?: boolean
+          created_at?: string
+          current_amount?: number
+          icon?: string
+          id?: string
+          name: string
+          target_amount: number
+          target_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          completed?: boolean
+          created_at?: string
+          current_amount?: number
+          icon?: string
+          id?: string
+          name?: string
+          target_amount?: number
+          target_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -77,6 +149,66 @@ export type Database = {
           name?: string
           timezone?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      recurring_transactions: {
+        Row: {
+          active: boolean
+          amount: number
+          category: string | null
+          created_at: string
+          day_of_month: number | null
+          day_of_week: number | null
+          description: string
+          end_date: string | null
+          essential: boolean
+          fixed: boolean
+          frequency: string
+          id: string
+          next_run: string
+          start_date: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          amount: number
+          category?: string | null
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          description: string
+          end_date?: string | null
+          essential?: boolean
+          fixed?: boolean
+          frequency: string
+          id?: string
+          next_run: string
+          start_date: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          category?: string | null
+          created_at?: string
+          day_of_month?: number | null
+          day_of_week?: number | null
+          description?: string
+          end_date?: string | null
+          essential?: boolean
+          fixed?: boolean
+          frequency?: string
+          id?: string
+          next_run?: string
+          start_date?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -133,7 +265,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      apply_due_recurring_transactions: {
+        Args: { _user_id: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
