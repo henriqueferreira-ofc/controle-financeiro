@@ -266,7 +266,11 @@ function ForecastCard({ forecast }: { forecast: ReturnType<typeof buildForecast>
         <div className="h-[200px] w-full sm:h-[240px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
-              data={forecast.series}
+              data={forecast.series.map((p) => ({
+                ...p,
+                saldoReal: p.projetado ? null : p.saldo,
+                saldoProj: p.projetado ? p.saldo : null,
+              }))}
               margin={{ top: 10, right: 12, left: -10, bottom: 0 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.014 250)" />
@@ -284,18 +288,30 @@ function ForecastCard({ forecast }: { forecast: ReturnType<typeof buildForecast>
                   borderRadius: 8,
                   fontSize: 12,
                 }}
-                formatter={(v: number) => brl(v)}
+                formatter={(v) => (typeof v === "number" ? brl(v) : "—")}
                 labelFormatter={(l) => `Dia ${l}`}
               />
               <ReferenceLine y={0} stroke="oklch(0.5 0.014 250)" strokeDasharray="3 3" />
               <Line
                 type="monotone"
-                dataKey="saldo"
-                name="Saldo"
+                dataKey="saldoReal"
+                name="Histórico"
                 stroke="oklch(0.78 0.16 165)"
                 strokeWidth={2.5}
                 dot={false}
-                strokeDasharray={(d: { projetado?: boolean }) => (d?.projetado ? "4 4" : "0")}
+                connectNulls
+                isAnimationActive={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="saldoProj"
+                name="Projeção"
+                stroke="oklch(0.78 0.16 165)"
+                strokeWidth={2.5}
+                strokeDasharray="4 4"
+                dot={false}
+                connectNulls
+                isAnimationActive={false}
               />
             </LineChart>
           </ResponsiveContainer>
