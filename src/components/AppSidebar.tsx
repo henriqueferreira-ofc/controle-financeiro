@@ -1,11 +1,12 @@
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { Link, useLocation } from "@tanstack/react-router";
-import { LayoutDashboard, ListChecks, PiggyBank, Repeat, Tags, Target, User, Wallet } from "lucide-react";
+import { Brain, LayoutDashboard, ListChecks, PiggyBank, Repeat, Tags, Target, User, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Meus Registros", url: "/registros", icon: ListChecks },
+  { title: "Inteligência", url: "/inteligencia", icon: Brain },
   { title: "Categorias", url: "/categorias", icon: Tags },
   { title: "Orçamentos", url: "/orcamentos", icon: PiggyBank },
   { title: "Metas", url: "/metas", icon: Target },
@@ -14,7 +15,11 @@ const items = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const { setOpenMobile, isMobile } = useSidebar();
   const isActive = (url: string) => location.pathname === url;
+  const handleNav = () => {
+    if (isMobile) setOpenMobile(false);
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -39,6 +44,7 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild isActive={active}>
                       <Link
                         to={item.url}
+                        onClick={handleNav}
                         className={cn(
                           "transition-all",
                           active && "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
@@ -60,7 +66,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isActive("/perfil")}>
-              <Link to="/perfil">
+              <Link to="/perfil" onClick={handleNav}>
                 <User className="h-4 w-4" />
                 <span>Meu Perfil</span>
               </Link>
