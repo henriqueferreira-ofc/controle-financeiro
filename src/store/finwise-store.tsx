@@ -476,7 +476,19 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
   );
 
   const updateRecurring = React.useCallback(async (id: string, patch: Partial<Omit<Recurring, "id">>) => {
-    const dbPatch: Record<string, unknown> = {};
+    const dbPatch: {
+      type?: "entrada" | "despesa";
+      description?: string;
+      amount?: number;
+      category?: string | null;
+      frequency?: RecurringFrequency;
+      start_date?: string;
+      end_date?: string | null;
+      next_run?: string;
+      essential?: boolean;
+      fixed?: boolean;
+      active?: boolean;
+    } = {};
     if (patch.type !== undefined) dbPatch.type = patch.type;
     if (patch.description !== undefined) dbPatch.description = patch.description;
     if (patch.amount !== undefined) dbPatch.amount = patch.amount;
