@@ -60,13 +60,13 @@ function BudgetsPage() {
   }, [budgets, transactions]);
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 md:px-8 md:py-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Orçamentos</h1>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Orçamentos</h1>
           <p className="text-sm text-muted-foreground">Defina limites por categoria e acompanhe gastos.</p>
         </div>
-        <Button onClick={() => { setEditing(null); setOpen(true); }}>
+        <Button onClick={() => { setEditing(null); setOpen(true); }} className="shrink-0">
           <Plus className="mr-1 h-4 w-4" /> Novo orçamento
         </Button>
       </div>
