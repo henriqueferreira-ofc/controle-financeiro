@@ -35,23 +35,24 @@ const FREQ_KEY: Record<RecurringFrequency, string> = {
 
 function RecurringPage() {
   const { recurrings, categories, addRecurring, updateRecurring, deleteRecurring, applyRecurringNow } = useFinwise();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Recurring | null>(null);
   const [confirmDel, setConfirmDel] = useState<Recurring | null>(null);
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 md:px-8 md:py-8">
+    <div className="mx-auto w-full max-w-7xl space-y-5 px-3 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Transações recorrentes</h1>
-          <p className="text-sm text-muted-foreground">Aplicadas automaticamente nas datas configuradas.</p>
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl md:text-3xl">{t("recurring.title")}</h1>
+          <p className="text-xs text-muted-foreground sm:text-sm">{t("recurring.subtitle")}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => applyRecurringNow()} className="shrink-0">
-            <Play className="mr-1 h-4 w-4" /> Executar pendentes
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => applyRecurringNow()} className="w-full sm:w-auto">
+            <Play className="mr-1 h-4 w-4" /> <span className="truncate">{t("recurring.runPending")}</span>
           </Button>
-          <Button onClick={() => { setEditing(null); setOpen(true); }} className="shrink-0">
-            <Plus className="mr-1 h-4 w-4" /> Nova
+          <Button size="sm" onClick={() => { setEditing(null); setOpen(true); }} className="w-full sm:w-auto">
+            <Plus className="mr-1 h-4 w-4" /> {t("common.new")}
           </Button>
         </div>
       </div>
@@ -60,52 +61,68 @@ function RecurringPage() {
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">
             <Repeat className="mx-auto mb-3 h-10 w-10 opacity-50" />
-            Nenhuma recorrência cadastrada.
+            {t("recurring.empty")}
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-3">
           {recurrings.map((r) => {
             const cat = categories.find((c) => c.id === r.categoryId);
+            const isIncome = r.type === "entrada";
             return (
-              <Card key={r.id}>
-                <CardContent className="p-4 flex items-center gap-4 flex-wrap">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${r.type === "entrada" ? "bg-green-500/15 text-green-600" : "bg-red-500/15 text-red-600"}`}>
-                    {r.type === "entrada" ? <ArrowUpCircle className="h-5 w-5" /> : <ArrowDownCircle className="h-5 w-5" />}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium truncate">{r.description}</p>
-                      <Badge variant="outline">{FREQ_LABEL[r.frequency]}</Badge>
-                      {!r.active && <Badge variant="secondary">Pausada</Badge>}
-                      {cat && (
-                        <Badge variant="outline" className="gap-1">
-                          <span className="h-2 w-2 rounded-full" style={{ background: cat.color }} />
-                          {cat.name}
-                        </Badge>
-                      )}
+              <Card key={r.id} className="overflow-hidden">
+                <CardContent className="p-3 sm:p-4">
+                  {/* Top row: icon + description + amount */}
+                  <div className="flex items-start gap-3">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${isIncome ? "bg-green-500/15 text-green-600" : "bg-red-500/15 text-red-600"}`}>
+                      {isIncome ? <ArrowUpCircle className="h-5 w-5" /> : <ArrowDownCircle className="h-5 w-5" />}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Próxima: {formatDateBR(r.nextRun)}
-                      {r.endDate && ` · até ${formatDateBR(r.endDate)}`}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate text-sm sm:text-base">{r.description}</p>
+                      <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3 shrink-0" />
+                        <span className="truncate">
+                          {t("recurring.next")}: {formatDateBR(r.nextRun)}
+                          {r.endDate && ` · ${t("recurring.until")} ${formatDateBR(r.endDate)}`}
+                        </span>
+                      </div>
+                    </div>
+                    <p className={`shrink-0 text-right text-sm font-semibold tabular-nums sm:text-base ${isIncome ? "text-green-600" : "text-red-600"}`}>
+                      {isIncome ? "+" : "-"}{brl(r.amount)}
                     </p>
                   </div>
-                  <p className={`font-semibold ${r.type === "entrada" ? "text-green-600" : "text-red-600"}`}>
-                    {r.type === "entrada" ? "+" : "-"}{brl(r.amount)}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={r.active}
-                      onCheckedChange={async (v) => {
-                        await updateRecurring(r.id, { active: v });
-                      }}
-                    />
-                    <Button size="icon" variant="ghost" onClick={() => { setEditing(r); setOpen(true); }}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => setConfirmDel(r)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+
+                  {/* Badges */}
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    <Badge variant="outline" className="text-[10px] sm:text-xs">{t(FREQ_KEY[r.frequency])}</Badge>
+                    {!r.active && <Badge variant="secondary" className="text-[10px] sm:text-xs">{t("recurring.paused")}</Badge>}
+                    {cat && (
+                      <Badge variant="outline" className="gap-1 text-[10px] sm:text-xs">
+                        <span className="h-2 w-2 rounded-full" style={{ background: cat.color }} />
+                        <span className="max-w-[120px] truncate">{cat.name}</span>
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Actions row */}
+                  <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-3">
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Switch
+                        checked={r.active}
+                        onCheckedChange={async (v) => {
+                          await updateRecurring(r.id, { active: v });
+                        }}
+                      />
+                      <span>{t("recurring.active")}</span>
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditing(r); setOpen(true); }}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-600" onClick={() => setConfirmDel(r)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -122,10 +139,10 @@ function RecurringPage() {
         onSave={async (payload) => {
           if (editing) {
             await updateRecurring(editing.id, payload);
-            toast.success("Recorrência atualizada.");
+            toast.success(t("recurring.updated"));
           } else {
             await addRecurring(payload);
-            toast.success("Recorrência criada.");
+            toast.success(t("recurring.created"));
           }
           setOpen(false);
           setEditing(null);
@@ -135,21 +152,21 @@ function RecurringPage() {
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir recorrência?</AlertDialogTitle>
-            <AlertDialogDescription>Transações já criadas serão preservadas.</AlertDialogDescription>
+            <AlertDialogTitle>{t("recurring.deleteTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("recurring.deleteDesc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
                 if (confirmDel) {
                   await deleteRecurring(confirmDel.id);
-                  toast.success("Recorrência excluída.");
+                  toast.success(t("recurring.deleted"));
                   setConfirmDel(null);
                 }
               }}
             >
-              Excluir
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
