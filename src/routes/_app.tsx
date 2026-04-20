@@ -1,11 +1,13 @@
 import * as React from "react";
-import { createFileRoute, Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { FinwiseProvider } from "@/store/finwise-store";
 import { useAuth } from "@/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
@@ -13,6 +15,7 @@ export const Route = createFileRoute("/_app")({
 
 function AppLayout() {
   const { user, loading, signOut } = useAuth();
+  const { t } = useI18n();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -39,12 +42,13 @@ function AppLayout() {
           <div className="flex-1 flex flex-col">
             <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-border/60 bg-background/80 px-3 backdrop-blur sm:px-4">
               <SidebarTrigger />
-              <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <div className="flex min-w-0 items-center gap-1 sm:gap-3">
                 <span className="hidden max-w-[200px] truncate text-sm text-muted-foreground sm:inline lg:max-w-none">
                   {user.email}
                 </span>
+                <LanguageSwitcher compact />
                 <Button size="sm" variant="ghost" onClick={() => signOut()}>
-                  <LogOut className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Sair</span>
+                  <LogOut className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">{t("common.signout")}</span>
                 </Button>
               </div>
             </header>

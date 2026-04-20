@@ -1,5 +1,6 @@
 import { Outlet, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/auth/AuthProvider";
+import { I18nProvider } from "@/i18n/I18nProvider";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
@@ -31,10 +32,14 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "FinWise — Controle financeiro simples" },
-      { name: "description", content: "FinWise: controle de entradas e saídas com dashboard, gráficos e insights." },
+      { title: "AxisPay — Smart financial control" },
+      { name: "description", content: "AxisPay: track income, expenses, budgets and goals with smart insights." },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/png", href: "/axispay-icon.png" },
+      { rel: "apple-touch-icon", href: "/axispay-icon.png" },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -57,9 +62,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <AuthProvider>
-      <Outlet />
-      <Toaster richColors position="top-right" />
-    </AuthProvider>
+    <I18nProvider>
+      <AuthProvider>
+        <Outlet />
+        <Toaster richColors position="top-right" />
+      </AuthProvider>
+    </I18nProvider>
   );
 }

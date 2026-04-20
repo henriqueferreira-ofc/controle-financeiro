@@ -1,37 +1,34 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { Link, useLocation } from "@tanstack/react-router";
-import { Brain, LayoutDashboard, ListChecks, PiggyBank, Repeat, Tags, Target, User, Wallet } from "lucide-react";
+import { Brain, LayoutDashboard, ListChecks, PiggyBank, Repeat, Tags, Target, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const items = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Meus Registros", url: "/registros", icon: ListChecks },
-  { title: "Inteligência", url: "/inteligencia", icon: Brain },
-  { title: "Categorias", url: "/categorias", icon: Tags },
-  { title: "Orçamentos", url: "/orcamentos", icon: PiggyBank },
-  { title: "Metas", url: "/metas", icon: Target },
-  { title: "Recorrentes", url: "/recorrentes", icon: Repeat },
-];
+import { AxispayLogo } from "@/components/AxispayLogo";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export function AppSidebar() {
   const location = useLocation();
   const { setOpenMobile, isMobile } = useSidebar();
+  const { t } = useI18n();
   const isActive = (url: string) => location.pathname === url;
   const handleNav = () => {
     if (isMobile) setOpenMobile(false);
   };
 
+  const items = [
+    { title: t("nav.dashboard"), url: "/", icon: LayoutDashboard },
+    { title: t("nav.records"), url: "/registros", icon: ListChecks },
+    { title: t("nav.intelligence"), url: "/inteligencia", icon: Brain },
+    { title: t("nav.categories"), url: "/categorias", icon: Tags },
+    { title: t("nav.budgets"), url: "/orcamentos", icon: PiggyBank },
+    { title: t("nav.goals"), url: "/metas", icon: Target },
+    { title: t("nav.recurring"), url: "/recorrentes", icon: Repeat },
+  ];
+
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        <div className="flex items-center gap-2 px-4 pt-5 pb-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-[var(--shadow-glow)]">
-            <Wallet className="h-5 w-5" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-base font-semibold tracking-tight">FinWise</span>
-            <span className="text-xs text-muted-foreground">Controle financeiro</span>
-          </div>
+        <div className="px-3 pt-5 pb-3">
+          <AxispayLogo size={36} tagline={t("app.tagline")} />
         </div>
 
         <SidebarGroup>
@@ -40,7 +37,7 @@ export function AppSidebar() {
               {items.map((item) => {
                 const active = isActive(item.url);
                 return (
-                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton asChild isActive={active}>
                       <Link
                         to={item.url}
@@ -68,7 +65,7 @@ export function AppSidebar() {
             <SidebarMenuButton asChild isActive={isActive("/perfil")}>
               <Link to="/perfil" onClick={handleNav}>
                 <User className="h-4 w-4" />
-                <span>Meu Perfil</span>
+                <span>{t("nav.profile")}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

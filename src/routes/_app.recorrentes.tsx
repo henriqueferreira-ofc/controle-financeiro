@@ -11,46 +11,48 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ArrowDownCircle, ArrowUpCircle, Pencil, Play, Plus, Repeat, Trash2 } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Calendar, Pencil, Play, Plus, Repeat, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { brl, formatDateBR, todayISO } from "@/lib/format";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/_app/recorrentes")({
   head: () => ({
     meta: [
-      { title: "Recorrentes — FinWise" },
+      { title: "Recorrentes — AxisPay" },
       { name: "description", content: "Cadastre transações que se repetem automaticamente." },
     ],
   }),
   component: RecurringPage,
 });
 
-const FREQ_LABEL: Record<RecurringFrequency, string> = {
-  daily: "Diária",
-  weekly: "Semanal",
-  monthly: "Mensal",
-  yearly: "Anual",
+const FREQ_KEY: Record<RecurringFrequency, string> = {
+  daily: "freq.daily",
+  weekly: "freq.weekly",
+  monthly: "freq.monthly",
+  yearly: "freq.yearly",
 };
 
 function RecurringPage() {
   const { recurrings, categories, addRecurring, updateRecurring, deleteRecurring, applyRecurringNow } = useFinwise();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Recurring | null>(null);
   const [confirmDel, setConfirmDel] = useState<Recurring | null>(null);
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 md:px-8 md:py-8">
+    <div className="mx-auto w-full max-w-7xl space-y-5 px-3 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Transações recorrentes</h1>
-          <p className="text-sm text-muted-foreground">Aplicadas automaticamente nas datas configuradas.</p>
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl md:text-3xl">{t("recurring.title")}</h1>
+          <p className="text-xs text-muted-foreground sm:text-sm">{t("recurring.subtitle")}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => applyRecurringNow()} className="shrink-0">
-            <Play className="mr-1 h-4 w-4" /> Executar pendentes
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => applyRecurringNow()} className="w-full sm:w-auto">
+            <Play className="mr-1 h-4 w-4" /> <span className="truncate">{t("recurring.runPending")}</span>
           </Button>
-          <Button onClick={() => { setEditing(null); setOpen(true); }} className="shrink-0">
-            <Plus className="mr-1 h-4 w-4" /> Nova
+          <Button size="sm" onClick={() => { setEditing(null); setOpen(true); }} className="w-full sm:w-auto">
+            <Plus className="mr-1 h-4 w-4" /> {t("common.new")}
           </Button>
         </div>
       </div>
@@ -59,52 +61,68 @@ function RecurringPage() {
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">
             <Repeat className="mx-auto mb-3 h-10 w-10 opacity-50" />
-            Nenhuma recorrência cadastrada.
+            {t("recurring.empty")}
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-3">
           {recurrings.map((r) => {
             const cat = categories.find((c) => c.id === r.categoryId);
+            const isIncome = r.type === "entrada";
             return (
-              <Card key={r.id}>
-                <CardContent className="p-4 flex items-center gap-4 flex-wrap">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${r.type === "entrada" ? "bg-green-500/15 text-green-600" : "bg-red-500/15 text-red-600"}`}>
-                    {r.type === "entrada" ? <ArrowUpCircle className="h-5 w-5" /> : <ArrowDownCircle className="h-5 w-5" />}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium truncate">{r.description}</p>
-                      <Badge variant="outline">{FREQ_LABEL[r.frequency]}</Badge>
-                      {!r.active && <Badge variant="secondary">Pausada</Badge>}
-                      {cat && (
-                        <Badge variant="outline" className="gap-1">
-                          <span className="h-2 w-2 rounded-full" style={{ background: cat.color }} />
-                          {cat.name}
-                        </Badge>
-                      )}
+              <Card key={r.id} className="overflow-hidden">
+                <CardContent className="p-3 sm:p-4">
+                  {/* Top row: icon + description + amount */}
+                  <div className="flex items-start gap-3">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${isIncome ? "bg-green-500/15 text-green-600" : "bg-red-500/15 text-red-600"}`}>
+                      {isIncome ? <ArrowUpCircle className="h-5 w-5" /> : <ArrowDownCircle className="h-5 w-5" />}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Próxima: {formatDateBR(r.nextRun)}
-                      {r.endDate && ` · até ${formatDateBR(r.endDate)}`}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate text-sm sm:text-base">{r.description}</p>
+                      <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3 shrink-0" />
+                        <span className="truncate">
+                          {t("recurring.next")}: {formatDateBR(r.nextRun)}
+                          {r.endDate && ` · ${t("recurring.until")} ${formatDateBR(r.endDate)}`}
+                        </span>
+                      </div>
+                    </div>
+                    <p className={`shrink-0 text-right text-sm font-semibold tabular-nums sm:text-base ${isIncome ? "text-green-600" : "text-red-600"}`}>
+                      {isIncome ? "+" : "-"}{brl(r.amount)}
                     </p>
                   </div>
-                  <p className={`font-semibold ${r.type === "entrada" ? "text-green-600" : "text-red-600"}`}>
-                    {r.type === "entrada" ? "+" : "-"}{brl(r.amount)}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={r.active}
-                      onCheckedChange={async (v) => {
-                        await updateRecurring(r.id, { active: v });
-                      }}
-                    />
-                    <Button size="icon" variant="ghost" onClick={() => { setEditing(r); setOpen(true); }}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => setConfirmDel(r)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+
+                  {/* Badges */}
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    <Badge variant="outline" className="text-[10px] sm:text-xs">{t(FREQ_KEY[r.frequency])}</Badge>
+                    {!r.active && <Badge variant="secondary" className="text-[10px] sm:text-xs">{t("recurring.paused")}</Badge>}
+                    {cat && (
+                      <Badge variant="outline" className="gap-1 text-[10px] sm:text-xs">
+                        <span className="h-2 w-2 rounded-full" style={{ background: cat.color }} />
+                        <span className="max-w-[120px] truncate">{cat.name}</span>
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Actions row */}
+                  <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-3">
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Switch
+                        checked={r.active}
+                        onCheckedChange={async (v) => {
+                          await updateRecurring(r.id, { active: v });
+                        }}
+                      />
+                      <span>{t("recurring.active")}</span>
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditing(r); setOpen(true); }}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-600" onClick={() => setConfirmDel(r)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -121,10 +139,10 @@ function RecurringPage() {
         onSave={async (payload) => {
           if (editing) {
             await updateRecurring(editing.id, payload);
-            toast.success("Recorrência atualizada.");
+            toast.success(t("recurring.updated"));
           } else {
             await addRecurring(payload);
-            toast.success("Recorrência criada.");
+            toast.success(t("recurring.created"));
           }
           setOpen(false);
           setEditing(null);
@@ -134,21 +152,21 @@ function RecurringPage() {
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir recorrência?</AlertDialogTitle>
-            <AlertDialogDescription>Transações já criadas serão preservadas.</AlertDialogDescription>
+            <AlertDialogTitle>{t("recurring.deleteTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("recurring.deleteDesc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
                 if (confirmDel) {
                   await deleteRecurring(confirmDel.id);
-                  toast.success("Recorrência excluída.");
+                  toast.success(t("recurring.deleted"));
                   setConfirmDel(null);
                 }
               }}
             >
-              Excluir
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -166,6 +184,7 @@ function RecurringDialog({
   onClose: () => void;
   onSave: (r: Omit<Recurring, "id" | "nextRun"> & { nextRun?: string }) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [type, setType] = useState<"entrada" | "despesa">("despesa");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -195,10 +214,10 @@ function RecurringDialog({
   const filteredCats = categories.filter((c) => c.kind === type);
 
   const submit = async () => {
-    if (!description.trim()) return toast.error("Informe a descrição.");
+    if (!description.trim()) return toast.error(t("recurring.description"));
     const n = Number(amount);
-    if (!n || n <= 0) return toast.error("Valor inválido.");
-    if (!startDate) return toast.error("Data inicial obrigatória.");
+    if (!n || n <= 0) return toast.error(t("recurring.amount"));
+    if (!startDate) return toast.error(t("recurring.start"));
     await onSave({
       type,
       description: description.trim(),
@@ -216,50 +235,50 @@ function RecurringDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
+      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{editing ? "Editar recorrência" : "Nova recorrência"}</DialogTitle>
+          <DialogTitle>{editing ? t("recurring.editTitle") : t("recurring.newTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Tipo</Label>
+              <Label>{t("recurring.type")}</Label>
               <Select value={type} onValueChange={(v) => setType(v as "entrada" | "despesa")}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="despesa">Despesa</SelectItem>
-                  <SelectItem value="entrada">Entrada</SelectItem>
+                  <SelectItem value="despesa">{t("recurring.expense")}</SelectItem>
+                  <SelectItem value="entrada">{t("recurring.income")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Frequência</Label>
+              <Label>{t("recurring.frequency")}</Label>
               <Select value={frequency} onValueChange={(v) => setFrequency(v as RecurringFrequency)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="daily">Diária</SelectItem>
-                  <SelectItem value="weekly">Semanal</SelectItem>
-                  <SelectItem value="monthly">Mensal</SelectItem>
-                  <SelectItem value="yearly">Anual</SelectItem>
+                  <SelectItem value="daily">{t("freq.daily")}</SelectItem>
+                  <SelectItem value="weekly">{t("freq.weekly")}</SelectItem>
+                  <SelectItem value="monthly">{t("freq.monthly")}</SelectItem>
+                  <SelectItem value="yearly">{t("freq.yearly")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Descrição</Label>
+            <Label>{t("recurring.description")}</Label>
             <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex.: Aluguel" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Valor</Label>
+              <Label>{t("recurring.amount")}</Label>
               <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Categoria</Label>
+              <Label>{t("recurring.category")}</Label>
               <Select value={categoryId || "none"} onValueChange={(v) => setCategoryId(v === "none" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Sem categoria" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("recurring.noCategory")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Sem categoria</SelectItem>
+                  <SelectItem value="none">{t("recurring.noCategory")}</SelectItem>
                   {filteredCats.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -267,29 +286,29 @@ function RecurringDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Início</Label>
+              <Label>{t("recurring.start")}</Label>
               <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Fim (opcional)</Label>
+              <Label>{t("recurring.end")}</Label>
               <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
           <div className="flex flex-wrap gap-4 pt-2">
             <label className="flex items-center gap-2 text-sm">
-              <Switch checked={essential} onCheckedChange={setEssential} /> Essencial
+              <Switch checked={essential} onCheckedChange={setEssential} /> {t("recurring.essential")}
             </label>
             <label className="flex items-center gap-2 text-sm">
-              <Switch checked={fixed} onCheckedChange={setFixed} /> Fixa
+              <Switch checked={fixed} onCheckedChange={setFixed} /> {t("recurring.fixed")}
             </label>
             <label className="flex items-center gap-2 text-sm">
-              <Switch checked={active} onCheckedChange={setActive} /> Ativa
+              <Switch checked={active} onCheckedChange={setActive} /> {t("recurring.active")}
             </label>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button onClick={submit}>Salvar</Button>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button onClick={submit}>{t("common.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
