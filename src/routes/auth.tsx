@@ -107,7 +107,7 @@ function AuthPage() {
             <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">Axis</span>
             <span className="text-foreground">Pay</span>
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">Smart financial control</p>
+          <p className="mt-1 text-sm text-muted-foreground">Financial Axis</p>
         </div>
 
         <Card className="border-border/60 shadow-[var(--shadow-card)]">

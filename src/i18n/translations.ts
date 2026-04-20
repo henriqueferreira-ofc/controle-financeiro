@@ -10,7 +10,7 @@ type Dict = Record<string, string>;
 
 export const translations: Record<Locale, Dict> = {
   pt: {
-    "app.tagline": "Controle financeiro inteligente",
+    "app.tagline": "Financial Axis",
     "nav.dashboard": "Dashboard",
     "nav.records": "Meus Registros",
     "nav.intelligence": "Inteligência",
@@ -59,7 +59,7 @@ export const translations: Record<Locale, Dict> = {
     "freq.yearly": "Anual",
   },
   en: {
-    "app.tagline": "Smart financial control",
+    "app.tagline": "Financial Axis",
     "nav.dashboard": "Dashboard",
     "nav.records": "My Records",
     "nav.intelligence": "Intelligence",
@@ -108,7 +108,7 @@ export const translations: Record<Locale, Dict> = {
     "freq.yearly": "Yearly",
   },
   es: {
-    "app.tagline": "Control financiero inteligente",
+    "app.tagline": "Financial Axis",
     "nav.dashboard": "Panel",
     "nav.records": "Mis Registros",
     "nav.intelligence": "Inteligencia",

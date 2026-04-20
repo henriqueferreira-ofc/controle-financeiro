@@ -12,13 +12,17 @@ export function AxispayLogo({ size = 40, showWordmark = true, className, tagline
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
       <img
-        src={logo}
+        src="/logo.png"
         alt="AxisPay"
-        width={size}
-        height={size}
         loading="eager"
-        className="rounded-xl shadow-[var(--shadow-glow)]"
-        style={{ width: size, height: size }}
+        className="block h-full w-full object-cover"
+        style={{ 
+          width: size, 
+          height: size,
+          borderRadius: 0,
+          margin: 0,
+          padding: 0
+        }}
       />
       {showWordmark && (
         <div className="flex flex-col leading-tight">
