@@ -11,25 +11,26 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ArrowDownCircle, ArrowUpCircle, Pencil, Play, Plus, Repeat, Trash2 } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Calendar, Pencil, Play, Plus, Repeat, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { brl, formatDateBR, todayISO } from "@/lib/format";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/_app/recorrentes")({
   head: () => ({
     meta: [
-      { title: "Recorrentes — FinWise" },
+      { title: "Recorrentes — AxisPay" },
       { name: "description", content: "Cadastre transações que se repetem automaticamente." },
     ],
   }),
   component: RecurringPage,
 });
 
-const FREQ_LABEL: Record<RecurringFrequency, string> = {
-  daily: "Diária",
-  weekly: "Semanal",
-  monthly: "Mensal",
-  yearly: "Anual",
+const FREQ_KEY: Record<RecurringFrequency, string> = {
+  daily: "freq.daily",
+  weekly: "freq.weekly",
+  monthly: "freq.monthly",
+  yearly: "freq.yearly",
 };
 
 function RecurringPage() {
