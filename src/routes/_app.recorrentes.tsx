@@ -184,6 +184,7 @@ function RecurringDialog({
   onClose: () => void;
   onSave: (r: Omit<Recurring, "id" | "nextRun"> & { nextRun?: string }) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [type, setType] = useState<"entrada" | "despesa">("despesa");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -213,10 +214,10 @@ function RecurringDialog({
   const filteredCats = categories.filter((c) => c.kind === type);
 
   const submit = async () => {
-    if (!description.trim()) return toast.error("Informe a descrição.");
+    if (!description.trim()) return toast.error(t("recurring.description"));
     const n = Number(amount);
-    if (!n || n <= 0) return toast.error("Valor inválido.");
-    if (!startDate) return toast.error("Data inicial obrigatória.");
+    if (!n || n <= 0) return toast.error(t("recurring.amount"));
+    if (!startDate) return toast.error(t("recurring.start"));
     await onSave({
       type,
       description: description.trim(),
@@ -234,50 +235,50 @@ function RecurringDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
+      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{editing ? "Editar recorrência" : "Nova recorrência"}</DialogTitle>
+          <DialogTitle>{editing ? t("recurring.editTitle") : t("recurring.newTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Tipo</Label>
+              <Label>{t("recurring.type")}</Label>
               <Select value={type} onValueChange={(v) => setType(v as "entrada" | "despesa")}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="despesa">Despesa</SelectItem>
-                  <SelectItem value="entrada">Entrada</SelectItem>
+                  <SelectItem value="despesa">{t("recurring.expense")}</SelectItem>
+                  <SelectItem value="entrada">{t("recurring.income")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Frequência</Label>
+              <Label>{t("recurring.frequency")}</Label>
               <Select value={frequency} onValueChange={(v) => setFrequency(v as RecurringFrequency)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="daily">Diária</SelectItem>
-                  <SelectItem value="weekly">Semanal</SelectItem>
-                  <SelectItem value="monthly">Mensal</SelectItem>
-                  <SelectItem value="yearly">Anual</SelectItem>
+                  <SelectItem value="daily">{t("freq.daily")}</SelectItem>
+                  <SelectItem value="weekly">{t("freq.weekly")}</SelectItem>
+                  <SelectItem value="monthly">{t("freq.monthly")}</SelectItem>
+                  <SelectItem value="yearly">{t("freq.yearly")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Descrição</Label>
+            <Label>{t("recurring.description")}</Label>
             <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex.: Aluguel" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Valor</Label>
+              <Label>{t("recurring.amount")}</Label>
               <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Categoria</Label>
+              <Label>{t("recurring.category")}</Label>
               <Select value={categoryId || "none"} onValueChange={(v) => setCategoryId(v === "none" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Sem categoria" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("recurring.noCategory")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Sem categoria</SelectItem>
+                  <SelectItem value="none">{t("recurring.noCategory")}</SelectItem>
                   {filteredCats.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -285,29 +286,29 @@ function RecurringDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Início</Label>
+              <Label>{t("recurring.start")}</Label>
               <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Fim (opcional)</Label>
+              <Label>{t("recurring.end")}</Label>
               <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
           <div className="flex flex-wrap gap-4 pt-2">
             <label className="flex items-center gap-2 text-sm">
-              <Switch checked={essential} onCheckedChange={setEssential} /> Essencial
+              <Switch checked={essential} onCheckedChange={setEssential} /> {t("recurring.essential")}
             </label>
             <label className="flex items-center gap-2 text-sm">
-              <Switch checked={fixed} onCheckedChange={setFixed} /> Fixa
+              <Switch checked={fixed} onCheckedChange={setFixed} /> {t("recurring.fixed")}
             </label>
             <label className="flex items-center gap-2 text-sm">
-              <Switch checked={active} onCheckedChange={setActive} /> Ativa
+              <Switch checked={active} onCheckedChange={setActive} /> {t("recurring.active")}
             </label>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button onClick={submit}>Salvar</Button>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button onClick={submit}>{t("common.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
