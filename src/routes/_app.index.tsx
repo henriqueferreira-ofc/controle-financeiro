@@ -90,15 +90,15 @@ function DashboardPage() {
   const data = dashboardData(transactions, categories, filters);
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+    <div className="mx-auto w-full max-w-7xl space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-6 md:px-8 md:py-8">
+      <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Dashboard</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Acompanhe entradas, despesas e tendências do seu período.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <PeriodButtons
             value={filters.period}
             onChange={(v) => setFilters((f) => ({ ...f, period: v }))}
@@ -107,7 +107,7 @@ function DashboardPage() {
             value={filters.categoryId}
             onValueChange={(v) => setFilters((f) => ({ ...f, categoryId: v }))}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
