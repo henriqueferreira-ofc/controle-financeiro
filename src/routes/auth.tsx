@@ -6,9 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { AxispayLogo } from "@/components/AxispayLogo";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -95,14 +96,18 @@ function AuthPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+    <div className="relative flex min-h-screen items-center justify-center bg-background px-4 py-10">
+      <div className="absolute right-3 top-3">
+        <LanguageSwitcher />
+      </div>
       <div className="w-full max-w-md">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[var(--shadow-glow)]">
-            <Wallet className="h-6 w-6" />
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight">FinWise</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Controle financeiro simples e seguro</p>
+          <AxispayLogo size={64} showWordmark={false} className="mb-3" />
+          <h1 className="text-3xl font-bold tracking-tight">
+            <span className="bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">Axis</span>
+            <span className="text-foreground">Pay</span>
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">Smart financial control</p>
         </div>
 
         <Card className="border-border/60 shadow-[var(--shadow-card)]">
