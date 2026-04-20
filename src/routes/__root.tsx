@@ -32,13 +32,13 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "AxisPay — Smart financial control" },
+      { title: "AxisPay — Financial Axis" },
       { name: "description", content: "AxisPay: track income, expenses, budgets and goals with smart insights." },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", type: "image/png", href: "/axispay-icon.png" },
-      { rel: "apple-touch-icon", href: "/axispay-icon.png" },
+      { rel: "icon", type: "image/png", href: "/logo.png" },
+      { rel: "apple-touch-icon", href: "/logo.png" },
     ],
   }),
   shellComponent: RootShell,
