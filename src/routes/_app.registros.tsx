@@ -85,22 +85,27 @@ function RegistrosPage() {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 md:px-8 md:py-8">
+      <div className="mx-auto w-full max-w-7xl space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-6 md:px-8 md:py-8">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Meus Registros</h1>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Meus Registros</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Gerencie todas as suas entradas e despesas. <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs">/</kbd> para buscar, <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs">n</kbd> para novo.
+              Gerencie todas as suas entradas e despesas.
+              <span className="hidden sm:inline">
+                {" "}
+                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs">/</kbd> para buscar,{" "}
+                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs">n</kbd> para novo.
+              </span>
             </p>
           </div>
-          <Button onClick={() => setCreateOpen(true)} className="shrink-0">
+          <Button onClick={() => setCreateOpen(true)} className="w-full shrink-0 md:w-auto">
             <Plus className="mr-1 h-4 w-4" /> Novo Registro
           </Button>
         </div>
 
         <Card className="border-border/60 shadow-[var(--shadow-card)]">
-          <CardContent className="p-4">
-            <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
+          <CardContent className="p-3 sm:p-4">
+            <div className="grid gap-2 sm:gap-3 md:grid-cols-[1fr_auto_auto]">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -112,7 +117,7 @@ function RegistrosPage() {
                 />
               </div>
               <Select value={filters.type} onValueChange={(v) => setFilters((f) => ({ ...f, type: v as typeof f.type }))}>
-                <SelectTrigger className="md:w-[180px]">
+                <SelectTrigger className="w-full md:w-[180px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -122,7 +127,7 @@ function RegistrosPage() {
                 </SelectContent>
               </Select>
               <Select value={filters.categoryId} onValueChange={(v) => setFilters((f) => ({ ...f, categoryId: v }))}>
-                <SelectTrigger className="md:w-[200px]">
+                <SelectTrigger className="w-full md:w-[200px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -139,7 +144,7 @@ function RegistrosPage() {
         <Card className="border-border/60 shadow-[var(--shadow-card)]">
           <CardContent className="p-0">
             {filtered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 px-4 py-16 text-center">
+              <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center sm:py-16">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
                   <Inbox className="h-6 w-6" />
                 </div>
@@ -159,13 +164,68 @@ function RegistrosPage() {
               </div>
             ) : (
               <>
-                <div className="overflow-x-auto">
+                {/* MOBILE: card list */}
+                <ul className="divide-y divide-border/60 md:hidden">
+                  {paginated.map((t) => (
+                    <li key={t.id} className="flex items-start gap-3 px-3 py-3 sm:px-4">
+                      <div
+                        className={`mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                          t.type === "entrada"
+                            ? "bg-success/15 text-success"
+                            : "bg-destructive/15 text-destructive"
+                        }`}
+                      >
+                        {t.type === "entrada" ? (
+                          <ArrowUpRight className="h-4 w-4" />
+                        ) : (
+                          <ArrowDownRight className="h-4 w-4" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="truncate text-sm font-medium">{t.description}</p>
+                          <span
+                            className={`shrink-0 text-sm font-semibold tabular-nums ${
+                              t.type === "entrada" ? "text-success" : "text-foreground"
+                            }`}
+                          >
+                            {t.type === "despesa" ? "-" : "+"} {brl(t.amount)}
+                          </span>
+                        </div>
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                          <span>{formatDateBR(t.date)}</span>
+                          <span aria-hidden>•</span>
+                          <span className="truncate">{getCategoryName(t.categoryId)}</span>
+                        </div>
+                        <div className="mt-2 flex gap-1">
+                          <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => setViewing(t)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => setEditing(t)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 px-2"
+                            onClick={() => setConfirmDelete(t)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* DESKTOP / TABLET: table */}
+                <div className="hidden overflow-x-auto md:block">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Data</TableHead>
                         <TableHead>Descrição</TableHead>
-                        <TableHead className="hidden md:table-cell">Categoria</TableHead>
+                        <TableHead className="hidden lg:table-cell">Categoria</TableHead>
                         <TableHead>Tipo</TableHead>
                         <TableHead className="text-right">Valor</TableHead>
                         <TableHead className="w-[140px] text-right">Ações</TableHead>
@@ -178,7 +238,7 @@ function RegistrosPage() {
                             {formatDateBR(t.date)}
                           </TableCell>
                           <TableCell className="font-medium">{t.description}</TableCell>
-                          <TableCell className="hidden text-sm text-muted-foreground md:table-cell">
+                          <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">
                             {getCategoryName(t.categoryId)}
                           </TableCell>
                           <TableCell>
@@ -229,7 +289,7 @@ function RegistrosPage() {
                   </Table>
                 </div>
                 {filtered.length > 50 && (
-                  <div className="flex items-center justify-between border-t border-border/60 px-4 py-3 text-sm">
+                  <div className="flex items-center justify-between border-t border-border/60 px-3 py-3 text-sm sm:px-4">
                     <span className="text-muted-foreground">
                       Página {page} de {totalPages}
                     </span>
@@ -247,6 +307,16 @@ function RegistrosPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Mobile floating action button */}
+        <Button
+          onClick={() => setCreateOpen(true)}
+          size="icon"
+          aria-label="Novo registro"
+          className="fixed bottom-5 right-5 z-40 h-14 w-14 rounded-full shadow-lg md:hidden"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
       </div>
 
       {/* Create */}

@@ -37,14 +37,14 @@ function AppLayout() {
         <div className="min-h-screen flex w-full bg-background">
           <AppSidebar />
           <div className="flex-1 flex flex-col">
-            <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-border/60 bg-background/80 px-4 backdrop-blur">
+            <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-border/60 bg-background/80 px-3 backdrop-blur sm:px-4">
               <SidebarTrigger />
-              <div className="flex items-center gap-3">
-                <span className="hidden text-sm text-muted-foreground sm:inline">
+              <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+                <span className="hidden max-w-[200px] truncate text-sm text-muted-foreground sm:inline lg:max-w-none">
                   {user.email}
                 </span>
                 <Button size="sm" variant="ghost" onClick={() => signOut()}>
-                  <LogOut className="mr-1 h-4 w-4" /> Sair
+                  <LogOut className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Sair</span>
                 </Button>
               </div>
             </header>

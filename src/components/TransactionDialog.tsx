@@ -88,7 +88,7 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="max-h-[90vh] w-[calc(100vw-1.5rem)] max-w-[480px] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{mode === "edit" ? "Editar registro" : "Novo registro"}</DialogTitle>
           <DialogDescription>
@@ -154,7 +154,7 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3 rounded-lg border border-border/60 bg-muted/30 p-3">
+          <div className="grid grid-cols-1 gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 sm:grid-cols-2">
             <div className="flex items-center justify-between gap-2">
               <div>
                 <Label htmlFor="essential" className="cursor-pointer">Essencial</Label>
@@ -171,11 +171,11 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row">
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button type="submit">{mode === "edit" ? "Salvar alterações" : "Adicionar"}</Button>
+            <Button type="submit" className="w-full sm:w-auto">{mode === "edit" ? "Salvar alterações" : "Adicionar"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
