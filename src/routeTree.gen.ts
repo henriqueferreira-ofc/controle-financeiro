@@ -13,6 +13,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppRelatoriosRouteImport } from './routes/_app.relatorios'
 import { Route as AppRegistrosRouteImport } from './routes/_app.registros'
 import { Route as AppRecorrentesRouteImport } from './routes/_app.recorrentes'
 import { Route as AppPerfilRouteImport } from './routes/_app.perfil'
@@ -38,6 +39,11 @@ const AppRoute = AppRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRelatoriosRoute = AppRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
   getParentRoute: () => AppRoute,
 } as any)
 const AppRegistrosRoute = AppRegistrosRouteImport.update({
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/perfil': typeof AppPerfilRoute
   '/recorrentes': typeof AppRecorrentesRoute
   '/registros': typeof AppRegistrosRoute
+  '/relatorios': typeof AppRelatoriosRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/perfil': typeof AppPerfilRoute
   '/recorrentes': typeof AppRecorrentesRoute
   '/registros': typeof AppRegistrosRoute
+  '/relatorios': typeof AppRelatoriosRoute
   '/': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/_app/perfil': typeof AppPerfilRoute
   '/_app/recorrentes': typeof AppRecorrentesRoute
   '/_app/registros': typeof AppRegistrosRoute
+  '/_app/relatorios': typeof AppRelatoriosRoute
   '/_app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/recorrentes'
     | '/registros'
+    | '/relatorios'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/recorrentes'
     | '/registros'
+    | '/relatorios'
     | '/'
   id:
     | '__root__'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/_app/perfil'
     | '/_app/recorrentes'
     | '/_app/registros'
+    | '/_app/relatorios'
     | '/_app/'
   fileRoutesById: FileRoutesById
 }
@@ -188,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/relatorios': {
+      id: '/_app/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof AppRelatoriosRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/registros': {
@@ -250,6 +269,7 @@ interface AppRouteChildren {
   AppPerfilRoute: typeof AppPerfilRoute
   AppRecorrentesRoute: typeof AppRecorrentesRoute
   AppRegistrosRoute: typeof AppRegistrosRoute
+  AppRelatoriosRoute: typeof AppRelatoriosRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
@@ -261,6 +281,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPerfilRoute: AppPerfilRoute,
   AppRecorrentesRoute: AppRecorrentesRoute,
   AppRegistrosRoute: AppRegistrosRoute,
+  AppRelatoriosRoute: AppRelatoriosRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
