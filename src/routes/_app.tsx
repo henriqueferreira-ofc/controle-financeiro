@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useI18n } from "@/i18n/I18nProvider";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
@@ -33,6 +34,9 @@ function AppLayout() {
     );
   }
 
+  const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0];
+  const avatarUrl = user.user_metadata?.avatar_url;
+  const initials = (name || "U").slice(0, 2).toUpperCase();
 
   return (
     <FinwiseProvider>
@@ -41,27 +45,22 @@ function AppLayout() {
           <AppSidebar />
           <div className="flex-1 flex flex-col">
             <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-border/60 bg-background/80 px-3 backdrop-blur sm:px-4">
-              <SidebarTrigger />
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-// ... dentro do componente AppLayout ...
-  const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0];
-  const avatarUrl = user.user_metadata?.avatar_url;
-  const initials = (name || "U").slice(0, 2).toUpperCase();
-
-// ... dentro do header ...
+              <div className="flex items-center gap-2">
+                <SidebarTrigger />
+              </div>
+              
               <div className="flex min-w-0 items-center gap-2 sm:gap-4">
-                <div className="flex items-center gap-2 mr-2">
+                <div className="flex items-center gap-2 mr-1 sm:mr-2">
                   <Avatar className="h-8 w-8 border border-border/50">
-                    <AvatarImage src={avatarUrl} />
-                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{initials}</AvatarFallback>
+                    <AvatarImage src={avatarUrl} className="object-cover" />
+                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-bold">{initials}</AvatarFallback>
                   </Avatar>
                   <span className="hidden max-w-[150px] truncate text-sm font-medium sm:inline">
-                    Olá, {name}
+                    {name}
                   </span>
                 </div>
                 <LanguageSwitcher compact />
-                <Button size="sm" variant="ghost" className="h-9 px-2 sm:px-3" onClick={() => signOut()}>
+                <Button size="sm" variant="ghost" className="h-9 px-2 sm:px-3 text-muted-foreground hover:text-destructive" onClick={() => signOut()}>
                   <LogOut className="h-4 w-4 sm:mr-2" /> 
                   <span className="hidden sm:inline">{t("common.signout")}</span>
                 </Button>
