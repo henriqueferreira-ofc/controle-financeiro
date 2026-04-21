@@ -24,12 +24,10 @@ export const Route = createFileRoute("/_app/relatorios")({
 function RelatoriosPage() {
   const { transactions, categories } = useFinwise();
   
-  // Estado para Mês e Ano
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth().toString());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear().toString());
 
-  // Anos disponíveis nos registros
   const years = useMemo(() => {
     const y = new Set<string>();
     y.add(now.getFullYear().toString());
@@ -38,21 +36,14 @@ function RelatoriosPage() {
   }, [transactions, now]);
 
   const months = [
-    { value: "0", label: "Janeiro" },
-    { value: "1", label: "Fevereiro" },
-    { value: "2", label: "Março" },
-    { value: "3", label: "Abril" },
-    { value: "4", label: "Maio" },
-    { value: "5", label: "Junho" },
-    { value: "6", label: "Julho" },
-    { value: "7", label: "Agosto" },
-    { value: "8", label: "Setembro" },
-    { value: "9", label: "Outubro" },
-    { value: "10", label: "Novembro" },
-    { value: "11", label: "Dezembro" },
+    { value: "0", label: "Janeiro" }, { value: "1", label: "Fevereiro" },
+    { value: "2", label: "Março" }, { value: "3", label: "Abril" },
+    { value: "4", label: "Maio" }, { value: "5", label: "Junho" },
+    { value: "6", label: "Julho" }, { value: "7", label: "Agosto" },
+    { value: "8", label: "Setembro" }, { value: "9", label: "Outubro" },
+    { value: "10", label: "Novembro" }, { value: "11", label: "Dezembro" },
   ];
 
-  // Filtragem dos dados
   const filteredData = useMemo(() => {
     const m = parseInt(selectedMonth);
     const y = parseInt(selectedYear);
@@ -77,10 +68,10 @@ function RelatoriosPage() {
   }, [transactions, selectedMonth, selectedYear]);
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div className="mx-auto w-full max-w-7xl space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-6 md:px-8 md:py-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Relatórios</h1>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Relatórios</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Análise detalhada de movimentações mensais.
           </p>
@@ -88,8 +79,8 @@ function RelatoriosPage() {
         
         <div className="flex items-center gap-2">
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Mês" />
+            <SelectTrigger className="w-full sm:w-[140px]">
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {months.map(m => (
@@ -99,8 +90,8 @@ function RelatoriosPage() {
           </Select>
 
           <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-[100px]">
-              <SelectValue placeholder="Ano" />
+            <SelectTrigger className="w-full sm:w-[100px]">
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {years.map(y => (
@@ -111,8 +102,7 @@ function RelatoriosPage() {
         </div>
       </div>
 
-      {/* Resumo do Mês */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3">
         <KpiCard
           label="Saldo do Mês"
           value={brl(filteredData.balance)}
@@ -134,61 +124,103 @@ function RelatoriosPage() {
       </div>
 
       <Card className="border-border/60 shadow-[var(--shadow-card)]">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-primary" />
-            Movimentações de {months[parseInt(selectedMonth)].label}
+        <CardHeader className="flex flex-row items-center justify-between px-4 pb-2 pt-4 sm:px-6">
+          <CardTitle className="text-base flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-primary" />
+            <span className="hidden sm:inline">Movimentações de</span> {months[parseInt(selectedMonth)].label}
           </CardTitle>
-          <Badge variant="outline" className="font-normal">
+          <Badge variant="outline" className="font-normal text-[10px] sm:text-xs">
             {filteredData.transactions.length} registros
           </Badge>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredData.transactions.length === 0 ? (
+        <CardContent className="p-0 sm:p-6">
+          {/* MOBILE VIEW */}
+          <div className="divide-y divide-border/40 sm:hidden">
+            {filteredData.transactions.length === 0 ? (
+              <div className="py-12 text-center text-sm text-muted-foreground px-4">
+                Nenhuma movimentação encontrada.
+              </div>
+            ) : (
+              filteredData.transactions.map((t) => {
+                const cat = categories.find(c => c.id === t.categoryId);
+                const isIncome = t.type === 'entrada';
+                return (
+                  <div key={t.id} className="flex items-center justify-between p-4 bg-card/30">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                        isIncome ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+                      }`}>
+                        {isIncome ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{t.description}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] text-muted-foreground">
+                            {format(new Date(t.date), "dd/MM/yy")}
+                          </span>
+                          <span className="text-xs font-medium" style={{ color: cat?.color }}>
+                            {cat?.name || "Sem cat."}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className={`text-sm font-bold tabular-nums ${isIncome ? 'text-success' : 'text-destructive'}`}>
+                      {isIncome ? '+' : '-'} {brl(Math.abs(t.amount))}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* DESKTOP VIEW */}
+          <div className="hidden sm:block">
+            <div className="rounded-md border overflow-hidden">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                      Nenhuma movimentação encontrada neste mês.
-                    </TableCell>
+                    <TableHead className="w-24 px-4">Data</TableHead>
+                    <TableHead className="px-4">Descrição</TableHead>
+                    <TableHead className="px-4">Categoria</TableHead>
+                    <TableHead className="text-right px-4">Valor</TableHead>
                   </TableRow>
-                ) : (
-                  filteredData.transactions.map((t) => {
-                    const cat = categories.find(c => c.id === t.categoryId);
-                    const isIncome = t.type === 'entrada';
-                    return (
-                      <TableRow key={t.id}>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {format(new Date(t.date), "dd/MM/yy", { locale: ptBR })}
-                        </TableCell>
-                        <TableCell className="font-medium">{t.description}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="font-normal" style={{ 
-                            backgroundColor: cat?.color + '20', 
-                            color: cat?.color,
-                            borderColor: cat?.color + '40'
-                          }}>
-                            {cat?.name || "Sem categoria"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className={`text-right font-semibold ${isIncome ? 'text-green-500' : 'text-red-500'}`}>
-                          {isIncome ? '+' : '-'} {brl(Math.abs(t.amount))}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredData.transactions.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                        Nenhuma movimentação encontrada.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredData.transactions.map((t) => {
+                      const cat = categories.find(c => c.id === t.categoryId);
+                      const isIncome = t.type === 'entrada';
+                      return (
+                        <TableRow key={t.id} className="hover:bg-muted/30">
+                          <TableCell className="text-xs text-muted-foreground px-4">
+                            {format(new Date(t.date), "dd/MM/yy", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell className="font-medium px-4">{t.description}</TableCell>
+                          <TableCell className="px-4">
+                            <Badge variant="secondary" className="font-normal h-5" style={{ 
+                              backgroundColor: cat?.color + '20', 
+                              color: cat?.color,
+                              borderColor: cat?.color + '40'
+                            }}>
+                              {cat?.name || "Sem categoria"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className={`text-right font-semibold tabular-nums px-4 ${isIncome ? 'text-green-500' : 'text-red-400'}`}>
+                            {isIncome ? '+' : '-'} {brl(Math.abs(t.amount))}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </CardContent>
       </Card>

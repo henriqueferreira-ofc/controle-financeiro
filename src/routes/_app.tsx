@@ -42,13 +42,28 @@ function AppLayout() {
           <div className="flex-1 flex flex-col">
             <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-border/60 bg-background/80 px-3 backdrop-blur sm:px-4">
               <SidebarTrigger />
-              <div className="flex min-w-0 items-center gap-1 sm:gap-3">
-                <span className="hidden max-w-[200px] truncate text-sm text-muted-foreground sm:inline lg:max-w-none">
-                  {user.email}
-                </span>
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+// ... dentro do componente AppLayout ...
+  const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0];
+  const avatarUrl = user.user_metadata?.avatar_url;
+  const initials = (name || "U").slice(0, 2).toUpperCase();
+
+// ... dentro do header ...
+              <div className="flex min-w-0 items-center gap-2 sm:gap-4">
+                <div className="flex items-center gap-2 mr-2">
+                  <Avatar className="h-8 w-8 border border-border/50">
+                    <AvatarImage src={avatarUrl} />
+                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{initials}</AvatarFallback>
+                  </Avatar>
+                  <span className="hidden max-w-[150px] truncate text-sm font-medium sm:inline">
+                    Olá, {name}
+                  </span>
+                </div>
                 <LanguageSwitcher compact />
-                <Button size="sm" variant="ghost" onClick={() => signOut()}>
-                  <LogOut className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">{t("common.signout")}</span>
+                <Button size="sm" variant="ghost" className="h-9 px-2 sm:px-3" onClick={() => signOut()}>
+                  <LogOut className="h-4 w-4 sm:mr-2" /> 
+                  <span className="hidden sm:inline">{t("common.signout")}</span>
                 </Button>
               </div>
             </header>
