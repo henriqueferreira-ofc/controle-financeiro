@@ -28,7 +28,7 @@ import {
 export const Route = createFileRoute("/_app/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — FinWise" },
+      { title: "AxisPay" },
       { name: "description", content: "Visão executiva das suas finanças com KPIs, gráficos e insights." },
     ],
   }),

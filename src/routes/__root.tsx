@@ -32,7 +32,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "AxisPay — Financial Axis" },
+      { title: "AxisPay" },
       { name: "description", content: "AxisPay: track income, expenses, budgets and goals with smart insights." },
     ],
     links: [

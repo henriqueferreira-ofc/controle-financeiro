@@ -19,7 +19,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_app/registros")({
   head: () => ({
     meta: [
-      { title: "Meus Registros — FinWise" },
+      { title: "AxisPay" },
       { name: "description", content: "Gestão completa de entradas e despesas." },
     ],
   }),

@@ -17,7 +17,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_app/categorias")({
   head: () => ({
     meta: [
-      { title: "Categorias — FinWise" },
+      { title: "AxisPay" },
       { name: "description", content: "Gerencie suas categorias personalizadas com cores e ícones." },
     ],
   }),

@@ -51,7 +51,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* FinWise — dark only */
+/* AxisPay — dark only */
 :root,
 .dark {
   --radius: 0.75rem;

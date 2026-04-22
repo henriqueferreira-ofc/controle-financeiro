@@ -14,7 +14,7 @@ import { ptBR } from "date-fns/locale";
 export const Route = createFileRoute("/_app/relatorios")({
   head: () => ({
     meta: [
-      { title: "Relatórios Mensais — AxisPay" },
+      { title: "AxisPay" },
       { name: "description", content: "Análise detalhada de entradas e saídas por mês." },
     ],
   }),

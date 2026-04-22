@@ -12,8 +12,8 @@ import { Wallet } from "lucide-react";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Redefinir senha — FinWise" },
-      { name: "description", content: "Defina uma nova senha para sua conta FinWise." },
+      { title: "Redefinir senha — AxisPay" },
+      { name: "description", content: "Defina uma nova senha para sua conta AxisPay." },
     ],
   }),
   component: ResetPasswordPage,
@@ -62,7 +62,7 @@ function ResetPasswordPage() {
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[var(--shadow-glow)]">
             <Wallet className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">FinWise</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">AxisPay</h1>
         </div>
         <Card className="border-border/60 shadow-[var(--shadow-card)]">
           <CardHeader>

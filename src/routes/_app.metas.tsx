@@ -17,7 +17,7 @@ import { brl, formatDateBR } from "@/lib/format";
 export const Route = createFileRoute("/_app/metas")({
   head: () => ({
     meta: [
-      { title: "Metas — FinWise" },
+      { title: "AxisPay" },
       { name: "description", content: "Crie metas financeiras e acompanhe o progresso até a data alvo." },
     ],
   }),

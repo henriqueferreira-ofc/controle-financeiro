@@ -17,8 +17,8 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "Entrar — FinWise" },
-      { name: "description", content: "Acesse sua conta FinWise para gerenciar suas finanças." },
+      { title: "AxisPay" },
+      { name: "description", content: "Acesse sua conta AxisPay para gerenciar suas finanças." },
     ],
   }),
   component: AuthPage,

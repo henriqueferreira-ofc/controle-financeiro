@@ -18,7 +18,7 @@ import { brl } from "@/lib/format";
 export const Route = createFileRoute("/_app/orcamentos")({
   head: () => ({
     meta: [
-      { title: "Orçamentos — FinWise" },
+      { title: "AxisPay" },
       { name: "description", content: "Defina limites mensais ou semanais por categoria e acompanhe o progresso." },
     ],
   }),

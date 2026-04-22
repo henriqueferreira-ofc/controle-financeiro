@@ -41,7 +41,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_app/inteligencia")({
   head: () => ({
     meta: [
-      { title: "Inteligência — FinWise" },
+      { title: "AxisPay" },
       {
         name: "description",
         content: "Score financeiro, detecção de anomalias, forecast e insights com IA.",
