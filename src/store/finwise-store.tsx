@@ -183,8 +183,8 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     }
     setLoading(true);
 
-    // Apply due recurring first
-    await supabase.rpc("apply_due_recurring_transactions", { _user_id: user.id });
+    // Interrompido para evitar duplicidades:
+    // await supabase.rpc("apply_due_recurring_transactions", { _user_id: user.id });
 
     const [txRes, catRes, budRes, goalRes, recRes] = await Promise.all([
       supabase.from("transactions").select("*").order("date", { ascending: false }),
