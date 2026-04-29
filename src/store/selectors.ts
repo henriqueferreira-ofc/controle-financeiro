@@ -54,10 +54,19 @@ export function dashboardData(transactions: Transaction[], categories: Category[
   const entradas = filtered.filter((t) => t.type === "entrada");
   const despesas = filtered.filter((t) => t.type === "despesa");
 
-  const totalEntradas = entradas.reduce((a, b) => a + b.amount, 0);
-  const totalSaidas = despesas.reduce((a, b) => a + b.amount, 0);
-  const saldo = totalEntradas - totalSaidas;
-  const gastoMedioDiario = days > 0 ? totalSaidas / days : 0;
+  const totalEntradas = Number(entradas.reduce((a, b) => a + b.amount, 0).toFixed(2));
+  const totalSaidas = Number(despesas.reduce((a, b) => a + b.amount, 0).toFixed(2));
+  
+  // Saldo do período selecionado
+  const periodSaldo = Number((totalEntradas - totalSaidas).toFixed(2));
+
+  // Saldo real total (considerando todas as transações, não apenas as filtradas)
+  const allEntradas = transactions.filter(t => t.type === "entrada").reduce((a, b) => a + b.amount, 0);
+  const allSaidas = transactions.filter(t => t.type === "despesa").reduce((a, b) => a + b.amount, 0);
+  const saldoTotal = Number((allEntradas - allSaidas).toFixed(2));
+
+  const saldo = filters.period === "all" ? saldoTotal : periodSaldo;
+  const gastoMedioDiario = days > 0 ? Number((totalSaidas / days).toFixed(2)) : 0;
 
   const byCategory = new Map<string, number>();
   for (const d of despesas) {

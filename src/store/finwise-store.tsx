@@ -15,7 +15,6 @@ type DBTransaction = {
   amount: number;
   payment_method: string | null;
   tags: string[];
-  recurring: boolean;
   essential: boolean;
   fixed: boolean;
   created_at: string;
@@ -148,6 +147,7 @@ type Ctx = {
   updateRecurring: (id: string, patch: Partial<Omit<Recurring, "id">>) => Promise<void>;
   deleteRecurring: (id: string) => Promise<void>;
   applyRecurringNow: () => Promise<number>;
+  deduplicateTransactions: () => Promise<number>;
   reseed: () => Promise<void>;
   exportJSON: () => void;
   importJSON: (file: File) => Promise<void>;
@@ -171,6 +171,71 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     type: "all",
   });
 
+  const applyRecurringsJS = React.useCallback(async (userId: string) => {
+    // 1. Fetch active recurring rules
+    const { data: recs, error: recError } = await supabase
+      .from("recurring_transactions")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("active", true);
+
+    if (recError || !recs) return 0;
+
+    let count = 0;
+    const now = new Date();
+    
+    // We want to ensure transactions exist for the current month AND the next month
+    const targetMonths = [
+      { y: now.getFullYear(), m: now.getMonth() }, // Current month
+      { y: now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear(), m: (now.getMonth() + 1) % 12 } // Next month
+    ];
+
+    for (const r of recs) {
+      for (const target of targetMonths) {
+        const monthStr = `${target.y}-${String(target.m + 1).padStart(2, "0")}`;
+        const uniqueTag = `rec_ref:${r.id}:${monthStr}`;
+        
+        // Check if a transaction with this unique tag already exists
+        const { data: exists, error: checkError } = await supabase
+          .from("transactions")
+          .select("id")
+          .eq("user_id", userId)
+          .contains("tags", [uniqueTag])
+          .limit(1);
+
+        if (checkError) continue;
+
+        if (!exists || exists.length === 0) {
+          // Determine the specific date for this month (try to match the day of start_date)
+          const startDay = new Date(r.start_date).getDate();
+          const lastDayOfMonth = new Date(target.y, target.m + 1, 0).getDate();
+          const targetDay = Math.min(startDay, lastDayOfMonth);
+          const targetDateStr = `${target.y}-${String(target.m + 1).padStart(2, "0")}-${String(targetDay).padStart(2, "0")}`;
+
+          // Only generate if the target date is >= start_date
+          if (targetDateStr < r.start_date) continue;
+
+          const { error: insError } = await supabase
+            .from("transactions")
+            .insert({
+              user_id: userId,
+              type: r.type,
+              date: targetDateStr,
+              description: r.description,
+              category: r.category,
+              amount: r.amount,
+              essential: r.essential,
+              fixed: r.fixed,
+              tags: [uniqueTag, "recorrente"],
+            });
+          
+          if (!insError) count++;
+        }
+      }
+    }
+    return count;
+  }, []);
+
   const refresh = React.useCallback(async () => {
     if (!user) {
       setTransactions([]);
@@ -183,8 +248,8 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     }
     setLoading(true);
 
-    // Interrompido para evitar duplicidades:
-    // await supabase.rpc("apply_due_recurring_transactions", { _user_id: user.id });
+    // Apply recurring logic strictly for current/next month
+    await applyRecurringsJS(user.id);
 
     const [txRes, catRes, budRes, goalRes, recRes] = await Promise.all([
       supabase.from("transactions").select("*").order("date", { ascending: false }),
@@ -210,7 +275,7 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     else setRecurrings((recRes.data as unknown as DBRecurring[]).map(toClientRecurring));
 
     setLoading(false);
-  }, [user]);
+  }, [user, applyRecurringsJS]);
 
   React.useEffect(() => {
     refresh();
@@ -526,19 +591,66 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
 
   const applyRecurringNow = React.useCallback(async () => {
     if (!user) return 0;
-    const { data, error } = await supabase.rpc("apply_due_recurring_transactions", { _user_id: user.id });
-    if (error) {
-      toast.error("Erro ao aplicar recorrências: " + error.message);
-      return 0;
-    }
-    const n = (data as unknown as number) ?? 0;
+    const n = await applyRecurringsJS(user.id);
     if (n > 0) {
       toast.success(`${n} transação(ões) recorrente(s) aplicada(s).`);
       await refresh();
     } else {
-      toast.info("Nenhuma recorrência pendente.");
+      toast.info("Nenhuma recorrência pendente para o período atual/próximo.");
     }
     return n;
+  }, [user, applyRecurringsJS, refresh]);
+
+  const deduplicateTransactions = React.useCallback(async () => {
+    if (!user) return 0;
+    setLoading(true);
+    
+    // 1. Buscar transações de Janeiro a Abril
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("id, date, description, amount, type")
+      .eq("user_id", user.id)
+      .gte("date", "2026-01-01")
+      .lte("date", "2026-04-30");
+
+    if (error || !data) {
+      setLoading(false);
+      return 0;
+    }
+
+    const seen = new Map<string, string>(); // key -> id to keep
+    const toDelete: string[] = [];
+
+    for (const tx of data) {
+      // Chave única para identificar duplicatas exatas
+      const key = `${tx.date}|${tx.description.toLowerCase().trim()}|${Number(tx.amount).toFixed(2)}|${tx.type}`;
+      
+      if (seen.has(key)) {
+        toDelete.push(tx.id);
+      } else {
+        seen.set(key, tx.id);
+      }
+    }
+
+    if (toDelete.length > 0) {
+      // Supabase delete supports .in()
+      const { error: delError } = await supabase
+        .from("transactions")
+        .delete()
+        .in("id", toDelete);
+
+      if (delError) {
+        toast.error("Erro ao remover duplicados: " + delError.message);
+      } else {
+        toast.success(`${toDelete.length} registros duplicados removidos com sucesso.`);
+        await refresh();
+      }
+    } else {
+      toast.info("Nenhuma duplicata encontrada no período de Janeiro a Abril.");
+    }
+
+    setLoading(false);
+    return toDelete.length;
   }, [user, refresh]);
 
   const reseed = React.useCallback(async () => {
@@ -641,6 +753,7 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     updateRecurring,
     deleteRecurring,
     applyRecurringNow,
+    deduplicateTransactions,
     reseed,
     exportJSON,
     importJSON,

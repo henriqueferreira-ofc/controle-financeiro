@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KpiCard } from "@/components/KpiCard";
 import { brl } from "@/lib/format";
-import { ArrowDownRight, ArrowUpRight, CalendarDays, Lightbulb, PiggyBank, Plus, Trophy, Wallet } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, CalendarDays, Lightbulb, PiggyBank, Plus, Trash2, Trophy, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -77,7 +77,7 @@ function ChartTooltip({ active, payload, label }: any) {
 }
 
 function DashboardPage() {
-  const { transactions, categories, filters, setFilters, loading: dataLoading } = useFinwise();
+  const { transactions, categories, filters, setFilters, loading: dataLoading, deduplicateTransactions } = useFinwise();
   const [transitionLoading, setTransitionLoading] = useState(false);
 
   useEffect(() => {
@@ -99,6 +99,15 @@ function DashboardPage() {
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => deduplicateTransactions()}
+            className="w-full sm:w-auto border-red-200 text-red-600 hover:bg-red-50"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Limpar Duplicados (Jan-Abr)
+          </Button>
           <PeriodButtons
             value={filters.period}
             onChange={(v) => setFilters((f) => ({ ...f, period: v }))}
