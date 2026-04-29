@@ -147,7 +147,6 @@ type Ctx = {
   updateRecurring: (id: string, patch: Partial<Omit<Recurring, "id">>) => Promise<void>;
   deleteRecurring: (id: string) => Promise<void>;
   applyRecurringNow: () => Promise<number>;
-  deduplicateTransactions: () => Promise<number>;
   reseed: () => Promise<void>;
   exportJSON: () => void;
   importJSON: (file: File) => Promise<void>;
@@ -601,58 +600,6 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     return n;
   }, [user, applyRecurringsJS, refresh]);
 
-  const deduplicateTransactions = React.useCallback(async () => {
-    if (!user) return 0;
-    setLoading(true);
-    
-    // 1. Buscar transações de Janeiro a Abril
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("id, date, description, amount, type")
-      .eq("user_id", user.id)
-      .gte("date", "2026-01-01")
-      .lte("date", "2026-04-30");
-
-    if (error || !data) {
-      setLoading(false);
-      return 0;
-    }
-
-    const seen = new Map<string, string>(); // key -> id to keep
-    const toDelete: string[] = [];
-
-    for (const tx of data) {
-      // Chave única para identificar duplicatas exatas
-      const key = `${tx.date}|${tx.description.toLowerCase().trim()}|${Number(tx.amount).toFixed(2)}|${tx.type}`;
-      
-      if (seen.has(key)) {
-        toDelete.push(tx.id);
-      } else {
-        seen.set(key, tx.id);
-      }
-    }
-
-    if (toDelete.length > 0) {
-      // Supabase delete supports .in()
-      const { error: delError } = await supabase
-        .from("transactions")
-        .delete()
-        .in("id", toDelete);
-
-      if (delError) {
-        toast.error("Erro ao remover duplicados: " + delError.message);
-      } else {
-        toast.success(`${toDelete.length} registros duplicados removidos com sucesso.`);
-        await refresh();
-      }
-    } else {
-      toast.info("Nenhuma duplicata encontrada no período de Janeiro a Abril.");
-    }
-
-    setLoading(false);
-    return toDelete.length;
-  }, [user, refresh]);
-
   const reseed = React.useCallback(async () => {
     if (!user) return;
     const byNameKind = new Map<string, string>();
@@ -753,7 +700,6 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     updateRecurring,
     deleteRecurring,
     applyRecurringNow,
-    deduplicateTransactions,
     reseed,
     exportJSON,
     importJSON,
