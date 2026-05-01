@@ -31,7 +31,7 @@ function RelatoriosPage() {
   const years = useMemo(() => {
     const y = new Set<string>();
     y.add(now.getFullYear().toString());
-    transactions.forEach(t => y.add(new Date(t.date).getFullYear().toString()));
+    transactions.forEach(t => y.add(new Date(t.date + "T12:00:00").getFullYear().toString()));
     return Array.from(y).sort((a, b) => b.localeCompare(a));
   }, [transactions, now]);
 
@@ -49,7 +49,7 @@ function RelatoriosPage() {
     const y = parseInt(selectedYear);
 
     const periodTransactions = transactions.filter(t => {
-      const d = new Date(t.date);
+      const d = new Date(t.date + "T12:00:00");
       return d.getMonth() === m && d.getFullYear() === y;
     });
 
@@ -156,7 +156,7 @@ function RelatoriosPage() {
                         <p className="text-sm font-medium truncate">{t.description}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[10px] text-muted-foreground">
-                            {format(new Date(t.date), "dd/MM/yy")}
+                            {format(new Date(t.date + "T12:00:00"), "dd/MM/yy")}
                           </span>
                           <span className="text-xs font-medium" style={{ color: cat?.color }}>
                             {cat?.name || "Sem cat."}
@@ -199,7 +199,7 @@ function RelatoriosPage() {
                       return (
                         <TableRow key={t.id} className="hover:bg-muted/30">
                           <TableCell className="text-xs text-muted-foreground px-4">
-                            {format(new Date(t.date), "dd/MM/yy", { locale: ptBR })}
+                            {format(new Date(t.date + "T12:00:00"), "dd/MM/yy", { locale: ptBR })}
                           </TableCell>
                           <TableCell className="font-medium px-4">{t.description}</TableCell>
                           <TableCell className="px-4">

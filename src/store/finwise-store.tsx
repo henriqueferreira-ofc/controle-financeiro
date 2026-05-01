@@ -171,55 +171,86 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
   });
 
   const applyRecurringsJS = React.useCallback(async (userId: string) => {
-    // 1. Fetch active recurring rules
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const lastDayOfMonth = new Date(y, m + 1, 0).getDate();
+    const firstDayOfMonthISO = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+    const lastDayOfMonthISO = `${y}-${String(m + 1).padStart(2, "0")}-${String(lastDayOfMonth).padStart(2, "0")}`;
+    const lastDayOfMonthDate = new Date(y, m + 1, 0, 23, 59, 59);
+
+    const ymd = (d: Date) => {
+      const yy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return `${yy}-${mm}-${dd}`;
+    };
+
+    // 1. Cleanup future recurring transactions (prevent projection into next months)
+    const { data: futureTxs } = await supabase
+      .from("transactions")
+      .select("id, tags")
+      .eq("user_id", userId)
+      .gt("date", lastDayOfMonthISO)
+      .contains("tags", ["recorrente"]);
+
+    const idsToDelete = futureTxs
+      ?.filter(tx => tx.tags?.some(tag => tag.startsWith("rec_ref:")))
+      .map(tx => tx.id);
+
+    if (idsToDelete && idsToDelete.length > 0) {
+      await supabase.from("transactions").delete().in("id", idsToDelete);
+    }
+
+    // 2. Fetch active recurring rules
     const { data: recs, error: recError } = await supabase
       .from("recurring_transactions")
       .select("*")
       .eq("user_id", userId)
       .eq("active", true);
 
-    if (recError || !recs) return 0;
+    if (recError || !recs || recs.length === 0) return 0;
 
-    let count = 0;
-    const now = new Date();
-    
-    // We want to ensure transactions exist for the current month AND the next month
-    const targetMonths = [
-      { y: now.getFullYear(), m: now.getMonth() }, // Current month
-      { y: now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear(), m: (now.getMonth() + 1) % 12 } // Next month
-    ];
+    // 3. Fetch ALL existing recurring tags for this user to avoid any duplicates
+    // We fetch tags that start with rec_ref: for the current month
+    const { data: existingTxs, error: txError } = await supabase
+      .from("transactions")
+      .select("tags")
+      .eq("user_id", userId)
+      .like("tags", `%rec_ref:%:${y}-${String(m + 1).padStart(2, "0")}-%`);
 
+    if (txError) return 0;
+
+    const existingTags = new Set<string>();
+    existingTxs?.forEach(tx => {
+      tx.tags?.forEach(tag => {
+        if (tag.startsWith("rec_ref:")) existingTags.add(tag);
+      });
+    });
+
+    const toInsert = [];
     for (const r of recs) {
-      for (const target of targetMonths) {
-        const monthStr = `${target.y}-${String(target.m + 1).padStart(2, "0")}`;
-        const uniqueTag = `rec_ref:${r.id}:${monthStr}`;
+      // Start from the start_date or the beginning of time
+      let current = new Date(r.start_date + "T12:00:00");
+      const endDate = r.end_date ? new Date(r.end_date + "T12:00:00") : null;
+
+      // Loop to find all occurrences that fall within the current month
+      // To keep it efficient, if start_date is way before current month, we could optimize,
+      // but for daily/weekly/monthly a simple loop is robust.
+      while (current <= lastDayOfMonthDate) {
+        if (endDate && current > endDate) break;
+
+        const dateStr = ymd(current);
         
-        // Check if a transaction with this unique tag already exists
-        const { data: exists, error: checkError } = await supabase
-          .from("transactions")
-          .select("id")
-          .eq("user_id", userId)
-          .contains("tags", [uniqueTag])
-          .limit(1);
-
-        if (checkError) continue;
-
-        if (!exists || exists.length === 0) {
-          // Determine the specific date for this month (try to match the day of start_date)
-          const startDay = new Date(r.start_date).getDate();
-          const lastDayOfMonth = new Date(target.y, target.m + 1, 0).getDate();
-          const targetDay = Math.min(startDay, lastDayOfMonth);
-          const targetDateStr = `${target.y}-${String(target.m + 1).padStart(2, "0")}-${String(targetDay).padStart(2, "0")}`;
-
-          // Only generate if the target date is >= start_date
-          if (targetDateStr < r.start_date) continue;
-
-          const { error: insError } = await supabase
-            .from("transactions")
-            .insert({
+        // Only process if this occurrence is within the current month
+        if (dateStr >= firstDayOfMonthISO && dateStr <= lastDayOfMonthISO) {
+          const uniqueTag = `rec_ref:${r.id}:${dateStr}`;
+          
+          if (!existingTags.has(uniqueTag)) {
+            toInsert.push({
               user_id: userId,
               type: r.type,
-              date: targetDateStr,
+              date: dateStr,
               description: r.description,
               category: r.category,
               amount: r.amount,
@@ -227,12 +258,25 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
               fixed: r.fixed,
               tags: [uniqueTag, "recorrente"],
             });
-          
-          if (!insError) count++;
+          }
         }
+
+        // Advance based on frequency
+        if (r.frequency === "daily") current.setDate(current.getDate() + 1);
+        else if (r.frequency === "weekly") current.setDate(current.getDate() + 7);
+        else if (r.frequency === "monthly") current.setMonth(current.getMonth() + 1);
+        else if (r.frequency === "yearly") current.setFullYear(current.getFullYear() + 1);
+        else break; // Should not happen
       }
     }
-    return count;
+
+    if (toInsert.length > 0) {
+      const { error: insError } = await supabase.from("transactions").insert(toInsert);
+      if (insError) return 0;
+      return toInsert.length;
+    }
+    
+    return 0;
   }, []);
 
   const refresh = React.useCallback(async () => {
