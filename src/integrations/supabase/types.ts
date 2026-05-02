@@ -167,6 +167,8 @@ export type Database = {
           frequency: string
           id: string
           next_run: string
+          paused_until: string | null
+          skip_dates: string[]
           start_date: string
           type: string
           updated_at: string
@@ -186,6 +188,8 @@ export type Database = {
           frequency: string
           id?: string
           next_run: string
+          paused_until?: string | null
+          skip_dates?: string[]
           start_date: string
           type: string
           updated_at?: string
@@ -205,6 +209,8 @@ export type Database = {
           frequency?: string
           id?: string
           next_run?: string
+          paused_until?: string | null
+          skip_dates?: string[]
           start_date?: string
           type?: string
           updated_at?: string
@@ -215,6 +221,7 @@ export type Database = {
       transactions: {
         Row: {
           amount: number
+          auto_generated: boolean
           category: string | null
           created_at: string
           date: string
@@ -224,12 +231,14 @@ export type Database = {
           id: string
           payment_method: string | null
           recurring: boolean
+          recurring_id: string | null
           tags: string[]
           type: string
           user_id: string
         }
         Insert: {
           amount: number
+          auto_generated?: boolean
           category?: string | null
           created_at?: string
           date: string
@@ -239,12 +248,14 @@ export type Database = {
           id?: string
           payment_method?: string | null
           recurring?: boolean
+          recurring_id?: string | null
           tags?: string[]
           type: string
           user_id: string
         }
         Update: {
           amount?: number
+          auto_generated?: boolean
           category?: string | null
           created_at?: string
           date?: string
@@ -254,6 +265,7 @@ export type Database = {
           id?: string
           payment_method?: string | null
           recurring?: boolean
+          recurring_id?: string | null
           tags?: string[]
           type?: string
           user_id?: string
