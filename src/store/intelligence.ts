@@ -24,7 +24,7 @@ export type ForecastPoint = { date: string; label: string; saldo: number; projet
 export type Forecast = {
   series: ForecastPoint[];
   projectedBalance: number;
-  daysAhead: number;
+  daysAhead: 30 | 60 | 90;
   avgDailyNet: number;
   message: string;
 };
