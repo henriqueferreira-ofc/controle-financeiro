@@ -1,5 +1,6 @@
 // Pure local intelligence calculations (Score, Anomalies, Forecast)
-import type { Transaction, Category, Budget, Goal } from "./types";
+// Fase 2 — Inteligência financeira refinada conforme roadmap
+import type { Transaction, Category, Budget, Goal, Recurring } from "./types";
 
 export type FinancialScore = {
   score: number; // 0-100
@@ -34,18 +35,21 @@ const ymd = (d: Date) => {
   return `${y}-${m}-${dd}`;
 };
 
-/* ---------------- SCORE 0–100 ----------------
-   Components:
-   - Saldo positivo (25)
-   - Controle de gastos (despesas/entradas) (25)
-   - Cumprimento de orçamentos (20)
-   - Consistência (registros nos últimos 30 dias) (15)
-   - Progresso em metas (15)
+/* ---------------- SCORE 0–100 (Fase 2 — refinado) ----------------
+   Pesos do roadmap:
+   - Taxa de poupança (saldo / entradas) — 30 pts
+   - Controle de gastos essenciais vs supérfluos — 20 pts
+   - Cumprimento de orçamentos — 20 pts
+   - Saúde de recorrências (sem atrasos / pausadas demais) — 10 pts
+   - Progresso em metas — 15 pts
+   - Ausência de anomalias graves — 5 pts
 */
 export function calculateScore(
   transactions: Transaction[],
   budgets: Budget[],
   goals: Goal[],
+  recurrings: Recurring[] = [],
+  anomalies: Anomaly[] = [],
 ): FinancialScore {
   const now = new Date();
   const start30 = new Date(now);
@@ -56,24 +60,34 @@ export function calculateScore(
   const entradas = last30.filter((t) => t.type === "entrada").reduce((a, b) => a + b.amount, 0);
   const despesas = last30.filter((t) => t.type === "despesa").reduce((a, b) => a + b.amount, 0);
 
-  // 1. Saldo (25)
-  const saldoNet = entradas - despesas;
-  const saldoComp = entradas > 0
-    ? Math.max(0, Math.min(25, (saldoNet / entradas) * 50 + 12.5))
-    : last30.length === 0 ? 12 : 0;
-
-  // 2. Controle de gastos (25)
-  let controleComp = 12;
+  // 1. Taxa de poupança (30) — saldo positivo / entradas
+  let poupancaComp = 0;
   if (entradas > 0) {
-    const ratio = despesas / entradas;
-    if (ratio <= 0.5) controleComp = 25;
-    else if (ratio <= 0.7) controleComp = 22;
-    else if (ratio <= 0.85) controleComp = 18;
-    else if (ratio <= 1) controleComp = 12;
-    else controleComp = Math.max(0, 12 - (ratio - 1) * 30);
+    const taxa = (entradas - despesas) / entradas;
+    if (taxa >= 0.3) poupancaComp = 30;
+    else if (taxa >= 0.2) poupancaComp = 25;
+    else if (taxa >= 0.1) poupancaComp = 18;
+    else if (taxa >= 0) poupancaComp = 10;
+    else poupancaComp = Math.max(0, 10 + taxa * 25);
+  } else if (last30.length === 0) {
+    poupancaComp = 12;
   }
 
-  // 3. Orçamentos (20) — % de orçamentos não excedidos
+  // 2. Controle essenciais vs supérfluos (20) — supérfluos < 30% das despesas é ideal
+  let controleComp = 10;
+  if (despesas > 0) {
+    const superfluos = last30
+      .filter((t) => t.type === "despesa" && !t.essential)
+      .reduce((a, b) => a + b.amount, 0);
+    const pct = superfluos / despesas;
+    if (pct <= 0.2) controleComp = 20;
+    else if (pct <= 0.3) controleComp = 17;
+    else if (pct <= 0.45) controleComp = 12;
+    else if (pct <= 0.6) controleComp = 7;
+    else controleComp = 3;
+  }
+
+  // 3. Orçamentos (20)
   let orcComp = 12;
   if (budgets.length > 0) {
     const monthStart = ymd(new Date(now.getFullYear(), now.getMonth(), 1));
@@ -87,12 +101,15 @@ export function calculateScore(
     orcComp = (okCount / budgets.length) * 20;
   }
 
-  // 4. Consistência (15) — registros distribuídos
-  const uniqueDays = new Set(last30.map((t) => t.date)).size;
-  const consComp = Math.min(15, (uniqueDays / 15) * 15);
+  // 4. Saúde de recorrências (10)
+  let recComp = 5;
+  if (recurrings.length > 0) {
+    const ativas = recurrings.filter((r) => r.active && !r.pausedUntil).length;
+    recComp = (ativas / recurrings.length) * 10;
+  }
 
   // 5. Metas (15)
-  let metasComp = 8;
+  let metasComp = 7;
   if (goals.length > 0) {
     const avgPct = goals.reduce(
       (acc, g) => acc + Math.min(1, g.currentAmount / Math.max(1, g.targetAmount)),
@@ -101,7 +118,11 @@ export function calculateScore(
     metasComp = avgPct * 15;
   }
 
-  const total = Math.round(saldoComp + controleComp + orcComp + consComp + metasComp);
+  // 6. Ausência de anomalias graves (5)
+  const altas = anomalies.filter((a) => a.severity === "alta").length;
+  const anomComp = Math.max(0, 5 - altas * 2);
+
+  const total = Math.round(poupancaComp + controleComp + orcComp + recComp + metasComp + anomComp);
   const score = Math.max(0, Math.min(100, total));
 
   let level: FinancialScore["level"] = "Crítico";
@@ -113,11 +134,12 @@ export function calculateScore(
     score,
     level,
     components: [
-      { label: "Saldo", value: Math.round(saldoComp), max: 25, description: "Sua renda menos despesas (30d)" },
-      { label: "Controle de gastos", value: Math.round(controleComp), max: 25, description: "% da renda que vai para despesas" },
+      { label: "Poupança", value: Math.round(poupancaComp), max: 30, description: "% da renda que sobra (30d)" },
+      { label: "Controle", value: Math.round(controleComp), max: 20, description: "Essenciais vs supérfluos" },
       { label: "Orçamentos", value: Math.round(orcComp), max: 20, description: "Limites respeitados no mês" },
-      { label: "Consistência", value: Math.round(consComp), max: 15, description: "Registros frequentes (30d)" },
-      { label: "Metas", value: Math.round(metasComp), max: 15, description: "Progresso médio das metas" },
+      { label: "Recorrências", value: Math.round(recComp), max: 10, description: "Ativas e em dia" },
+      { label: "Metas", value: Math.round(metasComp), max: 15, description: "Progresso médio" },
+      { label: "Estabilidade", value: anomComp, max: 5, description: "Sem gastos atípicos graves" },
     ],
   };
 }
