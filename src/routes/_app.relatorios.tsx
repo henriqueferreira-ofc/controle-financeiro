@@ -152,7 +152,7 @@ function RelatoriosPage() {
               </div>
             ) : (
               filteredData.transactions.map((t) => {
-                const cat = categories.find(c => c.id === t.categoryId);
+                const cat = t.categoryId ? catById.get(t.categoryId) : undefined;
                 const isIncome = t.type === 'entrada';
                 return (
                   <div key={t.id} className="flex items-center justify-between p-4 bg-card/30">
