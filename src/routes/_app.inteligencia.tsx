@@ -41,6 +41,7 @@ import {
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SimulationCard } from "@/components/SimulationCard";
 
 export const Route = createFileRoute("/_app/inteligencia")({
   head: () => ({
@@ -155,6 +156,9 @@ function IntelligencePage() {
 
       {/* Insights locais acionáveis (Fase 2.3) */}
       <LocalInsightsSection insights={localInsights} />
+
+      {/* Simulações "E se..." (Fase 3.2) */}
+      <SimulationCard />
 
       {/* Anomalies */}
       <AnomaliesSection anomalies={anomalies} />
