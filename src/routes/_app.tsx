@@ -9,6 +9,8 @@ import { LogOut } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NotificationsBell } from "@/components/NotificationsBell";
+import { useGoalCelebrations } from "@/hooks/use-goal-celebrations";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
