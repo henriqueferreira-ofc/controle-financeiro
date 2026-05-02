@@ -104,6 +104,8 @@ function NotificationsBellInner() {
   );
 }
 
+export const NotificationsBell = memo(NotificationsBellInner);
+
 const sevConfig = {
   critico: {
     icon: AlertTriangle,
