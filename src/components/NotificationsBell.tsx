@@ -17,7 +17,7 @@ import {
 import { useFinwise } from "@/store/finwise-store";
 import { buildForecast, buildInsights } from "@/store/intelligence";
 
-export function NotificationsBell() {
+function NotificationsBellInner() {
   const { transactions, categories, budgets, goals, recurrings, loading } = useFinwise();
 
   const insights = useMemo(() => {
