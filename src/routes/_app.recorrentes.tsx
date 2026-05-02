@@ -76,7 +76,7 @@ function RecurringPage() {
                 <CardContent className="p-3 sm:p-4">
                   {/* Top row: icon + description + amount */}
                   <div className="flex items-start gap-3">
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${isIncome ? "bg-green-500/15 text-green-600" : "bg-red-500/15 text-red-600"}`}>
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${isIncome ? "bg-success/15 text-green-600" : "bg-destructive/15 text-red-600"}`}>
                       {isIncome ? <ArrowUpCircle className="h-5 w-5" /> : <ArrowDownCircle className="h-5 w-5" />}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -178,7 +178,7 @@ function RecurringPage() {
                       <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditing(r); setOpen(true); }}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-600" onClick={() => setConfirmDel(r)}>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive/80" onClick={() => setConfirmDel(r)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
