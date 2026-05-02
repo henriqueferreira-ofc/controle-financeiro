@@ -154,13 +154,21 @@ function DashboardPage() {
             tone="success"
             delay={0.05}
           />
-          <KpiCard
-            label="Total Saídas"
-            value={brl(data.totalSaidas)}
-            icon={ArrowDownRight}
-            tone="destructive"
-            delay={0.1}
-          />
+          <div className="relative">
+            <KpiCard
+              label="Total Saídas"
+              value={brl(data.totalSaidas)}
+              icon={ArrowDownRight}
+              tone="destructive"
+              delay={0.1}
+            />
+            {/* Fase 1.2 — comparativo % vs média 3M */}
+            {expenseDelta !== null && (
+              <div className="absolute right-3 top-3">
+                <MonthDeltaBadge delta={expenseDelta} />
+              </div>
+            )}
+          </div>
           <KpiCard
             label="Gasto Médio Diário"
             value={brl(data.gastoMedioDiario)}
@@ -177,6 +185,19 @@ function DashboardPage() {
             tone="default"
             delay={0.2}
           />
+        </div>
+      )}
+
+      {/* Fase 1.2 + 1.1 — Projeção 7 dias + Próximas 4 semanas */}
+      {!loading && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <WeekProjectionCard
+            points={projection.points}
+            totalExpense={projection.totalExpense}
+            totalIncome={projection.totalIncome}
+            currentBalance={currentBalance}
+          />
+          <UpcomingRecurringsWidget recurrings={recurrings} categories={categories} weeks={4} />
         </div>
       )}
 
