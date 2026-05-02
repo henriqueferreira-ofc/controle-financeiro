@@ -64,6 +64,7 @@ type AIInsight = {
 
 function IntelligencePage() {
   const { transactions, categories, budgets, goals, recurrings, loading } = useFinwise();
+  const [horizon, setHorizon] = useState<30 | 60 | 90>(30);
 
   const anomalies = useMemo(
     () => detectAnomalies(transactions, categories),
@@ -73,7 +74,14 @@ function IntelligencePage() {
     () => calculateScore(transactions, budgets, goals, recurrings, anomalies),
     [transactions, budgets, goals, recurrings, anomalies],
   );
-  const forecast = useMemo(() => buildForecast(transactions, 30), [transactions]);
+  const forecast = useMemo(
+    () => buildForecast(transactions, horizon, recurrings),
+    [transactions, horizon, recurrings],
+  );
+  const localInsights = useMemo(
+    () => buildInsights(transactions, categories, budgets, goals, recurrings, forecast),
+    [transactions, categories, budgets, goals, recurrings, forecast],
+  );
 
   const [aiInsights, setAiInsights] = useState<AIInsight[] | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
