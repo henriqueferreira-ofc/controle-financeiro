@@ -11,7 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ArrowDownCircle, ArrowUpCircle, Calendar, Pencil, Play, Plus, Repeat, Trash2 } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Calendar, MoreVertical, Pause, Pencil, Play, PlayCircle, Plus, Repeat, SkipForward, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { nextOccurrences } from "@/store/recurring-engine";
 import { toast } from "sonner";
 import { brl, formatDateBR, todayISO } from "@/lib/format";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -34,7 +36,7 @@ const FREQ_KEY: Record<RecurringFrequency, string> = {
 };
 
 function RecurringPage() {
-  const { recurrings, categories, addRecurring, updateRecurring, deleteRecurring, applyRecurringNow } = useFinwise();
+  const { recurrings, categories, addRecurring, updateRecurring, deleteRecurring, applyRecurringNow, pauseRecurring, resumeRecurring, skipNext } = useFinwise();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Recurring | null>(null);
