@@ -1,6 +1,7 @@
-// Pure local intelligence calculations (Score, Anomalies, Forecast)
+// Pure local intelligence calculations (Score, Anomalies, Forecast, Insights)
 // Fase 2 — Inteligência financeira refinada conforme roadmap
 import type { Transaction, Category, Budget, Goal, Recurring } from "./types";
+import { occurrencesBetween } from "./recurring-engine";
 
 export type FinancialScore = {
   score: number; // 0-100
