@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useFinwise } from "@/store/finwise-store";
 import {
@@ -6,16 +6,20 @@ import {
   detectAnomalies,
   buildForecast,
   buildAISummary,
+  buildInsights,
+  type LocalInsight,
 } from "@/store/intelligence";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { brl, formatDateBR } from "@/lib/format";
 import { motion } from "framer-motion";
 import {
   AlertTriangle,
+  ArrowRight,
   Brain,
   CheckCircle2,
   Info,
