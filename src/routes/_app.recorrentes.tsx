@@ -98,6 +98,17 @@ function RecurringPage() {
                   <div className="mt-3 flex flex-wrap items-center gap-1.5">
                     <Badge variant="outline" className="text-[10px] sm:text-xs">{t(FREQ_KEY[r.frequency])}</Badge>
                     {!r.active && <Badge variant="secondary" className="text-[10px] sm:text-xs">{t("recurring.paused")}</Badge>}
+                    {/* Fase 1.1 — badge de pausa temporária */}
+                    {r.pausedUntil && (
+                      <Badge variant="secondary" className="gap-1 text-[10px] sm:text-xs">
+                        <Pause className="h-3 w-3" /> Pausada até {formatDateBR(r.pausedUntil)}
+                      </Badge>
+                    )}
+                    {(r.skipDates?.length ?? 0) > 0 && (
+                      <Badge variant="outline" className="text-[10px] sm:text-xs">
+                        {r.skipDates!.length} pulada{r.skipDates!.length > 1 ? "s" : ""}
+                      </Badge>
+                    )}
                     {cat && (
                       <Badge variant="outline" className="gap-1 text-[10px] sm:text-xs">
                         <span className="h-2 w-2 rounded-full" style={{ background: cat.color }} />
@@ -118,6 +129,52 @@ function RecurringPage() {
                       <span>{t("recurring.active")}</span>
                     </label>
                     <div className="flex items-center gap-1">
+                      {/* Fase 1.1 — menu Pausar / Retomar / Pular próxima */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          {r.pausedUntil ? (
+                            <DropdownMenuItem onClick={() => resumeRecurring(r.id)}>
+                              <PlayCircle className="mr-2 h-4 w-4" /> Retomar agora
+                            </DropdownMenuItem>
+                          ) : (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  const d = new Date();
+                                  d.setMonth(d.getMonth() + 1);
+                                  pauseRecurring(r.id, d.toISOString().slice(0, 10));
+                                }}
+                              >
+                                <Pause className="mr-2 h-4 w-4" /> Pausar por 1 mês
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  const d = new Date();
+                                  d.setMonth(d.getMonth() + 3);
+                                  pauseRecurring(r.id, d.toISOString().slice(0, 10));
+                                }}
+                              >
+                                <Pause className="mr-2 h-4 w-4" /> Pausar por 3 meses
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              const next = nextOccurrences(r, 1)[0];
+                              if (next) skipNext(r.id, next);
+                              else toast.info("Nenhuma próxima ocorrência para pular.");
+                            }}
+                          >
+                            <SkipForward className="mr-2 h-4 w-4" /> Pular próxima ocorrência
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditing(r); setOpen(true); }}>
                         <Pencil className="h-4 w-4" />
                       </Button>
