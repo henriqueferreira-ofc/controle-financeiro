@@ -2,7 +2,7 @@
 // Critérios cobertos:
 // - 3.1.1: Bell com badge contendo nº de itens críticos/atenção
 // - 3.1.2: Painel lateral (Sheet) com notificações priorizadas + CTA navegável
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { Bell, AlertTriangle, CheckCircle2, Info, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
