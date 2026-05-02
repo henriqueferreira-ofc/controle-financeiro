@@ -312,23 +312,44 @@ function ScoreRing({ value, color }: { value: number; color: string }) {
 }
 
 /* ---------------- FORECAST CARD ---------------- */
-function ForecastCard({ forecast }: { forecast: ReturnType<typeof buildForecast> }) {
+function ForecastCard({
+  forecast,
+  horizon,
+  setHorizon,
+}: {
+  forecast: ReturnType<typeof buildForecast>;
+  horizon: 30 | 60 | 90;
+  setHorizon: (h: 30 | 60 | 90) => void;
+}) {
   const isPositive = forecast.avgDailyNet >= 0;
   return (
     <Card className="border-border/60 shadow-[var(--shadow-card)] lg:col-span-2">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle className="flex items-center gap-2 text-base">
           {isPositive ? (
             <TrendingUp className="h-4 w-4 text-success" />
           ) : (
             <TrendingDown className="h-4 w-4 text-destructive" />
           )}
-          Previsão de saldo (30 dias)
+          Previsão de saldo ({horizon} dias)
         </CardTitle>
-        <Badge variant="outline" className="hidden sm:inline-flex">
-          {isPositive ? "+" : ""}
-          {brl(forecast.avgDailyNet)}/dia
-        </Badge>
+        <div className="flex items-center gap-2">
+          <ToggleGroup
+            type="single"
+            size="sm"
+            value={String(horizon)}
+            onValueChange={(v) => v && setHorizon(Number(v) as 30 | 60 | 90)}
+            className="border border-border/60 rounded-md"
+          >
+            <ToggleGroupItem value="30" className="h-7 px-2 text-xs">30d</ToggleGroupItem>
+            <ToggleGroupItem value="60" className="h-7 px-2 text-xs">60d</ToggleGroupItem>
+            <ToggleGroupItem value="90" className="h-7 px-2 text-xs">90d</ToggleGroupItem>
+          </ToggleGroup>
+          <Badge variant="outline" className="hidden sm:inline-flex">
+            {isPositive ? "+" : ""}
+            {brl(forecast.avgDailyNet)}/dia
+          </Badge>
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">{forecast.message}</p>
