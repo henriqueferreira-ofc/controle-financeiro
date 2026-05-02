@@ -80,7 +80,7 @@ function ChartTooltip({ active, payload, label }: any) {
 }
 
 function DashboardPage() {
-  const { transactions, categories, filters, setFilters, loading: dataLoading } = useFinwise();
+  const { transactions, categories, recurrings, filters, setFilters, loading: dataLoading } = useFinwise();
   const [transitionLoading, setTransitionLoading] = useState(false);
 
   useEffect(() => {
@@ -91,6 +91,11 @@ function DashboardPage() {
 
   const loading = transitionLoading || dataLoading;
   const data = dashboardData(transactions, categories, filters);
+
+  // Fase 1.2 — projeção 7 dias + comparativo + saldo atual
+  const projection = useMemo(() => projectNextDays(recurrings, 7), [recurrings]);
+  const currentBalance = useMemo(() => computeCurrentBalance(transactions), [transactions]);
+  const expenseDelta = useMemo(() => expenseVs3MonthAvg(transactions, { period: filters.period }), [transactions, filters.period]);
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-6 md:px-8 md:py-8">
