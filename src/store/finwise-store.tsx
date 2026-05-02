@@ -682,6 +682,7 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     toast.success("Ocorrência pulada.");
   }, [recurrings]);
 
+  const applyRecurringNow = React.useCallback(async () => {
     if (!user) return 0;
     const n = await applyRecurringsJS(user.id);
     if (n > 0) {
