@@ -59,15 +59,15 @@ type AIInsight = {
 };
 
 function IntelligencePage() {
-  const { transactions, categories, budgets, goals, loading } = useFinwise();
+  const { transactions, categories, budgets, goals, recurrings, loading } = useFinwise();
 
-  const score = useMemo(
-    () => calculateScore(transactions, budgets, goals),
-    [transactions, budgets, goals],
-  );
   const anomalies = useMemo(
     () => detectAnomalies(transactions, categories),
     [transactions, categories],
+  );
+  const score = useMemo(
+    () => calculateScore(transactions, budgets, goals, recurrings, anomalies),
+    [transactions, budgets, goals, recurrings, anomalies],
   );
   const forecast = useMemo(() => buildForecast(transactions, 30), [transactions]);
 
