@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useFinwise } from "@/store/finwise-store";
 import {
@@ -6,16 +6,20 @@ import {
   detectAnomalies,
   buildForecast,
   buildAISummary,
+  buildInsights,
+  type LocalInsight,
 } from "@/store/intelligence";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { brl, formatDateBR } from "@/lib/format";
 import { motion } from "framer-motion";
 import {
   AlertTriangle,
+  ArrowRight,
   Brain,
   CheckCircle2,
   Info,
@@ -60,6 +64,7 @@ type AIInsight = {
 
 function IntelligencePage() {
   const { transactions, categories, budgets, goals, recurrings, loading } = useFinwise();
+  const [horizon, setHorizon] = useState<30 | 60 | 90>(30);
 
   const anomalies = useMemo(
     () => detectAnomalies(transactions, categories),
@@ -69,7 +74,14 @@ function IntelligencePage() {
     () => calculateScore(transactions, budgets, goals, recurrings, anomalies),
     [transactions, budgets, goals, recurrings, anomalies],
   );
-  const forecast = useMemo(() => buildForecast(transactions, 30), [transactions]);
+  const forecast = useMemo(
+    () => buildForecast(transactions, horizon, recurrings),
+    [transactions, horizon, recurrings],
+  );
+  const localInsights = useMemo(
+    () => buildInsights(transactions, categories, budgets, goals, recurrings, forecast),
+    [transactions, categories, budgets, goals, recurrings, forecast],
+  );
 
   const [aiInsights, setAiInsights] = useState<AIInsight[] | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -138,8 +150,11 @@ function IntelligencePage() {
       {/* Score + Forecast side by side */}
       <div className="grid gap-4 lg:grid-cols-3">
         <ScoreCard score={score} />
-        <ForecastCard forecast={forecast} />
+        <ForecastCard forecast={forecast} horizon={horizon} setHorizon={setHorizon} />
       </div>
+
+      {/* Insights locais acionáveis (Fase 2.3) */}
+      <LocalInsightsSection insights={localInsights} />
 
       {/* Anomalies */}
       <AnomaliesSection anomalies={anomalies} />
@@ -150,6 +165,60 @@ function IntelligencePage() {
         loading={aiLoading}
         hasData={transactions.length > 0}
       />
+    </div>
+  );
+}
+
+/* ---------------- LOCAL INSIGHTS (Fase 2.3) ---------------- */
+function LocalInsightsSection({ insights }: { insights: LocalInsight[] }) {
+  if (insights.length === 0) return null;
+  const sevMap = {
+    positivo: { color: "text-success", bg: "bg-success/15", border: "border-success/30", icon: CheckCircle2 },
+    neutro: { color: "text-primary", bg: "bg-primary/15", border: "border-border/60", icon: Info },
+    atencao: { color: "text-warning", bg: "bg-warning/15", border: "border-warning/30", icon: AlertTriangle },
+    critico: { color: "text-destructive", bg: "bg-destructive/15", border: "border-destructive/40", icon: AlertTriangle },
+  } as const;
+
+  return (
+    <div>
+      <div className="mb-3 flex items-center gap-2">
+        <Lightbulb className="h-4 w-4 text-primary" />
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+          Insights acionáveis
+        </h2>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        {insights.map((ins, i) => {
+          const cfg = sevMap[ins.severity];
+          const Icon = cfg.icon;
+          return (
+            <motion.div
+              key={ins.id}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: i * 0.04 }}
+            >
+              <Card className={`h-full border ${cfg.border} shadow-[var(--shadow-card)]`}>
+                <CardContent className="flex h-full gap-3 p-4">
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${cfg.bg} ${cfg.color}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    <p className="text-sm font-semibold leading-snug">{ins.title}</p>
+                    <p className="text-sm text-muted-foreground">{ins.description}</p>
+                    {ins.ctaLabel && ins.ctaTo && (
+                      <Link to={ins.ctaTo} className="inline-flex items-center gap-1 pt-1 text-xs font-medium text-primary hover:underline">
+                        {ins.ctaLabel}
+                        <ArrowRight className="h-3 w-3" />
+                      </Link>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -243,23 +312,44 @@ function ScoreRing({ value, color }: { value: number; color: string }) {
 }
 
 /* ---------------- FORECAST CARD ---------------- */
-function ForecastCard({ forecast }: { forecast: ReturnType<typeof buildForecast> }) {
+function ForecastCard({
+  forecast,
+  horizon,
+  setHorizon,
+}: {
+  forecast: ReturnType<typeof buildForecast>;
+  horizon: 30 | 60 | 90;
+  setHorizon: (h: 30 | 60 | 90) => void;
+}) {
   const isPositive = forecast.avgDailyNet >= 0;
   return (
     <Card className="border-border/60 shadow-[var(--shadow-card)] lg:col-span-2">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle className="flex items-center gap-2 text-base">
           {isPositive ? (
             <TrendingUp className="h-4 w-4 text-success" />
           ) : (
             <TrendingDown className="h-4 w-4 text-destructive" />
           )}
-          Previsão de saldo (30 dias)
+          Previsão de saldo ({horizon} dias)
         </CardTitle>
-        <Badge variant="outline" className="hidden sm:inline-flex">
-          {isPositive ? "+" : ""}
-          {brl(forecast.avgDailyNet)}/dia
-        </Badge>
+        <div className="flex items-center gap-2">
+          <ToggleGroup
+            type="single"
+            size="sm"
+            value={String(horizon)}
+            onValueChange={(v) => v && setHorizon(Number(v) as 30 | 60 | 90)}
+            className="border border-border/60 rounded-md"
+          >
+            <ToggleGroupItem value="30" className="h-7 px-2 text-xs">30d</ToggleGroupItem>
+            <ToggleGroupItem value="60" className="h-7 px-2 text-xs">60d</ToggleGroupItem>
+            <ToggleGroupItem value="90" className="h-7 px-2 text-xs">90d</ToggleGroupItem>
+          </ToggleGroup>
+          <Badge variant="outline" className="hidden sm:inline-flex">
+            {isPositive ? "+" : ""}
+            {brl(forecast.avgDailyNet)}/dia
+          </Badge>
+        </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">{forecast.message}</p>
