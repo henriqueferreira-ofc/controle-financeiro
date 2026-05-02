@@ -227,7 +227,20 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     });
 
     // 4. Para cada regra, gera ocorrências do mês via engine
-    const toInsert: Array<Record<string, unknown>> = [];
+    type InsertTx = {
+      user_id: string;
+      type: "entrada" | "despesa";
+      date: string;
+      description: string;
+      category: string | null;
+      amount: number;
+      essential: boolean;
+      fixed: boolean;
+      auto_generated: boolean;
+      recurring_id: string;
+      tags: string[];
+    };
+    const toInsert: InsertTx[] = [];
     for (const r of recs as unknown as DBRecurring[]) {
       const recClient = toClientRecurring(r);
       const dates = occurrencesBetween(recClient, monthStart, monthEnd);
