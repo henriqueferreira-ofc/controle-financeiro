@@ -372,25 +372,25 @@ export function buildInsights(
     }
   }
 
-  // 3. Categoria com gasto bem acima da média
+  // 3. Categoria com gasto bem acima da média (Fase 4 — perf: indexa por (catId, ano-mes) em uma passada)
   const byCatNow = new Map<string, number>();
   for (const t of last30.filter((t) => t.type === "despesa" && t.categoryId)) {
     byCatNow.set(t.categoryId!, (byCatNow.get(t.categoryId!) || 0) + t.amount);
   }
-  // média de cada categoria nos 3 meses anteriores
+  // pré-indexa despesas por (catId|YYYY-MM) — evita varrer transactions N vezes
+  const catMonthTotals = new Map<string, number>();
+  for (const t of transactions) {
+    if (t.type !== "despesa" || !t.categoryId) continue;
+    const key = `${t.categoryId}|${t.date.slice(0, 7)}`;
+    catMonthTotals.set(key, (catMonthTotals.get(key) || 0) + t.amount);
+  }
   for (const [catId, atual] of byCatNow.entries()) {
     let soma = 0;
     let meses = 0;
     for (let k = 1; k <= 3; k++) {
       const ref = new Date(now.getFullYear(), now.getMonth() - k, 1);
-      const y = ref.getFullYear();
-      const m = ref.getMonth();
-      let total = 0;
-      for (const t of transactions) {
-        if (t.type !== "despesa" || t.categoryId !== catId) continue;
-        const d = new Date(t.date + "T12:00:00");
-        if (d.getFullYear() === y && d.getMonth() === m) total += t.amount;
-      }
+      const ym = `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`;
+      const total = catMonthTotals.get(`${catId}|${ym}`) ?? 0;
       if (total > 0) {
         soma += total;
         meses++;

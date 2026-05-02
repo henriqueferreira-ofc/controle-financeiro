@@ -34,11 +34,11 @@ export function WeekProjectionCard({
         <div className="grid grid-cols-3 gap-3 text-center">
           <div>
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Saídas previstas</p>
-            <p className="mt-1 text-sm font-semibold tabular-nums text-red-500 sm:text-base">{brl(totalExpense)}</p>
+            <p className="mt-1 text-sm font-semibold tabular-nums text-destructive sm:text-base">{brl(totalExpense)}</p>
           </div>
           <div>
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Entradas previstas</p>
-            <p className="mt-1 text-sm font-semibold tabular-nums text-green-500 sm:text-base">{brl(totalIncome)}</p>
+            <p className="mt-1 text-sm font-semibold tabular-nums text-success sm:text-base">{brl(totalIncome)}</p>
           </div>
           <div>
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Saldo projetado</p>
@@ -102,7 +102,7 @@ export function MonthDeltaBadge({ delta }: { delta: number | null }) {
   return (
     <Badge
       variant="outline"
-      className={`gap-1 text-[10px] sm:text-xs ${up ? "border-red-500/40 text-red-500" : "border-green-500/40 text-green-500"}`}
+      className={`gap-1 text-[10px] sm:text-xs ${up ? "border-destructive/40 text-destructive" : "border-success/40 text-success"}`}
     >
       <Icon className="h-3 w-3" />
       {up ? "+" : ""}

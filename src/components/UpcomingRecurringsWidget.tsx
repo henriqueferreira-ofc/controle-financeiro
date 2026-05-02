@@ -40,7 +40,7 @@ export function UpcomingRecurringsWidget({
                 <li key={`${item.recurringId}-${item.date}-${i}`} className="flex items-center gap-3 py-2.5">
                   <div
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
-                      isIncome ? "bg-green-500/15 text-green-500" : "bg-red-500/15 text-red-500"
+                      isIncome ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
                     }`}
                   >
                     {isIncome ? <ArrowUpCircle className="h-4 w-4" /> : <ArrowDownCircle className="h-4 w-4" />}
@@ -59,7 +59,7 @@ export function UpcomingRecurringsWidget({
                   </div>
                   <p
                     className={`shrink-0 text-sm font-semibold tabular-nums ${
-                      isIncome ? "text-green-500" : "text-red-500"
+                      isIncome ? "text-success" : "text-destructive"
                     }`}
                   >
                     {isIncome ? "+" : "-"}

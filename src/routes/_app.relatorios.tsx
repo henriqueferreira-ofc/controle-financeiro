@@ -23,17 +23,25 @@ export const Route = createFileRoute("/_app/relatorios")({
 
 function RelatoriosPage() {
   const { transactions, categories } = useFinwise();
-  
+
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth().toString());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear().toString());
 
+  // Fase 4 — perf: indexa categorias por id (lookup O(1))
+  const catById = useMemo(() => {
+    const m = new Map<string, typeof categories[number]>();
+    for (const c of categories) m.set(c.id, c);
+    return m;
+  }, [categories]);
+
   const years = useMemo(() => {
     const y = new Set<string>();
     y.add(now.getFullYear().toString());
-    transactions.forEach(t => y.add(new Date(t.date + "T12:00:00").getFullYear().toString()));
+    transactions.forEach(t => y.add(t.date.slice(0, 4)));
     return Array.from(y).sort((a, b) => b.localeCompare(a));
-  }, [transactions, now]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transactions]);
 
   const months = [
     { value: "0", label: "Janeiro" }, { value: "1", label: "Fevereiro" },
@@ -47,23 +55,25 @@ function RelatoriosPage() {
   const filteredData = useMemo(() => {
     const m = parseInt(selectedMonth);
     const y = parseInt(selectedYear);
+    const yStr = String(y);
+    const mStr = String(m + 1).padStart(2, "0");
+    const prefix = `${yStr}-${mStr}-`;
 
-    const periodTransactions = transactions.filter(t => {
-      const d = new Date(t.date + "T12:00:00");
-      return d.getMonth() === m && d.getFullYear() === y;
-    });
+    // Fase 4 — perf: filtra por prefixo de string (sem instanciar Date por linha)
+    const periodTransactions = transactions.filter(t => t.date.startsWith(prefix));
 
-    const entries = periodTransactions.filter(t => t.type === "entrada");
-    const expenses = periodTransactions.filter(t => t.type === "despesa");
-
-    const totalIn = entries.reduce((acc, t) => acc + Math.abs(t.amount), 0);
-    const totalOut = expenses.reduce((acc, t) => acc + Math.abs(t.amount), 0);
+    let totalIn = 0;
+    let totalOut = 0;
+    for (const t of periodTransactions) {
+      if (t.type === "entrada") totalIn += Math.abs(t.amount);
+      else totalOut += Math.abs(t.amount);
+    }
 
     return {
       transactions: periodTransactions.sort((a, b) => b.date.localeCompare(a.date)),
       totalIn,
       totalOut,
-      balance: totalIn - totalOut
+      balance: totalIn - totalOut,
     };
   }, [transactions, selectedMonth, selectedYear]);
 
@@ -142,7 +152,7 @@ function RelatoriosPage() {
               </div>
             ) : (
               filteredData.transactions.map((t) => {
-                const cat = categories.find(c => c.id === t.categoryId);
+                const cat = t.categoryId ? catById.get(t.categoryId) : undefined;
                 const isIncome = t.type === 'entrada';
                 return (
                   <div key={t.id} className="flex items-center justify-between p-4 bg-card/30">
@@ -194,7 +204,7 @@ function RelatoriosPage() {
                     </TableRow>
                   ) : (
                     filteredData.transactions.map((t) => {
-                      const cat = categories.find(c => c.id === t.categoryId);
+                      const cat = t.categoryId ? catById.get(t.categoryId) : undefined;
                       const isIncome = t.type === 'entrada';
                       return (
                         <TableRow key={t.id} className="hover:bg-muted/30">
@@ -203,15 +213,15 @@ function RelatoriosPage() {
                           </TableCell>
                           <TableCell className="font-medium px-4">{t.description}</TableCell>
                           <TableCell className="px-4">
-                            <Badge variant="secondary" className="font-normal h-5" style={{ 
-                              backgroundColor: cat?.color + '20', 
+                            <Badge variant="secondary" className="font-normal h-5" style={{
+                              backgroundColor: cat?.color + '20',
                               color: cat?.color,
                               borderColor: cat?.color + '40'
                             }}>
                               {cat?.name || "Sem categoria"}
                             </Badge>
                           </TableCell>
-                          <TableCell className={`text-right font-semibold tabular-nums px-4 ${isIncome ? 'text-green-500' : 'text-red-400'}`}>
+                          <TableCell className={`text-right font-semibold tabular-nums px-4 ${isIncome ? 'text-success' : 'text-destructive'}`}>
                             {isIncome ? '+' : '-'} {brl(Math.abs(t.amount))}
                           </TableCell>
                         </TableRow>
