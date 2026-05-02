@@ -23,17 +23,25 @@ export const Route = createFileRoute("/_app/relatorios")({
 
 function RelatoriosPage() {
   const { transactions, categories } = useFinwise();
-  
+
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth().toString());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear().toString());
 
+  // Fase 4 — perf: indexa categorias por id (lookup O(1))
+  const catById = useMemo(() => {
+    const m = new Map<string, typeof categories[number]>();
+    for (const c of categories) m.set(c.id, c);
+    return m;
+  }, [categories]);
+
   const years = useMemo(() => {
     const y = new Set<string>();
     y.add(now.getFullYear().toString());
-    transactions.forEach(t => y.add(new Date(t.date + "T12:00:00").getFullYear().toString()));
+    transactions.forEach(t => y.add(t.date.slice(0, 4)));
     return Array.from(y).sort((a, b) => b.localeCompare(a));
-  }, [transactions, now]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transactions]);
 
   const months = [
     { value: "0", label: "Janeiro" }, { value: "1", label: "Fevereiro" },
@@ -47,23 +55,25 @@ function RelatoriosPage() {
   const filteredData = useMemo(() => {
     const m = parseInt(selectedMonth);
     const y = parseInt(selectedYear);
+    const yStr = String(y);
+    const mStr = String(m + 1).padStart(2, "0");
+    const prefix = `${yStr}-${mStr}-`;
 
-    const periodTransactions = transactions.filter(t => {
-      const d = new Date(t.date + "T12:00:00");
-      return d.getMonth() === m && d.getFullYear() === y;
-    });
+    // Fase 4 — perf: filtra por prefixo de string (sem instanciar Date por linha)
+    const periodTransactions = transactions.filter(t => t.date.startsWith(prefix));
 
-    const entries = periodTransactions.filter(t => t.type === "entrada");
-    const expenses = periodTransactions.filter(t => t.type === "despesa");
-
-    const totalIn = entries.reduce((acc, t) => acc + Math.abs(t.amount), 0);
-    const totalOut = expenses.reduce((acc, t) => acc + Math.abs(t.amount), 0);
+    let totalIn = 0;
+    let totalOut = 0;
+    for (const t of periodTransactions) {
+      if (t.type === "entrada") totalIn += Math.abs(t.amount);
+      else totalOut += Math.abs(t.amount);
+    }
 
     return {
       transactions: periodTransactions.sort((a, b) => b.date.localeCompare(a.date)),
       totalIn,
       totalOut,
-      balance: totalIn - totalOut
+      balance: totalIn - totalOut,
     };
   }, [transactions, selectedMonth, selectedYear]);
 
