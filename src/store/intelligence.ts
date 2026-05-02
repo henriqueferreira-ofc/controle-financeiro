@@ -144,8 +144,11 @@ export function calculateScore(
   };
 }
 
-/* ---------------- DETECÇÃO DE ANOMALIAS ----------------
-   Despesa > 2.5x a média da categoria nos últimos 60 dias.
+/* ---------------- DETECÇÃO DE ANOMALIAS (Fase 2) ----------------
+   Combina:
+   - Razão vs média da categoria (>= 2.5x)
+   - Z-score por categoria (|z| >= 2 indica desvio significativo)
+   Severidade considera AMBOS os sinais.
 */
 export function detectAnomalies(transactions: Transaction[], categories: Category[]): Anomaly[] {
   const now = new Date();
@@ -155,7 +158,6 @@ export function detectAnomalies(transactions: Transaction[], categories: Categor
 
   const despesas = transactions.filter((t) => t.type === "despesa" && t.date >= startISO);
 
-  // Group by category
   const byCat = new Map<string, Transaction[]>();
   for (const t of despesas) {
     const key = t.categoryId || "_none";
@@ -166,16 +168,21 @@ export function detectAnomalies(transactions: Transaction[], categories: Categor
   const anomalies: Anomaly[] = [];
 
   for (const [catId, txs] of byCat.entries()) {
-    if (txs.length < 4) continue; // need history
-    const avg = txs.reduce((a, b) => a + b.amount, 0) / txs.length;
-    if (avg <= 0) continue;
+    if (txs.length < 4) continue;
+    const mean = txs.reduce((a, b) => a + b.amount, 0) / txs.length;
+    if (mean <= 0) continue;
+    const variance = txs.reduce((a, b) => a + (b.amount - mean) ** 2, 0) / txs.length;
+    const std = Math.sqrt(variance);
+
     for (const t of txs) {
-      const ratio = t.amount / avg;
-      if (ratio >= 2.5) {
+      const ratio = t.amount / mean;
+      const z = std > 0 ? (t.amount - mean) / std : 0;
+      // Critério: ratio >= 2.5 OU z >= 2
+      if (ratio >= 2.5 || z >= 2) {
         const cat = categories.find((c) => c.id === catId);
         let severity: Anomaly["severity"] = "baixa";
-        if (ratio >= 5) severity = "alta";
-        else if (ratio >= 3.5) severity = "média";
+        if (ratio >= 5 || z >= 3.5) severity = "alta";
+        else if (ratio >= 3.5 || z >= 2.5) severity = "média";
         anomalies.push({
           id: t.id,
           date: t.date,
