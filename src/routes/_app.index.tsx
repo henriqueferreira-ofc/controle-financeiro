@@ -1,15 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useFinwise } from "@/store/finwise-store";
 import { dashboardData } from "@/store/selectors";
+import { computeCurrentBalance, expenseVs3MonthAvg, projectNextDays } from "@/store/projection";
 import type { Filters } from "@/store/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KpiCard } from "@/components/KpiCard";
+import { WeekProjectionCard, MonthDeltaBadge } from "@/components/WeekProjectionCard";
+import { UpcomingRecurringsWidget } from "@/components/UpcomingRecurringsWidget";
 import { brl } from "@/lib/format";
 import { ArrowDownRight, ArrowUpRight, CalendarDays, Lightbulb, PiggyBank, Plus, Trophy, Wallet } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Bar,
