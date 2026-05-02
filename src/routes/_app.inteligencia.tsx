@@ -150,8 +150,11 @@ function IntelligencePage() {
       {/* Score + Forecast side by side */}
       <div className="grid gap-4 lg:grid-cols-3">
         <ScoreCard score={score} />
-        <ForecastCard forecast={forecast} />
+        <ForecastCard forecast={forecast} horizon={horizon} setHorizon={setHorizon} />
       </div>
+
+      {/* Insights locais acionáveis (Fase 2.3) */}
+      <LocalInsightsSection insights={localInsights} />
 
       {/* Anomalies */}
       <AnomaliesSection anomalies={anomalies} />
@@ -162,6 +165,60 @@ function IntelligencePage() {
         loading={aiLoading}
         hasData={transactions.length > 0}
       />
+    </div>
+  );
+}
+
+/* ---------------- LOCAL INSIGHTS (Fase 2.3) ---------------- */
+function LocalInsightsSection({ insights }: { insights: LocalInsight[] }) {
+  if (insights.length === 0) return null;
+  const sevMap = {
+    positivo: { color: "text-success", bg: "bg-success/15", border: "border-success/30", icon: CheckCircle2 },
+    neutro: { color: "text-primary", bg: "bg-primary/15", border: "border-border/60", icon: Info },
+    atencao: { color: "text-warning", bg: "bg-warning/15", border: "border-warning/30", icon: AlertTriangle },
+    critico: { color: "text-destructive", bg: "bg-destructive/15", border: "border-destructive/40", icon: AlertTriangle },
+  } as const;
+
+  return (
+    <div>
+      <div className="mb-3 flex items-center gap-2">
+        <Lightbulb className="h-4 w-4 text-primary" />
+        <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+          Insights acionáveis
+        </h2>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        {insights.map((ins, i) => {
+          const cfg = sevMap[ins.severity];
+          const Icon = cfg.icon;
+          return (
+            <motion.div
+              key={ins.id}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: i * 0.04 }}
+            >
+              <Card className={`h-full border ${cfg.border} shadow-[var(--shadow-card)]`}>
+                <CardContent className="flex h-full gap-3 p-4">
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${cfg.bg} ${cfg.color}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    <p className="text-sm font-semibold leading-snug">{ins.title}</p>
+                    <p className="text-sm text-muted-foreground">{ins.description}</p>
+                    {ins.ctaLabel && ins.ctaTo && (
+                      <Link to={ins.ctaTo} className="inline-flex items-center gap-1 pt-1 text-xs font-medium text-primary hover:underline">
+                        {ins.ctaLabel}
+                        <ArrowRight className="h-3 w-3" />
+                      </Link>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })}
+      </div>
     </div>
   );
 }
