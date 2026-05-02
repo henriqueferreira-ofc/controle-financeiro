@@ -20,6 +20,7 @@ import { Route as AppPerfilRouteImport } from './routes/_app.perfil'
 import { Route as AppOrcamentosRouteImport } from './routes/_app.orcamentos'
 import { Route as AppMetasRouteImport } from './routes/_app.metas'
 import { Route as AppInteligenciaRouteImport } from './routes/_app.inteligencia'
+import { Route as AppImportarRouteImport } from './routes/_app.importar'
 import { Route as AppCategoriasRouteImport } from './routes/_app.categorias'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -76,6 +77,11 @@ const AppInteligenciaRoute = AppInteligenciaRouteImport.update({
   path: '/inteligencia',
   getParentRoute: () => AppRoute,
 } as any)
+const AppImportarRoute = AppImportarRouteImport.update({
+  id: '/importar',
+  path: '/importar',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCategoriasRoute = AppCategoriasRouteImport.update({
   id: '/categorias',
   path: '/categorias',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/categorias': typeof AppCategoriasRoute
+  '/importar': typeof AppImportarRoute
   '/inteligencia': typeof AppInteligenciaRoute
   '/metas': typeof AppMetasRoute
   '/orcamentos': typeof AppOrcamentosRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/categorias': typeof AppCategoriasRoute
+  '/importar': typeof AppImportarRoute
   '/inteligencia': typeof AppInteligenciaRoute
   '/metas': typeof AppMetasRoute
   '/orcamentos': typeof AppOrcamentosRoute
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_app/categorias': typeof AppCategoriasRoute
+  '/_app/importar': typeof AppImportarRoute
   '/_app/inteligencia': typeof AppInteligenciaRoute
   '/_app/metas': typeof AppMetasRoute
   '/_app/orcamentos': typeof AppOrcamentosRoute
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/categorias'
+    | '/importar'
     | '/inteligencia'
     | '/metas'
     | '/orcamentos'
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/categorias'
+    | '/importar'
     | '/inteligencia'
     | '/metas'
     | '/orcamentos'
@@ -156,6 +167,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_app/categorias'
+    | '/_app/importar'
     | '/_app/inteligencia'
     | '/_app/metas'
     | '/_app/orcamentos'
@@ -251,6 +263,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInteligenciaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/importar': {
+      id: '/_app/importar'
+      path: '/importar'
+      fullPath: '/importar'
+      preLoaderRoute: typeof AppImportarRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/categorias': {
       id: '/_app/categorias'
       path: '/categorias'
@@ -263,6 +282,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppCategoriasRoute: typeof AppCategoriasRoute
+  AppImportarRoute: typeof AppImportarRoute
   AppInteligenciaRoute: typeof AppInteligenciaRoute
   AppMetasRoute: typeof AppMetasRoute
   AppOrcamentosRoute: typeof AppOrcamentosRoute
@@ -275,6 +295,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCategoriasRoute: AppCategoriasRoute,
+  AppImportarRoute: AppImportarRoute,
   AppInteligenciaRoute: AppInteligenciaRoute,
   AppMetasRoute: AppMetasRoute,
   AppOrcamentosRoute: AppOrcamentosRoute,
