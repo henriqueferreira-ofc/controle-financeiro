@@ -183,113 +183,79 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
   });
 
   const applyRecurringsJS = React.useCallback(async (userId: string) => {
+    // Fase 1.1 — gera ocorrências do mês atual respeitando edge-cases:
+    // clamp dia 31, paused_until e skip_dates (delegado ao engine).
     const now = new Date();
     const y = now.getFullYear();
     const m = now.getMonth();
-    const lastDayOfMonth = new Date(y, m + 1, 0).getDate();
-    const firstDayOfMonthISO = `${y}-${String(m + 1).padStart(2, "0")}-01`;
-    const lastDayOfMonthISO = `${y}-${String(m + 1).padStart(2, "0")}-${String(lastDayOfMonth).padStart(2, "0")}`;
-    const lastDayOfMonthDate = new Date(y, m + 1, 0, 23, 59, 59);
+    const lastDay = new Date(y, m + 1, 0).getDate();
+    const firstISO = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+    const lastISO = `${y}-${String(m + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    const monthStart = new Date(y, m, 1, 12, 0, 0);
+    const monthEnd = new Date(y, m, lastDay, 12, 0, 0);
 
-    const ymd = (d: Date) => {
-      const yy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, "0");
-      const dd = String(d.getDate()).padStart(2, "0");
-      return `${yy}-${mm}-${dd}`;
-    };
-
-    // 1. Cleanup future recurring transactions (prevent projection into next months)
-    const { data: futureTxs } = await supabase
+    // 1. Limpa transações auto_generated futuras (após o mês atual) — re-projeção limpa
+    await supabase
       .from("transactions")
-      .select("id, tags")
+      .delete()
       .eq("user_id", userId)
-      .gt("date", lastDayOfMonthISO)
-      .contains("tags", ["recorrente"]);
+      .eq("auto_generated", true)
+      .gt("date", lastISO);
 
-    const idsToDelete = futureTxs
-      ?.filter(tx => tx.tags?.some(tag => tag.startsWith("rec_ref:")))
-      .map(tx => tx.id);
-
-    if (idsToDelete && idsToDelete.length > 0) {
-      await supabase.from("transactions").delete().in("id", idsToDelete);
-    }
-
-    // 2. Fetch active recurring rules
+    // 2. Carrega regras ativas
     const { data: recs, error: recError } = await supabase
       .from("recurring_transactions")
       .select("*")
       .eq("user_id", userId)
       .eq("active", true);
-
     if (recError || !recs || recs.length === 0) return 0;
 
-    // 3. Fetch ALL existing recurring tags for this user to avoid any duplicates
-    // We fetch tags that start with rec_ref: for the current month
-    const { data: existingTxs, error: txError } = await supabase
+    // 3. Carrega o que já existe no mês atual para essas regras (idempotência)
+    const recIds = recs.map((r) => r.id);
+    const { data: existing } = await supabase
       .from("transactions")
-      .select("tags")
+      .select("recurring_id, date")
       .eq("user_id", userId)
-      .like("tags", `%rec_ref:%:${y}-${String(m + 1).padStart(2, "0")}-%`);
+      .eq("auto_generated", true)
+      .gte("date", firstISO)
+      .lte("date", lastISO)
+      .in("recurring_id", recIds);
 
-    if (txError) return 0;
-
-    const existingTags = new Set<string>();
-    existingTxs?.forEach(tx => {
-      tx.tags?.forEach(tag => {
-        if (tag.startsWith("rec_ref:")) existingTags.add(tag);
-      });
+    const existingKeys = new Set<string>();
+    (existing ?? []).forEach((tx) => {
+      if (tx.recurring_id) existingKeys.add(`${tx.recurring_id}:${tx.date}`);
     });
 
-    const toInsert = [];
-    for (const r of recs) {
-      // Start from the start_date or the beginning of time
-      let current = new Date(r.start_date + "T12:00:00");
-      const endDate = r.end_date ? new Date(r.end_date + "T12:00:00") : null;
-
-      // Loop to find all occurrences that fall within the current month
-      // To keep it efficient, if start_date is way before current month, we could optimize,
-      // but for daily/weekly/monthly a simple loop is robust.
-      while (current <= lastDayOfMonthDate) {
-        if (endDate && current > endDate) break;
-
-        const dateStr = ymd(current);
-        
-        // Only process if this occurrence is within the current month
-        if (dateStr >= firstDayOfMonthISO && dateStr <= lastDayOfMonthISO) {
-          const uniqueTag = `rec_ref:${r.id}:${dateStr}`;
-          
-          if (!existingTags.has(uniqueTag)) {
-            toInsert.push({
-              user_id: userId,
-              type: r.type,
-              date: dateStr,
-              description: r.description,
-              category: r.category,
-              amount: r.amount,
-              essential: r.essential,
-              fixed: r.fixed,
-              tags: [uniqueTag, "recorrente"],
-            });
-          }
-        }
-
-        // Advance based on frequency
-        if (r.frequency === "daily") current.setDate(current.getDate() + 1);
-        else if (r.frequency === "weekly") current.setDate(current.getDate() + 7);
-        else if (r.frequency === "monthly") current.setMonth(current.getMonth() + 1);
-        else if (r.frequency === "yearly") current.setFullYear(current.getFullYear() + 1);
-        else break; // Should not happen
+    // 4. Para cada regra, gera ocorrências do mês via engine
+    const toInsert: Array<Record<string, unknown>> = [];
+    for (const r of recs as unknown as DBRecurring[]) {
+      const recClient = toClientRecurring(r);
+      const dates = occurrencesBetween(recClient, monthStart, monthEnd);
+      for (const dateStr of dates) {
+        const key = `${r.id}:${dateStr}`;
+        if (existingKeys.has(key)) continue;
+        toInsert.push({
+          user_id: userId,
+          type: r.type,
+          date: dateStr,
+          description: r.description,
+          category: r.category,
+          amount: r.amount,
+          essential: r.essential,
+          fixed: r.fixed,
+          auto_generated: true,
+          recurring_id: r.id,
+          tags: ["recorrente"],
+        });
       }
     }
 
-    if (toInsert.length > 0) {
-      const { error: insError } = await supabase.from("transactions").insert(toInsert);
-      if (insError) return 0;
-      return toInsert.length;
-    }
-    
-    return 0;
+    if (toInsert.length === 0) return 0;
+    const { error: insError } = await supabase.from("transactions").insert(toInsert);
+    if (insError) return 0;
+    return toInsert.length;
   }, []);
+
 
   const refresh = React.useCallback(async () => {
     if (!user) {
