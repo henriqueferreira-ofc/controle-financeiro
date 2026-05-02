@@ -177,12 +177,8 @@ function DashboardPage() {
               icon={ArrowDownRight}
               tone="destructive"
               delay={0}
+              extra={expenseDelta !== null && <MonthDeltaBadge delta={expenseDelta} />}
             />
-            {expenseDelta !== null && (
-              <div className="absolute right-3 top-3">
-                <MonthDeltaBadge delta={expenseDelta} />
-              </div>
-            )}
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
             <KpiCard

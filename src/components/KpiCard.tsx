@@ -10,6 +10,7 @@ interface KpiCardProps {
   icon: LucideIcon;
   tone?: "default" | "success" | "destructive" | "warning";
   delay?: number;
+  extra?: React.ReactNode;
 }
 
 const toneRing: Record<string, string> = {
@@ -19,7 +20,7 @@ const toneRing: Record<string, string> = {
   warning: "bg-warning/15 text-warning",
 };
 
-export function KpiCard({ label, value, hint, icon: Icon, tone = "default", delay = 0 }: KpiCardProps) {
+export function KpiCard({ label, value, hint, icon: Icon, tone = "default", delay = 0, extra }: KpiCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -28,14 +29,19 @@ export function KpiCard({ label, value, hint, icon: Icon, tone = "default", dela
     >
       <Card className="overflow-hidden border-border/60 bg-card shadow-[var(--shadow-card)] transition-colors hover:border-border">
         <CardContent className="flex items-start justify-between gap-4 p-5">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <div className="flex flex-col gap-1 min-w-0 flex-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
               {label}
             </span>
-            <span className="text-2xl font-semibold tracking-tight text-foreground">{value}</span>
-            {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+            <div className="flex items-baseline gap-2 overflow-hidden">
+              <span className="text-2xl font-bold tracking-tight text-foreground truncate">{value}</span>
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              {extra}
+              {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+            </div>
           </div>
-          <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg", toneRing[tone])}>
+          <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-inner", toneRing[tone])}>
             <Icon className="h-5 w-5" />
           </div>
         </CardContent>

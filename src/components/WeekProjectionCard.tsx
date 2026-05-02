@@ -102,7 +102,11 @@ export function MonthDeltaBadge({ delta }: { delta: number | null }) {
   return (
     <Badge
       variant="outline"
-      className={`gap-1 text-[10px] sm:text-xs ${up ? "border-destructive/40 text-destructive" : "border-success/40 text-success"}`}
+      className={`gap-1 px-1.5 py-0 text-[10px] font-medium sm:text-xs ${
+        up 
+          ? "border-destructive/30 bg-destructive/10 text-destructive" 
+          : "border-success/30 bg-success/10 text-success"
+      }`}
     >
       <Icon className="h-3 w-3" />
       {up ? "+" : ""}
