@@ -204,7 +204,7 @@ function RelatoriosPage() {
                     </TableRow>
                   ) : (
                     filteredData.transactions.map((t) => {
-                      const cat = categories.find(c => c.id === t.categoryId);
+                      const cat = t.categoryId ? catById.get(t.categoryId) : undefined;
                       const isIncome = t.type === 'entrada';
                       return (
                         <TableRow key={t.id} className="hover:bg-muted/30">
@@ -213,15 +213,15 @@ function RelatoriosPage() {
                           </TableCell>
                           <TableCell className="font-medium px-4">{t.description}</TableCell>
                           <TableCell className="px-4">
-                            <Badge variant="secondary" className="font-normal h-5" style={{ 
-                              backgroundColor: cat?.color + '20', 
+                            <Badge variant="secondary" className="font-normal h-5" style={{
+                              backgroundColor: cat?.color + '20',
                               color: cat?.color,
                               borderColor: cat?.color + '40'
                             }}>
                               {cat?.name || "Sem categoria"}
                             </Badge>
                           </TableCell>
-                          <TableCell className={`text-right font-semibold tabular-nums px-4 ${isIncome ? 'text-green-500' : 'text-red-400'}`}>
+                          <TableCell className={`text-right font-semibold tabular-nums px-4 ${isIncome ? 'text-success' : 'text-destructive'}`}>
                             {isIncome ? '+' : '-'} {brl(Math.abs(t.amount))}
                           </TableCell>
                         </TableRow>
