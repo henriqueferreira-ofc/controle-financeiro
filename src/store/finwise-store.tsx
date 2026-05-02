@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { SEED_TRANSACTIONS } from "./seed";
 import type { Transaction, Filters, Category, Budget, Goal, Recurring, RecurringFrequency } from "./types";
+import { occurrencesBetween } from "./recurring-engine";
 import { toast } from "sonner";
 
 type DBTransaction = {
