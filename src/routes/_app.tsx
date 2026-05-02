@@ -42,38 +42,62 @@ function AppLayout() {
 
   return (
     <FinwiseProvider>
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full bg-background">
-          <AppSidebar />
-          <div className="flex-1 flex flex-col">
-            <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-border/60 bg-background/80 px-3 backdrop-blur sm:px-4">
-              <div className="flex items-center gap-2">
-                <SidebarTrigger />
-              </div>
-              
-              <div className="flex min-w-0 items-center gap-2 sm:gap-4">
-                <div className="flex items-center gap-2 mr-1 sm:mr-2">
-                  <Avatar className="h-8 w-8 border border-border/50">
-                    <AvatarImage src={avatarUrl} className="object-cover" />
-                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-bold">{initials}</AvatarFallback>
-                  </Avatar>
-                  <span className="hidden max-w-[150px] truncate text-sm font-medium sm:inline">
-                    {name}
-                  </span>
-                </div>
-                <LanguageSwitcher compact />
-                <Button size="sm" variant="ghost" className="h-9 px-2 sm:px-3 text-muted-foreground hover:text-destructive" onClick={() => signOut()}>
-                  <LogOut className="h-4 w-4 sm:mr-2" /> 
-                  <span className="hidden sm:inline">{t("common.signout")}</span>
-                </Button>
-              </div>
-            </header>
-            <main className="flex-1">
-              <Outlet />
-            </main>
-          </div>
-        </div>
-      </SidebarProvider>
+      <AppShell name={name} avatarUrl={avatarUrl} initials={initials} signOut={signOut} t={t} />
     </FinwiseProvider>
+  );
+}
+
+function AppShell({
+  name,
+  avatarUrl,
+  initials,
+  signOut,
+  t,
+}: {
+  name: string;
+  avatarUrl?: string;
+  initials: string;
+  signOut: () => Promise<void> | void;
+  t: (k: string) => string;
+}) {
+  // Fase 3.1.3 — celebra metas concluídas
+  useGoalCelebrations();
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col">
+          <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-border/60 bg-background/80 px-3 backdrop-blur sm:px-4">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger />
+            </div>
+
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              {/* Fase 3.1.1 — Bell de notificações */}
+              <NotificationsBell />
+
+              <div className="flex items-center gap-2 mr-1 sm:mr-2">
+                <Avatar className="h-8 w-8 border border-border/50">
+                  <AvatarImage src={avatarUrl} className="object-cover" />
+                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-bold">{initials}</AvatarFallback>
+                </Avatar>
+                <span className="hidden max-w-[150px] truncate text-sm font-medium sm:inline">
+                  {name}
+                </span>
+              </div>
+              <LanguageSwitcher compact />
+              <Button size="sm" variant="ghost" className="h-9 px-2 sm:px-3 text-muted-foreground hover:text-destructive" onClick={() => signOut()}>
+                <LogOut className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">{t("common.signout")}</span>
+              </Button>
+            </div>
+          </header>
+          <main className="flex-1">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }
