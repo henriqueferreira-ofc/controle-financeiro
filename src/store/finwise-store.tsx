@@ -623,7 +623,65 @@ export function FinwiseProvider({ children }: { children: React.ReactNode }) {
     setRecurrings((prev) => prev.filter((r) => r.id !== id));
   }, []);
 
-  const applyRecurringNow = React.useCallback(async () => {
+  // Fase 1.1 — Pausar até uma data + também limpa auto-gerados ainda não passados dentro do range pausado
+  const pauseRecurring = React.useCallback(async (id: string, untilISO: string) => {
+    const { error } = await supabase
+      .from("recurring_transactions")
+      .update({ paused_until: untilISO })
+      .eq("id", id);
+    if (error) {
+      toast.error("Erro ao pausar: " + error.message);
+      throw error;
+    }
+    // Remove auto-gerados ainda não ocorridos dentro do período pausado
+    const today = new Date().toISOString().slice(0, 10);
+    await supabase
+      .from("transactions")
+      .delete()
+      .eq("recurring_id", id)
+      .eq("auto_generated", true)
+      .gte("date", today)
+      .lte("date", untilISO);
+    setRecurrings((prev) => prev.map((r) => (r.id === id ? { ...r, pausedUntil: untilISO } : r)));
+    toast.success("Recorrência pausada.");
+  }, []);
+
+  // Fase 1.1 — Retomar (limpa paused_until)
+  const resumeRecurring = React.useCallback(async (id: string) => {
+    const { error } = await supabase
+      .from("recurring_transactions")
+      .update({ paused_until: null })
+      .eq("id", id);
+    if (error) {
+      toast.error("Erro ao retomar: " + error.message);
+      throw error;
+    }
+    setRecurrings((prev) => prev.map((r) => (r.id === id ? { ...r, pausedUntil: null } : r)));
+    toast.success("Recorrência retomada.");
+  }, []);
+
+  // Fase 1.1 — Pular ocorrência única (adiciona em skip_dates) e remove o auto-gerado se já existir
+  const skipNext = React.useCallback(async (id: string, dateISO: string) => {
+    const current = recurrings.find((r) => r.id === id);
+    const newSkip = Array.from(new Set([...(current?.skipDates ?? []), dateISO]));
+    const { error } = await supabase
+      .from("recurring_transactions")
+      .update({ skip_dates: newSkip })
+      .eq("id", id);
+    if (error) {
+      toast.error("Erro ao pular: " + error.message);
+      throw error;
+    }
+    await supabase
+      .from("transactions")
+      .delete()
+      .eq("recurring_id", id)
+      .eq("auto_generated", true)
+      .eq("date", dateISO);
+    setRecurrings((prev) => prev.map((r) => (r.id === id ? { ...r, skipDates: newSkip } : r)));
+    toast.success("Ocorrência pulada.");
+  }, [recurrings]);
+
     if (!user) return 0;
     const n = await applyRecurringsJS(user.id);
     if (n > 0) {
