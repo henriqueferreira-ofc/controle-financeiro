@@ -12,16 +12,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, X, Wand2 } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, X, Wand2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import {
   detectSeparator,
   parseCsv,
   processRows,
   hashKey,
+  suggestCategory,
   type CsvRow,
   type ColumnMapping,
   type ParsedRow,
+  type BankPreset,
+  BANK_PRESETS,
 } from "@/store/csv-import";
 import { brl } from "@/lib/format";
 
@@ -253,33 +256,62 @@ function ImportarPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <Label>Separador</Label>
-                <Select value={separator} onValueChange={reparseSeparator}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+            <div className="grid grid-cols-1 gap-6 border-b pb-6 md:grid-cols-2">
+              <div className="space-y-3">
+                <Label className="text-primary font-semibold">Configuração Rápida (Banco)</Label>
+                <Select 
+                  onValueChange={(v: BankPreset) => {
+                    const p = BANK_PRESETS[v];
+                    setSeparator(p.separator);
+                    setMapping(p.mapping);
+                    setHasHeader(p.hasHeader);
+                    setRows(parseCsv(rawText, p.separator));
+                  }}
+                >
+                  <SelectTrigger className="w-full border-primary/40 bg-primary/5">
+                    <SelectValue placeholder="Selecione seu banco para auto-mapear" />
+                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value=",">Vírgula (,)</SelectItem>
-                    <SelectItem value=";">Ponto-e-vírgula (;)</SelectItem>
-                    <SelectItem value={"\t"}>Tab</SelectItem>
-                    <SelectItem value="|">Pipe (|)</SelectItem>
+                    {Object.entries(BANK_PRESETS).map(([id, p]) => (
+                      <SelectItem key={id} value={id}>{p.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                <p className="text-[10px] text-muted-foreground italic">
+                  * Selecionar um banco irá preencher automaticamente os campos abaixo.
+                </p>
               </div>
-              <div className="flex items-end gap-2">
-                <Checkbox
-                  id="hasHeader"
-                  checked={hasHeader}
-                  onCheckedChange={(v) => setHasHeader(!!v)}
-                />
-                <Label htmlFor="hasHeader" className="cursor-pointer">Primeira linha é cabeçalho</Label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Separador Manual</Label>
+                  <Select value={separator} onValueChange={reparseSeparator}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value=",">Vírgula (,)</SelectItem>
+                      <SelectItem value=";">Ponto-e-vírgula (;)</SelectItem>
+                      <SelectItem value={"\t"}>Tab</SelectItem>
+                      <SelectItem value="|">Pipe (|)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col justify-end pb-2">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="hasHeader"
+                      checked={hasHeader}
+                      onCheckedChange={(v) => setHasHeader(!!v)}
+                    />
+                    <Label htmlFor="hasHeader" className="cursor-pointer text-xs">Cabeçalho</Label>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {(["date", "description", "amount", "type", "category"] as const).map((field) => (
                 <div key={field}>
-                  <Label className="capitalize">
+                  <Label className="capitalize text-xs">
                     {field === "date" ? "Data *" : field === "description" ? "Descrição *" : field === "amount" ? "Valor *" : field === "type" ? "Tipo (opcional)" : "Categoria (opcional)"}
                   </Label>
                   <Select
@@ -288,7 +320,7 @@ function ImportarPage() {
                       setMapping((m) => ({ ...m, [field]: v === "none" ? null : parseInt(v, 10) }))
                     }
                   >
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">— Nenhuma —</SelectItem>
                       {headers.map((h, i) => (
@@ -301,7 +333,7 @@ function ImportarPage() {
             </div>
 
             {/* Preview das primeiras linhas */}
-            <div className="overflow-x-auto rounded-lg border">
+            <div className="overflow-x-auto rounded-lg border bg-muted/20">
               <table className="w-full text-xs">
                 <thead className="bg-muted/40">
                   <tr>
@@ -349,9 +381,25 @@ function ImportarPage() {
           )}
 
           <Card>
-            <CardHeader>
-              <CardTitle>Revisar e ajustar</CardTitle>
-              <CardDescription>Edite categoria/tipo se necessário. Desmarque o que não quer importar.</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle>Revisar e ajustar</CardTitle>
+                <CardDescription>Edite categoria/tipo se necessário. Desmarque o que não quer importar.</CardDescription>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  setParsed(prev => prev.map(r => {
+                    const suggested = suggestCategory(r.description);
+                    return suggested ? { ...r, categoryName: suggested.category, type: suggested.type } : r;
+                  }));
+                  toast.success("Categorização inteligente aplicada!");
+                }}
+                className="gap-2 border-primary/40 text-primary"
+              >
+                <Sparkles className="h-4 w-4" /> Categorização IA
+              </Button>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="overflow-x-auto">

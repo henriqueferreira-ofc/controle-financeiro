@@ -36,6 +36,8 @@ const ymd = (d: Date) => {
   return `${y}-${m}-${dd}`;
 };
 
+const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
 /* ---------------- SCORE 0–100 (Fase 2 — refinado) ----------------
    Pesos do roadmap:
    - Taxa de poupança (saldo / entradas) — 30 pts
@@ -491,8 +493,25 @@ export function buildInsights(
     }
   }
 
+  // 8. Alerta de Vencimento de Cartão de Crédito (Fase 3.4)
+  const hasCreditCard = last30.some(t => t.paymentMethod === "credit_card");
+  if (hasCreditCard) {
+    const totalCC = last30.filter(t => t.paymentMethod === "credit_card").reduce((a, b) => a + b.amount, 0);
+    out.push({
+      id: "credit-card-alert",
+      title: "Monitoramento de Cartão",
+      description: `Você possui ${brl(totalCC)} em gastos no cartão de crédito este mês. Verifique o fechamento da fatura.`,
+      severity: "atencao",
+      ctaLabel: "Ver registros",
+      ctaTo: "/registros",
+      priority: 85,
+    });
+  }
+
   return out.sort((a, b) => b.priority - a.priority).slice(0, 8);
 }
+
+
 
 
 /* ---------------- AI SUMMARY PAYLOAD ----------------

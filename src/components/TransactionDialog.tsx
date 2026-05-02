@@ -26,6 +26,8 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
   const [amount, setAmount] = React.useState<string>("");
   const [essential, setEssential] = React.useState(true);
   const [fixed, setFixed] = React.useState(false);
+  const [paymentMethod, setPaymentMethod] = React.useState<string>("");
+  const [tags, setTags] = React.useState<string>("");
 
   React.useEffect(() => {
     if (open && initial) {
@@ -36,6 +38,8 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
       setAmount(String(initial.amount));
       setEssential(initial.essential);
       setFixed(initial.fixed);
+      setPaymentMethod(initial.paymentMethod || "");
+      setTags(initial.tags?.join(", ") || "");
     } else if (open) {
       setType("despesa");
       setDate(todayISO());
@@ -44,6 +48,8 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
       setAmount("");
       setEssential(true);
       setFixed(false);
+      setPaymentMethod("");
+      setTags("");
     }
   }, [open, initial]);
 
@@ -70,6 +76,8 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
       amount: numericAmount,
       essential,
       fixed,
+      paymentMethod: paymentMethod || undefined,
+      tags: tags.split(",").map(t => t.trim()).filter(Boolean),
     };
 
     try {
@@ -168,6 +176,29 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
                 <p className="text-xs text-muted-foreground">Repete todo período</p>
               </div>
               <Switch id="fixed" checked={fixed} onCheckedChange={setFixed} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label>Método de Pagamento</Label>
+              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="money">Dinheiro</SelectItem>
+                  <SelectItem value="pix">PIX</SelectItem>
+                  <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
+                  <SelectItem value="debit_card">Cartão de Débito</SelectItem>
+                  <SelectItem value="transfer">Transferência</SelectItem>
+                  <SelectItem value="other">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="tags">Tags (separadas por vírgula)</Label>
+              <Input id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="ex: viagem, presente" />
             </div>
           </div>
 

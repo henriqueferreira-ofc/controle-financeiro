@@ -141,7 +141,10 @@ function normalizeDescription(s: string): string {
   return s
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\u0300-\u036f]/g, "") // remove acentos
+    .replace(/\d{2,}\/\d{2,}(\/\d{2,})?/g, "") // remove datas ex: 10/12
+    .replace(/\d{4,}/g, "") // remove números longos (códigos de transação)
+    .replace(/[\*\-#]/g, " ") // remove caracteres especiais de separação
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -159,16 +162,58 @@ export function hashKey(date: string, amount: number, desc: string): string {
 
 // Regras simples de auto-categorização
 const CATEGORY_RULES: Array<{ keywords: string[]; category: string; type: "entrada" | "despesa" }> = [
-  { keywords: ["mercado", "supermerc", "carrefour", "extra", "pão de açúcar", "atacad"], category: "Alimentação", type: "despesa" },
-  { keywords: ["ifood", "uber eats", "rappi", "restaurante", "lanche"], category: "Alimentação", type: "despesa" },
-  { keywords: ["uber", "99", "taxi", "metro", "ônibus", "combustivel", "gasolina", "posto"], category: "Transporte", type: "despesa" },
-  { keywords: ["aluguel", "condominio", "iptu"], category: "Moradia", type: "despesa" },
-  { keywords: ["luz", "energia", "agua", "gas", "internet", "telefone", "celular"], category: "Contas", type: "despesa" },
-  { keywords: ["farmacia", "drogaria", "consulta", "hospital", "plano de saude"], category: "Saúde", type: "despesa" },
-  { keywords: ["netflix", "spotify", "prime", "disney", "hbo", "youtube"], category: "Assinaturas", type: "despesa" },
-  { keywords: ["salario", "salário", "pagamento", "honorario"], category: "Salário", type: "entrada" },
-  { keywords: ["pix recebido", "transferencia recebida", "ted recebid"], category: "Transferências", type: "entrada" },
+  { keywords: ["mercado", "supermerc", "carrefour", "extra", "pao de acucar", "atacadao", "assai", "condor", "zaffari", "muffato", "angeloni", "compras", "mercearia"], category: "Alimentação", type: "despesa" },
+  { keywords: ["ifood", "uber eats", "rappi", "restaurante", "lanche", "padaria", "panificadora", "cafe", "starbucks", "mcdonalds", "burger king", "bk", "outback", "pizza", "sushi"], category: "Alimentação", type: "despesa" },
+  { keywords: ["uber", "99", "taxi", "metro", "onibus", "combustivel", "gasolina", "posto", "shell", "ipiranga", "br", "estacionamento", "pedagio", "movida", "localiza", "azul", "latam", "gol", "passagem"], category: "Transporte", type: "despesa" },
+  { keywords: ["aluguel", "condominio", "iptu", "imovel", "quinto andar", "loft"], category: "Moradia", type: "despesa" },
+  { keywords: ["luz", "energia", "cpfl", "enel", "light", "agua", "gas", "internet", "telefone", "vivo", "claro", "tim", "oi", "net", "sky"], category: "Contas", type: "despesa" },
+  { keywords: ["farmacia", "drogaria", "raia", "drogasil", "pague menos", "saopaulo", "consulta", "hospital", "plano de saude", "unimed", "bradesco saude", "sulamerica", "laboratorio", "dentista"], category: "Saúde", type: "despesa" },
+  { keywords: ["netflix", "spotify", "prime", "disney", "hbo", "youtube", "crunchyroll", "deezer", "globo play", "game", "steam", "playstation", "xbox", "nintendo"], category: "Assinaturas", type: "despesa" },
+  { keywords: ["salario", "salario", "pagamento", "honorario", "pro-labore", "rendimento", "dividendos"], category: "Salário", type: "entrada" },
+  { keywords: ["pix recebido", "transferencia recebida", "ted recebida", "deposito", "estorno", "cashback", "reembolso"], category: "Transferências", type: "entrada" },
+  { keywords: ["amazon", "mercado livre", "shopee", "shein", "magalu", "magazine", "americanas", "casas bahia", "loja", "roupa", "calcado", "tenis", "centauro", "decathlon", "renner", "cea", "riachuelo"], category: "Shopping", type: "despesa" },
+  { keywords: ["academia", "smartfit", "bluefit", "selfit", "esporte", "cinema", "ingresso", "show", "teatro", "viagem", "hotel", "airbnb", "booking", "decolar"], category: "Lazer", type: "despesa" },
 ];
+
+export type BankPreset = "nubank" | "itau" | "bradesco" | "bb" | "generic";
+
+export const BANK_PRESETS: Record<BankPreset, {
+  name: string;
+  separator: string;
+  mapping: ColumnMapping;
+  hasHeader: boolean;
+}> = {
+  nubank: {
+    name: "Nubank",
+    separator: ",",
+    hasHeader: true,
+    mapping: { date: 0, amount: 1, description: 3, type: null, category: null },
+  },
+  itau: {
+    name: "Itaú",
+    separator: ";",
+    hasHeader: true,
+    mapping: { date: 0, description: 1, amount: 2, type: null, category: null },
+  },
+  bradesco: {
+    name: "Bradesco",
+    separator: ";",
+    hasHeader: true,
+    mapping: { date: 0, description: 2, amount: 3, type: null, category: null },
+  },
+  bb: {
+    name: "Banco do Brasil",
+    separator: ",",
+    hasHeader: true,
+    mapping: { date: 0, description: 2, amount: 3, type: null, category: null },
+  },
+  generic: {
+    name: "Genérico / Outros",
+    separator: ",",
+    hasHeader: true,
+    mapping: { date: null, description: null, amount: null, type: null, category: null },
+  },
+};
 
 export function suggestCategory(description: string): { category: string; type: "entrada" | "despesa" } | null {
   const norm = normalizeDescription(description);
@@ -207,19 +252,30 @@ export function processRows(
     const description = (descRaw || "").trim();
     if (!description) errors.push("Descrição vazia");
 
-    // Tipo: explícito > sinal do valor > sugestão por descrição > despesa
+    // Tipo: Heurística robusta de sinal (Fase 2.1 - Integridade de entradas/saídas)
     let type: "entrada" | "despesa" = "despesa";
     const typeNorm = typeRaw.trim().toLowerCase();
-    if (typeNorm.startsWith("entr") || typeNorm === "income" || typeNorm === "credit" || typeNorm === "c") {
+    
+    // 1. Se houver coluna de tipo explícita
+    if (typeNorm.startsWith("entr") || typeNorm === "income" || typeNorm === "credit" || typeNorm === "c" || typeNorm === "credito") {
       type = "entrada";
-    } else if (typeNorm.startsWith("des") || typeNorm.startsWith("exp") || typeNorm === "debit" || typeNorm === "d") {
+    } else if (typeNorm.startsWith("des") || typeNorm.startsWith("exp") || typeNorm === "debit" || typeNorm === "d" || typeNorm === "debito") {
       type = "despesa";
-    } else if (amount !== null && amount > 0 && !typeRaw) {
-      // sem coluna de tipo: positivo=entrada, negativo=despesa
+    } 
+    // 2. Baseado no sinal do valor (Padrão: negativo = despesa)
+    else if (amount !== null) {
+      if (amount < 0) {
+        type = "despesa";
+      } else if (amount > 0) {
+        // No Nubank e outros, valores positivos no extrato costumam ser entradas (pagamentos/estornos)
+        type = "entrada";
+      }
+    }
+
+    // 3. Refinamento por palavra-chave se ainda incerto
+    if (amount !== null && amount > 0 && !typeRaw) {
       const suggested = suggestCategory(description);
       if (suggested) type = suggested.type;
-    } else if (amount !== null && amount < 0) {
-      type = "despesa";
     }
 
     const absAmount = amount !== null ? Math.abs(amount) : 0;

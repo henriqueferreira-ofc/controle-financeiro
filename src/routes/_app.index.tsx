@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { KpiCard } from "@/components/KpiCard";
 import { WeekProjectionCard, MonthDeltaBadge } from "@/components/WeekProjectionCard";
 import { UpcomingRecurringsWidget } from "@/components/UpcomingRecurringsWidget";
+import { SimulationCard } from "@/components/SimulationCard";
 import { brl } from "@/lib/format";
 import { ArrowDownRight, ArrowUpRight, CalendarDays, Lightbulb, PiggyBank, Plus, Trophy, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -138,54 +139,72 @@ function DashboardPage() {
           ))}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-          <KpiCard
-            label="Saldo atual"
-            value={brl(data.saldo)}
-            hint={data.saldo >= 0 ? "Positivo" : "Negativo"}
-            icon={Wallet}
-            tone={data.saldo >= 0 ? "success" : "destructive"}
-            delay={0}
-          />
-          <KpiCard
-            label="Total Entradas"
-            value={brl(data.totalEntradas)}
-            icon={ArrowUpRight}
-            tone="success"
-            delay={0.05}
-          />
-          <div className="relative">
+        <motion.div 
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: { staggerChildren: 0.05 }
+            }
+          }}
+          className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"
+        >
+          <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
+            <KpiCard
+              label="Saldo atual"
+              value={brl(data.saldo)}
+              hint={data.saldo >= 0 ? "Positivo" : "Negativo"}
+              icon={Wallet}
+              tone={data.saldo >= 0 ? "success" : "destructive"}
+              delay={0}
+            />
+          </motion.div>
+          <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
+            <KpiCard
+              label="Total Entradas"
+              value={brl(data.totalEntradas)}
+              icon={ArrowUpRight}
+              tone="success"
+              delay={0}
+            />
+          </motion.div>
+          <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} className="relative">
             <KpiCard
               label="Total Saídas"
               value={brl(data.totalSaidas)}
               icon={ArrowDownRight}
               tone="destructive"
-              delay={0.1}
+              delay={0}
             />
-            {/* Fase 1.2 — comparativo % vs média 3M */}
             {expenseDelta !== null && (
               <div className="absolute right-3 top-3">
                 <MonthDeltaBadge delta={expenseDelta} />
               </div>
             )}
-          </div>
-          <KpiCard
-            label="Gasto Médio Diário"
-            value={brl(data.gastoMedioDiario)}
-            hint={`Período de ${data.days} dia${data.days > 1 ? "s" : ""}`}
-            icon={CalendarDays}
-            tone="warning"
-            delay={0.15}
-          />
-          <KpiCard
-            label="Maior gasto/categoria"
-            value={data.topCat ? brl(data.topCat.total) : brl(0)}
-            hint={data.topCat ? data.topCat.name : "Sem dados"}
-            icon={Trophy}
-            tone="default"
-            delay={0.2}
-          />
-        </div>
+          </motion.div>
+          <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
+            <KpiCard
+              label="Gasto Médio Diário"
+              value={brl(data.gastoMedioDiario)}
+              hint={`Período de ${data.days} dia${data.days > 1 ? "s" : ""}`}
+              icon={CalendarDays}
+              tone="warning"
+              delay={0}
+            />
+          </motion.div>
+          <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
+            <KpiCard
+              label="Maior gasto/categoria"
+              value={data.topCat ? brl(data.topCat.total) : brl(0)}
+              hint={data.topCat ? data.topCat.name : "Sem dados"}
+              icon={Trophy}
+              tone="default"
+              delay={0}
+            />
+          </motion.div>
+        </motion.div>
       )}
 
       {/* Fase 1.2 + 1.1 — Projeção 7 dias + Próximas 4 semanas */}
@@ -326,6 +345,13 @@ function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Fase 3.2 — Simulador "E se..." */}
+      {!loading && (
+        <div className="mb-8 grid gap-6">
+          <SimulationCard />
+        </div>
+      )}
 
       {/* Insights */}
       <div>

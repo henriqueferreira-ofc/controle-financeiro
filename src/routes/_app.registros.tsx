@@ -13,8 +13,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import { brl, formatDateBR } from "@/lib/format";
-import { ArrowDownRight, ArrowUpRight, Eye, Pencil, Plus, Search, Trash2, Inbox } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Eye, Pencil, Plus, Search, Trash2, Inbox, Download } from "lucide-react";
+import { exportToCSV } from "@/lib/export";
 import { toast } from "sonner";
+import * as React from "react";
 
 export const Route = createFileRoute("/_app/registros")({
   head: () => ({
@@ -58,12 +60,14 @@ function RegistrosPage() {
       .filter((t) => {
         if (filters.type !== "all" && t.type !== filters.type) return false;
         if (filters.categoryId !== "all" && t.categoryId !== filters.categoryId) return false;
-        if (filters.search.trim()) {
-          const s = filters.search.toLowerCase();
-          if (!t.description.toLowerCase().includes(s)) return false;
-        }
-        return true;
-      })
+          if (filters.search.trim()) {
+            const s = filters.search.toLowerCase();
+            if (!t.description.toLowerCase().includes(s)) return false;
+          }
+          if (filters.tag !== "all" && !t.tags?.includes(filters.tag!)) return false;
+          if (filters.paymentMethod !== "all" && t.paymentMethod !== filters.paymentMethod) return false;
+          return true;
+        })
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [transactions, filters]);
 
@@ -98,9 +102,19 @@ function RegistrosPage() {
               </span>
             </p>
           </div>
-          <Button onClick={() => setCreateOpen(true)} className="w-full shrink-0 md:w-auto">
-            <Plus className="mr-1 h-4 w-4" /> Novo Registro
-          </Button>
+          <div className="flex w-full flex-col gap-2 sm:flex-row md:w-auto">
+            <Button 
+              variant="outline" 
+              onClick={() => exportToCSV(filtered, categories)} 
+              disabled={filtered.length === 0}
+              className="w-full sm:w-auto"
+            >
+              <Download className="mr-1 h-4 w-4" /> Exportar
+            </Button>
+            <Button onClick={() => setCreateOpen(true)} className="w-full shrink-0 md:w-auto">
+              <Plus className="mr-1 h-4 w-4" /> Novo Registro
+            </Button>
+          </div>
         </div>
 
         <Card className="border-border/60 shadow-[var(--shadow-card)]">
@@ -116,6 +130,7 @@ function RegistrosPage() {
                   className="pl-9"
                 />
               </div>
+              <div className="flex flex-wrap gap-2 sm:gap-3">
               <Select value={filters.type} onValueChange={(v) => setFilters((f) => ({ ...f, type: v as typeof f.type }))}>
                 <SelectTrigger className="w-full md:w-[180px]">
                   <SelectValue />
@@ -137,6 +152,40 @@ function RegistrosPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={filters.tag} onValueChange={(v) => setFilters((f) => ({ ...f, tag: v }))}>
+                <SelectTrigger className="w-full md:w-[150px]">
+                  <SelectValue placeholder="Tags" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as Tags</SelectItem>
+                  {Array.from(new Set(transactions.flatMap(t => t.tags || []))).map(tag => (
+                    <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filters.paymentMethod} onValueChange={(v) => setFilters((f) => ({ ...f, paymentMethod: v }))}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Método" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Métodos</SelectItem>
+                  <SelectItem value="money">Dinheiro</SelectItem>
+                  <SelectItem value="pix">PIX</SelectItem>
+                  <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
+                  <SelectItem value="debit_card">Cartão de Débito</SelectItem>
+                  <SelectItem value="transfer">Transferência</SelectItem>
+                  <SelectItem value="other">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-9 px-2 text-muted-foreground"
+                onClick={() => setFilters({ search: "", type: "all", categoryId: "all", tag: "all", paymentMethod: "all", period: "all" })}
+              >
+                Limpar
+              </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -227,63 +276,23 @@ function RegistrosPage() {
                         <TableHead>Descrição</TableHead>
                         <TableHead className="hidden lg:table-cell">Categoria</TableHead>
                         <TableHead>Tipo</TableHead>
+                        <TableHead className="hidden xl:table-cell">Tags</TableHead>
                         <TableHead className="text-right">Valor</TableHead>
                         <TableHead className="w-[140px] text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {paginated.map((t) => (
-                        <TableRow key={t.id} className="group">
-                          <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                            {formatDateBR(t.date)}
-                          </TableCell>
-                          <TableCell className="font-medium">{t.description}</TableCell>
-                          <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">
-                            {getCategoryName(t.categoryId)}
-                          </TableCell>
-                          <TableCell>
-                            {t.type === "entrada" ? (
-                              <Badge className="border-success/30 bg-success/15 text-success hover:bg-success/20">
-                                <ArrowUpRight className="mr-1 h-3 w-3" /> Entrada
-                              </Badge>
-                            ) : (
-                              <Badge className="border-destructive/30 bg-destructive/15 text-destructive hover:bg-destructive/20">
-                                <ArrowDownRight className="mr-1 h-3 w-3" /> Despesa
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className={`text-right font-semibold tabular-nums ${t.type === "entrada" ? "text-success" : "text-foreground"}`}>
-                            {t.type === "despesa" ? "-" : "+"} {brl(t.amount)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-1">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button size="icon" variant="ghost" onClick={() => setViewing(t)}>
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Ver detalhes</TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button size="icon" variant="ghost" onClick={() => setEditing(t)}>
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Editar</TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button size="icon" variant="ghost" onClick={() => setConfirmDelete(t)}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Excluir</TooltipContent>
-                              </Tooltip>
-                            </div>
-                          </TableCell>
-                        </TableRow>
+                        <TransactionRow
+                          key={t.id}
+                          t={t}
+                          getCategoryName={getCategoryName}
+                          brl={brl}
+                          formatDateBR={formatDateBR}
+                          onView={setViewing}
+                          onEdit={setEditing}
+                          onDelete={setConfirmDelete}
+                        />
                       ))}
                     </TableBody>
                   </Table>
@@ -384,3 +393,79 @@ function Row({ label, value, valueClass }: { label: string; value: string; value
     </div>
   );
 }
+
+// Fase 4.1 — Memoized Row for Performance
+interface RowProps {
+  t: Transaction;
+  getCategoryName: (id?: string) => string;
+  brl: (v: number) => string;
+  formatDateBR: (d: string) => string;
+  onView: (t: Transaction) => void;
+  onEdit: (t: Transaction) => void;
+  onDelete: (t: Transaction) => void;
+}
+
+const TransactionRow = React.memo(({ t, getCategoryName, brl, formatDateBR, onView, onEdit, onDelete }: RowProps) => {
+  return (
+    <TableRow className="group transition-colors hover:bg-muted/30">
+      <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+        {formatDateBR(t.date)}
+      </TableCell>
+      <TableCell className="font-medium">{t.description}</TableCell>
+      <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">
+        {getCategoryName(t.categoryId)}
+      </TableCell>
+      <TableCell>
+        {t.type === "entrada" ? (
+          <Badge className="border-success/30 bg-success/15 text-success hover:bg-success/20">
+            <ArrowUpRight className="mr-1 h-3 w-3" /> Entrada
+          </Badge>
+        ) : (
+          <Badge className="border-destructive/30 bg-destructive/15 text-destructive hover:bg-destructive/20">
+            <ArrowDownRight className="mr-1 h-3 w-3" /> Despesa
+          </Badge>
+        )}
+      </TableCell>
+      <TableCell className="hidden xl:table-cell">
+        <div className="flex flex-wrap gap-1">
+          {t.tags?.map(tag => (
+            <Badge key={tag} variant="outline" className="text-[10px] font-normal py-0 px-1 text-muted-foreground border-muted-foreground/30">
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      </TableCell>
+      <TableCell className={`text-right font-semibold tabular-nums ${t.type === "entrada" ? "text-success" : "text-foreground"}`}>
+        {t.type === "despesa" ? "-" : "+"} {brl(t.amount)}
+      </TableCell>
+      <TableCell className="text-right">
+        <div className="flex justify-end gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onView(t)}>
+                <Eye className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Ver detalhes</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(t)}>
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Editar</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => onDelete(t)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Excluir</TooltipContent>
+          </Tooltip>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+});

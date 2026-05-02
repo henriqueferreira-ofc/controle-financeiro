@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { AlertTriangle, Pencil, Plus, Trash2, Wallet } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, History, LayoutDashboard, Pencil, Plus, Trash2, Wallet } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { brl } from "@/lib/format";
 
@@ -25,6 +26,70 @@ export const Route = createFileRoute("/_app/orcamentos")({
   component: BudgetsPage,
 });
 
+function BudgetCard({ 
+  budget, category, spent, pct, over, onEdit, onDelete, isHistory = false 
+}: { 
+  budget: Budget; 
+  category: any; 
+  spent: number; 
+  pct: number; 
+  over: boolean; 
+  onEdit?: () => void; 
+  onDelete?: () => void;
+  isHistory?: boolean;
+}) {
+  return (
+    <Card className={`relative overflow-hidden ${over ? "border-destructive/30 bg-destructive/5" : ""}`}>
+      <CardContent className="p-5 space-y-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full" style={{ background: category?.color || "#64748b" }} />
+              <p className="font-medium truncate">{category?.name || "Categoria removida"}</p>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {budget.period === "monthly" ? "Mensal" : "Semanal"}
+            </p>
+          </div>
+          {!isHistory && onEdit && onDelete && (
+            <div className="flex gap-1">
+              <Button size="icon" variant="ghost" onClick={onEdit} className="h-8 w-8">
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+              <Button size="icon" variant="ghost" onClick={onDelete} className="h-8 w-8 text-destructive">
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-sm">
+            <span className={over ? "text-destructive font-semibold" : "font-medium"}>{brl(spent)}</span>
+            <span className="text-muted-foreground">{brl(budget.amount)}</span>
+          </div>
+          <Progress value={pct} className={over ? "[&>div]:bg-destructive" : ""} />
+          <div className="flex justify-between text-xs">
+            <span className={over ? "text-destructive font-medium" : "text-muted-foreground"}>
+              {pct.toFixed(0)}% utilizado
+            </span>
+            {over && (
+              <Badge variant="destructive" className="h-5 gap-1 px-1.5 text-[10px]">
+                <AlertTriangle className="h-3 w-3" /> Excedido
+              </Badge>
+            )}
+            {!over && isHistory && (
+              <Badge variant="outline" className="h-5 border-success/40 text-success bg-success/5 text-[10px]">
+                No limite
+              </Badge>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function BudgetsPage() {
   const { budgets, categories, transactions, addBudget, updateBudget, deleteBudget } = useFinwise();
   const [open, setOpen] = useState(false);
@@ -33,31 +98,58 @@ function BudgetsPage() {
 
   const despesaCats = categories.filter((c) => c.kind === "despesa");
 
+  const [view, setView] = useState<"current" | "history">("current");
+  const [historyMonth, setHistoryMonth] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    return d.toISOString().slice(0, 7); // YYYY-MM
+  });
+
   const spentByBudget = useMemo(() => {
     const map = new Map<string, number>();
-    const now = new Date();
+    const now = view === "current" ? new Date() : new Date(historyMonth + "-01T12:00:00");
+    
     for (const b of budgets) {
       let start: Date;
+      let end: Date;
+      
       if (b.period === "monthly") {
         start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
       } else {
-        const day = now.getDay();
-        start = new Date(now);
-        start.setDate(now.getDate() - day);
-        start.setHours(0, 0, 0, 0);
+        // Semanal só faz sentido no "atual" ou requer lógica complexa de histórico de semanas. 
+        // Para simplificar no histórico mensal, ignoramos semanas ou tratamos como o mês todo.
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
       }
+      
       const startISO = start.toISOString().slice(0, 10);
+      const endISO = end.toISOString().slice(0, 10);
+      
       let total = 0;
       for (const t of transactions) {
-        if (t.type !== "despesa") continue;
-        if (t.categoryId !== b.categoryId) continue;
-        if (t.date < startISO) continue;
-        total += t.amount;
+        if (t.type !== "despesa" || t.categoryId !== b.categoryId) continue;
+        if (t.date >= startISO && t.date <= endISO) {
+          total += t.amount;
+        }
       }
       map.set(b.id, total);
     }
     return map;
-  }, [budgets, transactions]);
+  }, [budgets, transactions, view, historyMonth]);
+
+  const historyOptions = useMemo(() => {
+    const opts = [];
+    const now = new Date();
+    for (let i = 1; i <= 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      opts.push({
+        label: d.toLocaleString("pt-BR", { month: "long", year: "numeric" }),
+        value: d.toISOString().slice(0, 7),
+      });
+    }
+    return opts;
+  }, []);
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 md:px-8 md:py-8">
@@ -71,66 +163,85 @@ function BudgetsPage() {
         </Button>
       </div>
 
-      {budgets.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center text-muted-foreground">
-            <Wallet className="mx-auto mb-3 h-10 w-10 opacity-50" />
-            Nenhum orçamento criado. Comece definindo um limite para uma categoria.
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {budgets.map((b) => {
-            const cat = categories.find((c) => c.id === b.categoryId);
-            const spent = spentByBudget.get(b.id) || 0;
-            const pct = Math.min(100, (spent / b.amount) * 100);
-            const over = spent > b.amount;
-            return (
-              <Card key={b.id} className="relative overflow-hidden">
-                <CardContent className="p-5 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="h-3 w-3 rounded-full" style={{ background: cat?.color || "#64748b" }} />
-                        <p className="font-medium truncate">{cat?.name || "Categoria removida"}</p>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {b.period === "monthly" ? "Mensal" : "Semanal"}
-                      </p>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => { setEditing(b); setOpen(true); }}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => setConfirmDel(b)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
+      <Tabs value={view} onValueChange={(v) => setView(v as any)} className="w-full">
+        <div className="flex items-center justify-between border-b pb-1">
+          <TabsList className="bg-transparent h-auto p-0 gap-6">
+            <TabsTrigger value="current" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-2 text-sm font-medium">
+              Mês atual
+            </TabsTrigger>
+            <TabsTrigger value="history" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-2 text-sm font-medium">
+              Histórico
+            </TabsTrigger>
+          </TabsList>
 
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-sm">
-                      <span className={over ? "text-destructive font-medium" : ""}>{brl(spent)}</span>
-                      <span className="text-muted-foreground">{brl(b.amount)}</span>
-                    </div>
-                    <Progress value={pct} className={over ? "[&>div]:bg-destructive" : ""} />
-                    <div className="flex justify-between text-xs">
-                      <span className={over ? "text-destructive" : "text-muted-foreground"}>
-                        {pct.toFixed(0)}% utilizado
-                      </span>
-                      {over && (
-                        <Badge variant="destructive" className="gap-1">
-                          <AlertTriangle className="h-3 w-3" /> Excedido
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+          {view === "history" && (
+            <Select value={historyMonth} onValueChange={setHistoryMonth}>
+              <SelectTrigger className="h-8 w-[180px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {historyOptions.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
-      )}
+
+        <TabsContent value="current" className="mt-6 space-y-4">
+          {budgets.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                <Wallet className="mx-auto mb-3 h-10 w-10 opacity-50" />
+                Nenhum orçamento criado. Comece definindo um limite para uma categoria.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {budgets.map((b) => {
+                const cat = categories.find((c) => c.id === b.categoryId);
+                const spent = spentByBudget.get(b.id) || 0;
+                const pct = Math.min(100, (spent / b.amount) * 100);
+                const over = spent > b.amount;
+                return (
+                  <BudgetCard 
+                    key={b.id} 
+                    budget={b} 
+                    category={cat} 
+                    spent={spent} 
+                    pct={pct} 
+                    over={over} 
+                    onEdit={() => { setEditing(b); setOpen(true); }}
+                    onDelete={() => setConfirmDel(b)}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-6 space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {budgets.map((b) => {
+              const cat = categories.find((c) => c.id === b.categoryId);
+              const spent = spentByBudget.get(b.id) || 0;
+              const pct = Math.min(100, (spent / b.amount) * 100);
+              const over = spent > b.amount;
+              return (
+                <BudgetCard 
+                  key={b.id} 
+                  budget={b} 
+                  category={cat} 
+                  spent={spent} 
+                  pct={pct} 
+                  over={over} 
+                  isHistory
+                />
+              );
+            })}
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <BudgetDialog
         open={open}

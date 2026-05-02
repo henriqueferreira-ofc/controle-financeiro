@@ -6,6 +6,7 @@ import { AxispayLogo } from "@/components/AxispayLogo";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/auth/AuthProvider";
 import { Avatar } from "@/components/ui/avatar";
+import { motion } from "framer-motion";
 
 export function AppSidebar() {
   const location = useLocation();
@@ -36,7 +37,13 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarContent>
         <div className="px-3 pt-5 pb-3">
-          <AxispayLogo size={36} tagline={t("app.tagline")} />
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="cursor-default"
+          >
+            <AxispayLogo size={36} tagline={t("app.tagline")} />
+          </motion.div>
         </div>
 
         <SidebarGroup>
