@@ -1,15 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useFinwise } from "@/store/finwise-store";
 import { dashboardData } from "@/store/selectors";
+import { computeCurrentBalance, expenseVs3MonthAvg, projectNextDays } from "@/store/projection";
 import type { Filters } from "@/store/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { KpiCard } from "@/components/KpiCard";
+import { WeekProjectionCard, MonthDeltaBadge } from "@/components/WeekProjectionCard";
+import { UpcomingRecurringsWidget } from "@/components/UpcomingRecurringsWidget";
 import { brl } from "@/lib/format";
 import { ArrowDownRight, ArrowUpRight, CalendarDays, Lightbulb, PiggyBank, Plus, Trophy, Wallet } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Bar,
@@ -77,7 +80,7 @@ function ChartTooltip({ active, payload, label }: any) {
 }
 
 function DashboardPage() {
-  const { transactions, categories, filters, setFilters, loading: dataLoading } = useFinwise();
+  const { transactions, categories, recurrings, filters, setFilters, loading: dataLoading } = useFinwise();
   const [transitionLoading, setTransitionLoading] = useState(false);
 
   useEffect(() => {
@@ -88,6 +91,11 @@ function DashboardPage() {
 
   const loading = transitionLoading || dataLoading;
   const data = dashboardData(transactions, categories, filters);
+
+  // Fase 1.2 — projeção 7 dias + comparativo + saldo atual
+  const projection = useMemo(() => projectNextDays(recurrings, 7), [recurrings]);
+  const currentBalance = useMemo(() => computeCurrentBalance(transactions), [transactions]);
+  const expenseDelta = useMemo(() => expenseVs3MonthAvg(transactions, { period: filters.period }), [transactions, filters.period]);
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-6 md:px-8 md:py-8">
@@ -146,13 +154,21 @@ function DashboardPage() {
             tone="success"
             delay={0.05}
           />
-          <KpiCard
-            label="Total Saídas"
-            value={brl(data.totalSaidas)}
-            icon={ArrowDownRight}
-            tone="destructive"
-            delay={0.1}
-          />
+          <div className="relative">
+            <KpiCard
+              label="Total Saídas"
+              value={brl(data.totalSaidas)}
+              icon={ArrowDownRight}
+              tone="destructive"
+              delay={0.1}
+            />
+            {/* Fase 1.2 — comparativo % vs média 3M */}
+            {expenseDelta !== null && (
+              <div className="absolute right-3 top-3">
+                <MonthDeltaBadge delta={expenseDelta} />
+              </div>
+            )}
+          </div>
           <KpiCard
             label="Gasto Médio Diário"
             value={brl(data.gastoMedioDiario)}
@@ -169,6 +185,19 @@ function DashboardPage() {
             tone="default"
             delay={0.2}
           />
+        </div>
+      )}
+
+      {/* Fase 1.2 + 1.1 — Projeção 7 dias + Próximas 4 semanas */}
+      {!loading && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <WeekProjectionCard
+            points={projection.points}
+            totalExpense={projection.totalExpense}
+            totalIncome={projection.totalIncome}
+            currentBalance={currentBalance}
+          />
+          <UpcomingRecurringsWidget recurrings={recurrings} categories={categories} weeks={4} />
         </div>
       )}
 
