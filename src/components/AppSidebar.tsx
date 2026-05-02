@@ -1,6 +1,6 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { Link, useLocation } from "@tanstack/react-router";
-import { BarChart3, Brain, LayoutDashboard, ListChecks, PiggyBank, Repeat, Tags, Target, User } from "lucide-react";
+import { BarChart3, Brain, LayoutDashboard, ListChecks, PiggyBank, Repeat, Tags, Target, Upload, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AxispayLogo } from "@/components/AxispayLogo";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -28,6 +28,7 @@ export function AppSidebar() {
     { title: t("nav.budgets"), url: "/orcamentos", icon: PiggyBank },
     { title: t("nav.goals"), url: "/metas", icon: Target },
     { title: t("nav.recurring"), url: "/recorrentes", icon: Repeat },
+    { title: t("nav.import"), url: "/importar", icon: Upload },
     { title: t("nav.reports"), url: "/relatorios", icon: BarChart3 },
   ];
 
