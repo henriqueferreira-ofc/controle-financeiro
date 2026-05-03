@@ -256,7 +256,7 @@ function DashboardPage() {
 
         <Card className="border-border/60 shadow-[var(--shadow-card)]">
           <CardHeader>
-            <CardTitle className="text-base">Despesa por categoria</CardTitle>
+            <CardTitle className="text-base">{t("dash.chart.perCategory")}</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
