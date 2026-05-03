@@ -410,11 +410,12 @@ function DashboardPage() {
 }
 
 function EmptyChart() {
+  const { t } = useI18n();
   return (
     <div className="flex h-[260px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border/60 text-center">
-      <p className="text-sm font-medium text-muted-foreground">Sem dados no período</p>
+      <p className="text-sm font-medium text-muted-foreground">{t("dash.empty.period")}</p>
       <Link to="/registros" className="text-sm text-primary hover:underline">
-        Adicionar registro
+        {t("dash.empty.addRecord")}
       </Link>
     </div>
   );
