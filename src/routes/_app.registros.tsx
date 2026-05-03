@@ -94,14 +94,9 @@ function RegistrosPage() {
       <div className="mx-auto w-full max-w-7xl space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-6 md:px-8 md:py-8">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Meus Registros</h1>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{tr("rec.title")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Gerencie todas as suas entradas e despesas.
-              <span className="hidden sm:inline">
-                {" "}
-                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs">/</kbd> para buscar,{" "}
-                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs">n</kbd> para novo.
-              </span>
+              {tr("rec.subtitle")}
             </p>
           </div>
           <div className="flex w-full flex-col gap-2 sm:flex-row md:w-auto">
@@ -111,10 +106,10 @@ function RegistrosPage() {
               disabled={filtered.length === 0}
               className="w-full sm:w-auto"
             >
-              <Download className="mr-1 h-4 w-4" /> Exportar
+              <Download className="mr-1 h-4 w-4" /> {tr("common.export")}
             </Button>
             <Button onClick={() => setCreateOpen(true)} className="w-full shrink-0 md:w-auto">
-              <Plus className="mr-1 h-4 w-4" /> Novo Registro
+              <Plus className="mr-1 h-4 w-4" /> {tr("rec.new")}
             </Button>
           </div>
         </div>
