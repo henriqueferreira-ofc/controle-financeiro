@@ -223,7 +223,7 @@ function DashboardPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="border-border/60 shadow-[var(--shadow-card)]">
           <CardHeader>
-            <CardTitle className="text-base">Gasto por dia</CardTitle>
+            <CardTitle className="text-base">{t("dash.chart.perDay")}</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
