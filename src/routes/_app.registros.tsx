@@ -30,6 +30,7 @@ export const Route = createFileRoute("/_app/registros")({
 });
 
 function RegistrosPage() {
+  const { t: tr } = useI18n();
   const { transactions, categories, filters, setFilters, deleteTransaction } = useFinwise();
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
