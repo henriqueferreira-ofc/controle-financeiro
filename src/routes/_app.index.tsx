@@ -83,6 +83,7 @@ function ChartTooltip({ active, payload, label }: any) {
 }
 
 function DashboardPage() {
+  const { t } = useI18n();
   const { transactions, categories, recurrings, filters, setFilters, loading: dataLoading } = useFinwise();
   const [transitionLoading, setTransitionLoading] = useState(false);
 
