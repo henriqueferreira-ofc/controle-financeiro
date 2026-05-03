@@ -57,6 +57,7 @@ export function AppSidebar() {
                       <Link
                         to={item.url}
                         onClick={handleNav}
+                        preload="intent"
                         className={cn(
                           "transition-all",
                           active && "bg-sidebar-accent text-sidebar-accent-foreground font-medium",
