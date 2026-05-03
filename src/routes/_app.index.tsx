@@ -15,6 +15,7 @@ import { brl } from "@/lib/format";
 import { ArrowDownRight, ArrowUpRight, CalendarDays, Lightbulb, PiggyBank, Plus, Trophy, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { useI18n } from "@/i18n/I18nProvider";
 import {
   Bar,
   BarChart,
@@ -40,10 +41,11 @@ export const Route = createFileRoute("/_app/")({
 });
 
 function PeriodButtons({ value, onChange }: { value: Filters["period"]; onChange: (v: Filters["period"]) => void }) {
+  const { t } = useI18n();
   const opts: { v: Filters["period"]; label: string }[] = [
-    { v: "7d", label: "7 dias" },
-    { v: "30d", label: "30 dias" },
-    { v: "all", label: "Total" },
+    { v: "7d", label: t("period.7d") },
+    { v: "30d", label: t("period.30d") },
+    { v: "all", label: t("period.all") },
   ];
   return (
     <div className="inline-flex rounded-lg border border-border bg-card p-1">
@@ -81,6 +83,7 @@ function ChartTooltip({ active, payload, label }: any) {
 }
 
 function DashboardPage() {
+  const { t } = useI18n();
   const { transactions, categories, recurrings, filters, setFilters, loading: dataLoading } = useFinwise();
   const [transitionLoading, setTransitionLoading] = useState(false);
 
@@ -102,9 +105,9 @@ function DashboardPage() {
     <div className="mx-auto w-full max-w-7xl space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-6 md:px-8 md:py-8">
       <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Dashboard</h1>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("dash.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Acompanhe entradas, despesas e tendências do seu período.
+            {t("dash.subtitle")}
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
@@ -120,7 +123,7 @@ function DashboardPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as categorias</SelectItem>
+              <SelectItem value="all">{t("common.allCategories")}</SelectItem>
               {categories.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
                   {c.name}
@@ -153,9 +156,9 @@ function DashboardPage() {
         >
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
             <KpiCard
-              label="Saldo atual"
+              label={t("dash.kpi.balance")}
               value={brl(data.saldo)}
-              hint={data.saldo >= 0 ? "Positivo" : "Negativo"}
+              hint={data.saldo >= 0 ? t("dash.kpi.balance.positive") : t("dash.kpi.balance.negative")}
               icon={Wallet}
               tone={data.saldo >= 0 ? "success" : "destructive"}
               delay={0}
@@ -163,7 +166,7 @@ function DashboardPage() {
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
             <KpiCard
-              label="Total Entradas"
+              label={t("dash.kpi.income")}
               value={brl(data.totalEntradas)}
               icon={ArrowUpRight}
               tone="success"
@@ -172,7 +175,7 @@ function DashboardPage() {
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} className="relative">
             <KpiCard
-              label="Total Saídas"
+              label={t("dash.kpi.expense")}
               value={brl(data.totalSaidas)}
               icon={ArrowDownRight}
               tone="destructive"
@@ -182,9 +185,9 @@ function DashboardPage() {
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
             <KpiCard
-              label="Gasto Médio Diário"
+              label={t("dash.kpi.daily")}
               value={brl(data.gastoMedioDiario)}
-              hint={`Período de ${data.days} dia${data.days > 1 ? "s" : ""}`}
+              hint={t("dash.kpi.daily.hint", { n: data.days })}
               icon={CalendarDays}
               tone="warning"
               delay={0}
@@ -192,9 +195,9 @@ function DashboardPage() {
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
             <KpiCard
-              label="Maior gasto/categoria"
+              label={t("dash.kpi.topCat")}
               value={data.topCat ? brl(data.topCat.total) : brl(0)}
-              hint={data.topCat ? data.topCat.name : "Sem dados"}
+              hint={data.topCat ? data.topCat.name : t("common.noData")}
               icon={Trophy}
               tone="default"
               delay={0}
@@ -220,7 +223,7 @@ function DashboardPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="border-border/60 shadow-[var(--shadow-card)]">
           <CardHeader>
-            <CardTitle className="text-base">Gasto por dia</CardTitle>
+            <CardTitle className="text-base">{t("dash.chart.perDay")}</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -238,7 +241,7 @@ function DashboardPage() {
                     <Line
                       type="monotone"
                       dataKey="despesa"
-                      name="Despesa"
+                      name={t("dash.legend.expense")}
                       stroke="oklch(0.65 0.21 25)"
                       strokeWidth={2.5}
                       dot={{ r: 3 }}
@@ -253,7 +256,7 @@ function DashboardPage() {
 
         <Card className="border-border/60 shadow-[var(--shadow-card)]">
           <CardHeader>
-            <CardTitle className="text-base">Despesa por categoria</CardTitle>
+            <CardTitle className="text-base">{t("dash.chart.perCategory")}</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -285,7 +288,7 @@ function DashboardPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="border-border/60 shadow-[var(--shadow-card)]">
           <CardHeader>
-            <CardTitle className="text-base">Saldo acumulado</CardTitle>
+            <CardTitle className="text-base">{t("dash.chart.cumulative")}</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -303,7 +306,7 @@ function DashboardPage() {
                     <Line
                       type="monotone"
                       dataKey="saldo"
-                      name="Saldo"
+                      name={t("dash.kpi.balance")}
                       stroke="oklch(0.78 0.16 165)"
                       strokeWidth={2.5}
                       dot={{ r: 3 }}
@@ -318,7 +321,7 @@ function DashboardPage() {
 
         <Card className="border-border/60 shadow-[var(--shadow-card)]">
           <CardHeader>
-            <CardTitle className="text-base">Mês atual vs mês anterior</CardTitle>
+            <CardTitle className="text-base">{t("dash.chart.monthCompare")}</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -332,8 +335,8 @@ function DashboardPage() {
                     <YAxis stroke="oklch(0.7 0.015 250)" fontSize={12} />
                     <Tooltip content={<ChartTooltip />} cursor={{ fill: "oklch(0.3 0.02 250 / 0.4)" }} />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="entrada" name="Entradas" fill="oklch(0.78 0.16 165)" radius={[6, 6, 0, 0]} />
-                    <Bar dataKey="despesa" name="Despesas" fill="oklch(0.65 0.21 25)" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="entrada" name={t("dash.legend.income")} fill="oklch(0.78 0.16 165)" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="despesa" name={t("dash.legend.expense")} fill="oklch(0.65 0.21 25)" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -353,7 +356,7 @@ function DashboardPage() {
       <div>
         <div className="mb-3 flex items-center gap-2">
           <Lightbulb className="h-4 w-4 text-warning" />
-          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Insights</h2>
+          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">{t("dash.insights")}</h2>
         </div>
         {loading ? (
           <div className="grid gap-3 md:grid-cols-2">
@@ -365,14 +368,14 @@ function DashboardPage() {
           <Card className="border-dashed">
             <CardContent className="flex items-center justify-between gap-4 p-6">
               <div>
-                <p className="font-medium">Nenhum insight disponível</p>
+                <p className="font-medium">{t("dash.insights.empty.title")}</p>
                 <p className="text-sm text-muted-foreground">
-                  Adicione registros para receber recomendações inteligentes.
+                  {t("dash.insights.empty.desc")}
                 </p>
               </div>
               <Button asChild>
                 <Link to="/registros">
-                  <Plus className="mr-1 h-4 w-4" /> Adicionar registro
+                  <Plus className="mr-1 h-4 w-4" /> {t("dash.empty.addRecord")}
                 </Link>
               </Button>
             </CardContent>
@@ -407,11 +410,12 @@ function DashboardPage() {
 }
 
 function EmptyChart() {
+  const { t } = useI18n();
   return (
     <div className="flex h-[260px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border/60 text-center">
-      <p className="text-sm font-medium text-muted-foreground">Sem dados no período</p>
+      <p className="text-sm font-medium text-muted-foreground">{t("dash.empty.period")}</p>
       <Link to="/registros" className="text-sm text-primary hover:underline">
-        Adicionar registro
+        {t("dash.empty.addRecord")}
       </Link>
     </div>
   );

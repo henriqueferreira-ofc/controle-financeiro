@@ -27,6 +27,7 @@ import {
   BANK_PRESETS,
 } from "@/store/csv-import";
 import { brl } from "@/lib/format";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/_app/importar")({
   component: ImportarPage,
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/_app/importar")({
 type Step = "upload" | "mapping" | "preview" | "done";
 
 function ImportarPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { transactions, categories, refresh } = useFinwise();
   const [step, setStep] = React.useState<Step>("upload");
@@ -197,7 +199,7 @@ function ImportarPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-3 md:p-6">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Importar CSV</h1>
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{t("imp.title")}</h1>
         <p className="text-sm text-muted-foreground">
           Importe extratos bancários com mapeamento automático, deduplicação e categorização inteligente.
         </p>

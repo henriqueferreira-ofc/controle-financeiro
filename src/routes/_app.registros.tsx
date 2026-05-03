@@ -17,6 +17,7 @@ import { ArrowDownRight, ArrowUpRight, Eye, Pencil, Plus, Search, Trash2, Inbox,
 import { exportToCSV } from "@/lib/export";
 import { toast } from "sonner";
 import * as React from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/_app/registros")({
   head: () => ({
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/_app/registros")({
 });
 
 function RegistrosPage() {
+  const { t: tr } = useI18n();
   const { transactions, categories, filters, setFilters, deleteTransaction } = useFinwise();
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
@@ -80,7 +82,7 @@ function RegistrosPage() {
     if (!confirmDelete) return;
     try {
       await deleteTransaction(confirmDelete.id);
-      toast.success("Registro removido.");
+      toast.success(tr("rec.deleted"));
     } catch {
       // toast already shown
     }
@@ -92,14 +94,9 @@ function RegistrosPage() {
       <div className="mx-auto w-full max-w-7xl space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-6 md:px-8 md:py-8">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Meus Registros</h1>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{tr("rec.title")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Gerencie todas as suas entradas e despesas.
-              <span className="hidden sm:inline">
-                {" "}
-                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs">/</kbd> para buscar,{" "}
-                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs">n</kbd> para novo.
-              </span>
+              {tr("rec.subtitle")}
             </p>
           </div>
           <div className="flex w-full flex-col gap-2 sm:flex-row md:w-auto">
@@ -109,10 +106,10 @@ function RegistrosPage() {
               disabled={filtered.length === 0}
               className="w-full sm:w-auto"
             >
-              <Download className="mr-1 h-4 w-4" /> Exportar
+              <Download className="mr-1 h-4 w-4" /> {tr("common.export")}
             </Button>
             <Button onClick={() => setCreateOpen(true)} className="w-full shrink-0 md:w-auto">
-              <Plus className="mr-1 h-4 w-4" /> Novo Registro
+              <Plus className="mr-1 h-4 w-4" /> {tr("rec.new")}
             </Button>
           </div>
         </div>
@@ -124,7 +121,7 @@ function RegistrosPage() {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="search-input"
-                  placeholder="Buscar por descrição..."
+                  placeholder={tr("rec.search")}
                   value={filters.search}
                   onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
                   className="pl-9"
@@ -136,9 +133,9 @@ function RegistrosPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os tipos</SelectItem>
-                  <SelectItem value="entrada">Apenas Entradas</SelectItem>
-                  <SelectItem value="despesa">Apenas Despesas</SelectItem>
+                  <SelectItem value="all">{tr("rec.type.all")}</SelectItem>
+                  <SelectItem value="entrada">{tr("rec.type.income")}</SelectItem>
+                  <SelectItem value="despesa">{tr("rec.type.expense")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filters.categoryId} onValueChange={(v) => setFilters((f) => ({ ...f, categoryId: v }))}>
@@ -146,7 +143,7 @@ function RegistrosPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas as categorias</SelectItem>
+                  <SelectItem value="all">{tr("common.allCategories")}</SelectItem>
                   {categories.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}

@@ -42,6 +42,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SimulationCard } from "@/components/SimulationCard";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/_app/inteligencia")({
   head: () => ({
@@ -64,6 +65,7 @@ type AIInsight = {
 };
 
 function IntelligencePage() {
+  const { t } = useI18n();
   const { transactions, categories, budgets, goals, recurrings, loading } = useFinwise();
   const [horizon, setHorizon] = useState<30 | 60 | 90>(30);
 
@@ -136,7 +138,7 @@ function IntelligencePage() {
         <div>
           <div className="flex items-center gap-2">
             <Brain className="h-7 w-7 text-primary" />
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Inteligência financeira</h1>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("int.title")}</h1>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             Score, anomalias, projeções e insights gerados por IA.

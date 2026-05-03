@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/_app/categorias")({
   head: () => ({
@@ -30,6 +31,7 @@ const PALETTE = [
 ];
 
 function CategoriesPage() {
+  const { t } = useI18n();
   const { categories, addCategory, updateCategory, deleteCategory } = useFinwise();
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
@@ -42,7 +44,7 @@ function CategoriesPage() {
     if (!confirmDelete) return;
     try {
       await deleteCategory(confirmDelete.id);
-      toast.success("Categoria excluída.");
+      toast.success(t("cat.deleted"));
     } catch {
       // already toasted
     }
@@ -54,24 +56,24 @@ function CategoriesPage() {
       <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 md:px-8 md:py-8">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Categorias</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">{t("cat.title")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Use as categorias padrão ou crie as suas, com cor própria.
+              {t("cat.subtitle")}
             </p>
           </div>
           <Button onClick={() => setCreateOpen(true)} className="shrink-0">
-            <Plus className="mr-1 h-4 w-4" /> Nova categoria
+            <Plus className="mr-1 h-4 w-4" /> {t("cat.new")}
           </Button>
         </div>
 
         <Section
-          title="Suas categorias personalizadas"
-          subtitle={customs.length === 0 ? "Você ainda não criou categorias personalizadas." : undefined}
+          title={t("cat.yours")}
+          subtitle={customs.length === 0 ? t("cat.yours.empty") : undefined}
         >
           <CategoryGrid items={customs} onEdit={setEditing} onDelete={setConfirmDelete} />
         </Section>
 
-        <Section title="Categorias padrão" subtitle="Disponíveis para todos os usuários e não podem ser editadas.">
+        <Section title={t("cat.global")} subtitle={t("cat.global.subtitle")}>
           <CategoryGrid items={globais} readonly />
         </Section>
       </div>

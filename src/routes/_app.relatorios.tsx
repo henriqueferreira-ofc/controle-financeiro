@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/_app/relatorios")({
   head: () => ({
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/_app/relatorios")({
 });
 
 function RelatoriosPage() {
+  const { t } = useI18n();
   const { transactions, categories } = useFinwise();
 
   const now = new Date();
@@ -81,9 +83,9 @@ function RelatoriosPage() {
     <div className="mx-auto w-full max-w-7xl space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-6 md:px-8 md:py-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Relatórios</h1>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("rep.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Análise detalhada de movimentações mensais.
+            {t("rep.subtitle")}
           </p>
         </div>
         
