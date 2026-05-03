@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Database, Download, Globe, LogOut, RefreshCw, Upload, Wallet, Link as LinkIcon } from "lucide-react";
+import { Camera, Database, Download, Globe, Loader2, LogOut, RefreshCw, Upload, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/perfil")({
@@ -27,8 +27,10 @@ function PerfilPage() {
   const [name, setName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [reseeding, setReseeding] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const avatarFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -72,6 +74,42 @@ function PerfilPage() {
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Imagem muito grande. Máximo 2MB.");
+      if (avatarFileRef.current) avatarFileRef.current.value = "";
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      const publicUrl = `${pub.publicUrl}?v=${Date.now()}`;
+
+      const { error: authErr } = await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl },
+      });
+      if (authErr) throw authErr;
+
+      setAvatarUrl(publicUrl);
+      toast.success("Foto atualizada!");
+    } catch (err: any) {
+      toast.error("Erro ao enviar foto: " + err.message);
+    } finally {
+      setUploading(false);
+      if (avatarFileRef.current) avatarFileRef.current.value = "";
+    }
+  };
+
   const handleReseed = async () => {
     setReseeding(true);
     try {
@@ -101,38 +139,44 @@ function PerfilPage() {
           <CardTitle className="text-base">Informações da conta</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-6 sm:flex-row sm:items-start">
-          <Avatar className="h-20 w-20 border-2 border-primary/20 p-1">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={name} className="h-full w-full rounded-full object-cover" />
-            ) : (
-              <AvatarFallback className="bg-primary text-primary-foreground text-xl font-bold">{initials}</AvatarFallback>
-            )}
-          </Avatar>
-          
+          <div className="relative shrink-0">
+            <Avatar className="h-24 w-24 border-2 border-primary/20 p-1">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={name} className="h-full w-full rounded-full object-cover" />
+              ) : (
+                <AvatarFallback className="bg-primary text-primary-foreground text-xl font-bold">{initials}</AvatarFallback>
+              )}
+            </Avatar>
+            <button
+              type="button"
+              onClick={() => avatarFileRef.current?.click()}
+              disabled={uploading}
+              aria-label="Alterar foto de perfil"
+              className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md ring-2 ring-background transition hover:scale-105 disabled:opacity-60"
+            >
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+            </button>
+            <input
+              ref={avatarFileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
+          </div>
+
           <div className="grid flex-1 gap-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome Completo</Label>
-                <Input 
-                  id="name" 
-                  placeholder="Seu nome" 
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)} 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="avatar">Link da Foto (URL)</Label>
-                <div className="relative">
-                  <Input 
-                    id="avatar" 
-                    placeholder="https://exemplo.com/foto.jpg" 
-                    value={avatarUrl} 
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    className="pl-9"
-                  />
-                  <LinkIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                </div>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome Completo</Label>
+              <Input
+                id="name"
+                placeholder="Seu nome"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Clique no ícone da câmera para enviar uma nova foto (máx. 2MB).
+              </p>
             </div>
 
             <div className="flex justify-end">
