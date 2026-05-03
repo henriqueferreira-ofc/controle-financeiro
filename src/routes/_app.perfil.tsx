@@ -69,9 +69,9 @@ function PerfilPage() {
       });
       if (authError) throw authError;
 
-      toast.success("Perfil atualizado com sucesso!");
+      toast.success(t("prof.saved"));
     } catch (error: any) {
-      toast.error("Erro ao salvar: " + error.message);
+      toast.error(t("common.saving") + ": " + error.message);
     } finally {
       setSaving(false);
     }
@@ -81,7 +81,7 @@ function PerfilPage() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("Imagem muito grande. Máximo 2MB.");
+      toast.error(t("prof.tooLarge"));
       if (avatarFileRef.current) avatarFileRef.current.value = "";
       return;
     }
@@ -107,9 +107,9 @@ function PerfilPage() {
       await supabase.from("profiles").update({ avatar_url: publicUrl } as any).eq("id", user.id);
 
       setAvatarUrl(publicUrl);
-      toast.success("Foto atualizada!");
+      toast.success(t("prof.uploaded"));
     } catch (err: any) {
-      toast.error("Erro ao enviar foto: " + err.message);
+      toast.error("✗ " + err.message);
     } finally {
       setUploading(false);
       if (avatarFileRef.current) avatarFileRef.current.value = "";
@@ -120,7 +120,7 @@ function PerfilPage() {
     setReseeding(true);
     try {
       await reseed();
-      toast.success("Dados de exemplo carregados.");
+      toast.success(t("prof.demoLoaded"));
     } catch {
       // toast already shown
     }
