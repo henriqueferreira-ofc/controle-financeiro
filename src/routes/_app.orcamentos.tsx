@@ -15,6 +15,7 @@ import { AlertTriangle, ChevronLeft, ChevronRight, History, LayoutDashboard, Pen
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { brl } from "@/lib/format";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/_app/orcamentos")({
   head: () => ({

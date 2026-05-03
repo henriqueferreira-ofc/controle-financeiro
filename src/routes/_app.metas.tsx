@@ -15,6 +15,7 @@ import { CheckCircle2, Pencil, Plus, Target, Trash2, Trophy, Star, Zap } from "l
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { brl, formatDateBR } from "@/lib/format";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/_app/metas")({
   head: () => ({

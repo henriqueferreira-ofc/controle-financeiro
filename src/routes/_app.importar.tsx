@@ -27,6 +27,7 @@ import {
   BANK_PRESETS,
 } from "@/store/csv-import";
 import { brl } from "@/lib/format";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/_app/importar")({
   component: ImportarPage,
