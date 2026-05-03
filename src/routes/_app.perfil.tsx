@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Database, Download, Globe, LogOut, RefreshCw, Upload, Wallet, Link as LinkIcon } from "lucide-react";
+import { Camera, Database, Download, Globe, Loader2, LogOut, RefreshCw, Upload, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/perfil")({
