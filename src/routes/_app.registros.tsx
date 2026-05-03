@@ -133,9 +133,9 @@ function RegistrosPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os tipos</SelectItem>
-                  <SelectItem value="entrada">Apenas Entradas</SelectItem>
-                  <SelectItem value="despesa">Apenas Despesas</SelectItem>
+                  <SelectItem value="all">{tr("rec.type.all")}</SelectItem>
+                  <SelectItem value="entrada">{tr("rec.type.income")}</SelectItem>
+                  <SelectItem value="despesa">{tr("rec.type.expense")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filters.categoryId} onValueChange={(v) => setFilters((f) => ({ ...f, categoryId: v }))}>
