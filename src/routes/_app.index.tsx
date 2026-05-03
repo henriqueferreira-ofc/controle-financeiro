@@ -105,9 +105,9 @@ function DashboardPage() {
     <div className="mx-auto w-full max-w-7xl space-y-4 px-3 py-4 sm:space-y-6 sm:px-4 sm:py-6 md:px-8 md:py-8">
       <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Dashboard</h1>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("dash.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Acompanhe entradas, despesas e tendências do seu período.
+            {t("dash.subtitle")}
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
@@ -123,7 +123,7 @@ function DashboardPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as categorias</SelectItem>
+              <SelectItem value="all">{t("common.allCategories")}</SelectItem>
               {categories.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
                   {c.name}
