@@ -82,7 +82,7 @@ function RegistrosPage() {
     if (!confirmDelete) return;
     try {
       await deleteTransaction(confirmDelete.id);
-      toast.success("Registro removido.");
+      toast.success(tr("rec.deleted"));
     } catch {
       // toast already shown
     }
