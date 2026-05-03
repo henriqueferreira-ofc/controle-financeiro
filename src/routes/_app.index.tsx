@@ -356,7 +356,7 @@ function DashboardPage() {
       <div>
         <div className="mb-3 flex items-center gap-2">
           <Lightbulb className="h-4 w-4 text-warning" />
-          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Insights</h2>
+          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">{t("dash.insights")}</h2>
         </div>
         {loading ? (
           <div className="grid gap-3 md:grid-cols-2">
