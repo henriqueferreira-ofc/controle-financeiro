@@ -199,7 +199,7 @@ function ImportarPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-3 md:p-6">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Importar CSV</h1>
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{t("imp.title")}</h1>
         <p className="text-sm text-muted-foreground">
           Importe extratos bancários com mapeamento automático, deduplicação e categorização inteligente.
         </p>
