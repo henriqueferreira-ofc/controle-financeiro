@@ -23,6 +23,7 @@ export const Route = createFileRoute("/_app/relatorios")({
 });
 
 function RelatoriosPage() {
+  const { t } = useI18n();
   const { transactions, categories } = useFinwise();
 
   const now = new Date();

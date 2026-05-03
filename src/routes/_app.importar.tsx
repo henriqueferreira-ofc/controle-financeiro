@@ -36,6 +36,7 @@ export const Route = createFileRoute("/_app/importar")({
 type Step = "upload" | "mapping" | "preview" | "done";
 
 function ImportarPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { transactions, categories, refresh } = useFinwise();
   const [step, setStep] = React.useState<Step>("upload");

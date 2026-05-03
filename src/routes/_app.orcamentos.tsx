@@ -92,6 +92,7 @@ function BudgetCard({
 }
 
 function BudgetsPage() {
+  const { t } = useI18n();
   const { budgets, categories, transactions, addBudget, updateBudget, deleteBudget } = useFinwise();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Budget | null>(null);

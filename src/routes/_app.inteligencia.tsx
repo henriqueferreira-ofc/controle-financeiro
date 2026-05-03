@@ -65,6 +65,7 @@ type AIInsight = {
 };
 
 function IntelligencePage() {
+  const { t } = useI18n();
   const { transactions, categories, budgets, goals, recurrings, loading } = useFinwise();
   const [horizon, setHorizon] = useState<30 | 60 | 90>(30);
 
