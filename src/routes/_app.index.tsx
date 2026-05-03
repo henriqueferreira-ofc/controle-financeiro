@@ -306,7 +306,7 @@ function DashboardPage() {
                     <Line
                       type="monotone"
                       dataKey="saldo"
-                      name="Saldo"
+                      name={t("dash.kpi.balance")}
                       stroke="oklch(0.78 0.16 165)"
                       strokeWidth={2.5}
                       dot={{ r: 3 }}
