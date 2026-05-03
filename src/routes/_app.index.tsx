@@ -41,10 +41,11 @@ export const Route = createFileRoute("/_app/")({
 });
 
 function PeriodButtons({ value, onChange }: { value: Filters["period"]; onChange: (v: Filters["period"]) => void }) {
+  const { t } = useI18n();
   const opts: { v: Filters["period"]; label: string }[] = [
-    { v: "7d", label: "7 dias" },
-    { v: "30d", label: "30 dias" },
-    { v: "all", label: "Total" },
+    { v: "7d", label: t("period.7d") },
+    { v: "30d", label: t("period.30d") },
+    { v: "all", label: t("period.all") },
   ];
   return (
     <div className="inline-flex rounded-lg border border-border bg-card p-1">
