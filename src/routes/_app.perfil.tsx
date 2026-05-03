@@ -101,6 +101,9 @@ function PerfilPage() {
       });
       if (authErr) throw authErr;
 
+      // Persiste na tabela profiles → sincroniza em qualquer dispositivo/login
+      await supabase.from("profiles").update({ avatar_url: publicUrl } as any).eq("id", user.id);
+
       setAvatarUrl(publicUrl);
       toast.success("Foto atualizada!");
     } catch (err: any) {
