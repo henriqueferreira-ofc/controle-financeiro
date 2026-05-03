@@ -4,7 +4,7 @@ import { translations, type Locale, LOCALES } from "./translations";
 type I18nContextType = {
   locale: Locale;
   setLocale: (l: Locale) => void;
-  t: (key: string) => string;
+  t: (key: string, vars?: Record<string, string | number>) => string;
   locales: typeof LOCALES;
 };
 
