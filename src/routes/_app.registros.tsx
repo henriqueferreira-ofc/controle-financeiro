@@ -17,6 +17,7 @@ import { ArrowDownRight, ArrowUpRight, Eye, Pencil, Plus, Search, Trash2, Inbox,
 import { exportToCSV } from "@/lib/export";
 import { toast } from "sonner";
 import * as React from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/_app/registros")({
   head: () => ({
