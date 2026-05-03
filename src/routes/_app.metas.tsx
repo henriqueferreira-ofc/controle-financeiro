@@ -30,6 +30,7 @@ export const Route = createFileRoute("/_app/metas")({
 const PALETTE = ["#10b981", "#3b82f6", "#8b5cf6", "#ec4899", "#f97316", "#eab308", "#06b6d4", "#ef4444"];
 
 function GoalsPage() {
+  const { t } = useI18n();
   const { goals, addGoal, updateGoal, deleteGoal } = useFinwise();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Goal | null>(null);
@@ -39,11 +40,11 @@ function GoalsPage() {
     <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 md:px-8 md:py-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Metas financeiras</h1>
-          <p className="text-sm text-muted-foreground">Defina objetivos e acompanhe o progresso.</p>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("goal.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("goal.subtitle")}</p>
         </div>
         <Button onClick={() => { setEditing(null); setOpen(true); }} className="shrink-0">
-          <Plus className="mr-1 h-4 w-4" /> Nova meta
+          <Plus className="mr-1 h-4 w-4" /> {t("goal.new")}
         </Button>
       </div>
 
@@ -51,7 +52,7 @@ function GoalsPage() {
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">
             <Target className="mx-auto mb-3 h-10 w-10 opacity-50" />
-            Nenhuma meta criada. Defina seu primeiro objetivo financeiro.
+            {t("goal.empty")}
           </CardContent>
         </Card>
       ) : (
