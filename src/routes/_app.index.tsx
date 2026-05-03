@@ -241,7 +241,7 @@ function DashboardPage() {
                     <Line
                       type="monotone"
                       dataKey="despesa"
-                      name="Despesa"
+                      name={t("dash.legend.expense")}
                       stroke="oklch(0.65 0.21 25)"
                       strokeWidth={2.5}
                       dot={{ r: 3 }}
