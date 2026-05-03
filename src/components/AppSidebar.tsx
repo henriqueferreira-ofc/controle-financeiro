@@ -79,7 +79,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isActive("/perfil")} className="h-12">
-              <Link to="/perfil" onClick={handleNav} className="flex items-center gap-3">
+              <Link to="/perfil" onClick={handleNav} preload="intent" className="flex items-center gap-3">
                 {avatarUrl ? (
                   <Avatar className="h-6 w-6 border border-border overflow-hidden">
                     <img src={avatarUrl} className="h-full w-full object-cover rounded-full" />
