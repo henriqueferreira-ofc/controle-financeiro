@@ -23,6 +23,7 @@ export const Route = createFileRoute("/_app/perfil")({
 });
 
 function PerfilPage() {
+  const { t } = useI18n();
   const { user, signOut } = useAuth();
   const { reseed, exportJSON, importJSON, refresh } = useFinwise();
   const [name, setName] = useState("");
