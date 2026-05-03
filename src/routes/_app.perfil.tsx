@@ -54,13 +54,16 @@ function PerfilPage() {
     if (!user) return;
     setSaving(true);
     try {
-      // 1. Atualizar nome na tabela profiles
-      const { error: profileError } = await supabase.from("profiles").update({ name } as any).eq("id", user.id);
+      // Persiste nome + avatar_url na tabela profiles (sincroniza entre dispositivos)
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ name, avatar_url: avatarUrl } as any)
+        .eq("id", user.id);
       if (profileError) throw profileError;
 
-      // 2. Atualizar avatar nos metadata do Auth (funciona sempre no Lovable)
+      // Espelha no auth metadata para acesso rápido em todas as telas
       const { error: authError } = await supabase.auth.updateUser({
-        data: { avatar_url: avatarUrl }
+        data: { avatar_url: avatarUrl, name },
       });
       if (authError) throw authError;
 
