@@ -156,9 +156,9 @@ function DashboardPage() {
         >
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
             <KpiCard
-              label="Saldo atual"
+              label={t("dash.kpi.balance")}
               value={brl(data.saldo)}
-              hint={data.saldo >= 0 ? "Positivo" : "Negativo"}
+              hint={data.saldo >= 0 ? t("dash.kpi.balance.positive") : t("dash.kpi.balance.negative")}
               icon={Wallet}
               tone={data.saldo >= 0 ? "success" : "destructive"}
               delay={0}
@@ -166,7 +166,7 @@ function DashboardPage() {
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
             <KpiCard
-              label="Total Entradas"
+              label={t("dash.kpi.income")}
               value={brl(data.totalEntradas)}
               icon={ArrowUpRight}
               tone="success"
@@ -175,7 +175,7 @@ function DashboardPage() {
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} className="relative">
             <KpiCard
-              label="Total Saídas"
+              label={t("dash.kpi.expense")}
               value={brl(data.totalSaidas)}
               icon={ArrowDownRight}
               tone="destructive"
@@ -185,9 +185,9 @@ function DashboardPage() {
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
             <KpiCard
-              label="Gasto Médio Diário"
+              label={t("dash.kpi.daily")}
               value={brl(data.gastoMedioDiario)}
-              hint={`Período de ${data.days} dia${data.days > 1 ? "s" : ""}`}
+              hint={t("dash.kpi.daily.hint", { n: data.days })}
               icon={CalendarDays}
               tone="warning"
               delay={0}
@@ -195,9 +195,9 @@ function DashboardPage() {
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
             <KpiCard
-              label="Maior gasto/categoria"
+              label={t("dash.kpi.topCat")}
               value={data.topCat ? brl(data.topCat.total) : brl(0)}
-              hint={data.topCat ? data.topCat.name : "Sem dados"}
+              hint={data.topCat ? data.topCat.name : t("common.noData")}
               icon={Trophy}
               tone="default"
               delay={0}
