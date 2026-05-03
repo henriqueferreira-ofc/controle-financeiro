@@ -27,8 +27,10 @@ function PerfilPage() {
   const [name, setName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [reseeding, setReseeding] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const avatarFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
