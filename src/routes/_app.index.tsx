@@ -321,7 +321,7 @@ function DashboardPage() {
 
         <Card className="border-border/60 shadow-[var(--shadow-card)]">
           <CardHeader>
-            <CardTitle className="text-base">Mês atual vs mês anterior</CardTitle>
+            <CardTitle className="text-base">{t("dash.chart.monthCompare")}</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
