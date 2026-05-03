@@ -38,31 +38,57 @@ function AppLayout() {
   }
 
   const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0];
-  const avatarUrl = user.user_metadata?.avatar_url;
   const initials = (name || "U").slice(0, 2).toUpperCase();
 
   return (
     <FinwiseProvider>
-      <AppShell name={name} avatarUrl={avatarUrl} initials={initials} signOut={signOut} t={t} />
+      <AppShell
+        userId={user.id}
+        name={name}
+        fallbackAvatar={user.user_metadata?.avatar_url}
+        initials={initials}
+        signOut={signOut}
+        t={t}
+      />
     </FinwiseProvider>
   );
 }
 
 function AppShell({
+  userId,
   name,
-  avatarUrl,
+  fallbackAvatar,
   initials,
   signOut,
   t,
 }: {
+  userId: string;
   name: string;
-  avatarUrl?: string;
+  fallbackAvatar?: string;
   initials: string;
   signOut: () => Promise<void> | void;
   t: (k: string) => string;
 }) {
-  // Fase 3.1.3 — celebra metas concluídas
   useGoalCelebrations();
+
+  // Avatar sincronizado entre dispositivos via tabela profiles
+  const [avatarUrl, setAvatarUrl] = React.useState<string | undefined>(fallbackAvatar);
+  React.useEffect(() => {
+    let alive = true;
+    supabase
+      .from("profiles")
+      .select("avatar_url")
+      .eq("id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!alive) return;
+        const url = (data as any)?.avatar_url;
+        if (url) setAvatarUrl(url);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [userId]);
 
   return (
     <SidebarProvider>
@@ -75,7 +101,6 @@ function AppShell({
             </div>
 
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-              {/* Fase 3.1.1 — Bell de notificações */}
               <NotificationsBell />
 
               <div className="flex items-center gap-2 mr-1 sm:mr-2">
@@ -95,18 +120,7 @@ function AppShell({
             </div>
           </header>
           <main className="flex-1 overflow-hidden relative">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={location.pathname}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="h-full"
-              >
-                <Outlet />
-              </motion.div>
-            </AnimatePresence>
+            <Outlet />
           </main>
         </div>
       </div>
