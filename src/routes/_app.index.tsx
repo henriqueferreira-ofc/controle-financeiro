@@ -335,8 +335,8 @@ function DashboardPage() {
                     <YAxis stroke="oklch(0.7 0.015 250)" fontSize={12} />
                     <Tooltip content={<ChartTooltip />} cursor={{ fill: "oklch(0.3 0.02 250 / 0.4)" }} />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="entrada" name="Entradas" fill="oklch(0.78 0.16 165)" radius={[6, 6, 0, 0]} />
-                    <Bar dataKey="despesa" name="Despesas" fill="oklch(0.65 0.21 25)" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="entrada" name={t("dash.legend.income")} fill="oklch(0.78 0.16 165)" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="despesa" name={t("dash.legend.expense")} fill="oklch(0.65 0.21 25)" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
