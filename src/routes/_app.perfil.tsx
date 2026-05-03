@@ -103,38 +103,44 @@ function PerfilPage() {
           <CardTitle className="text-base">Informações da conta</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-6 sm:flex-row sm:items-start">
-          <Avatar className="h-20 w-20 border-2 border-primary/20 p-1">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={name} className="h-full w-full rounded-full object-cover" />
-            ) : (
-              <AvatarFallback className="bg-primary text-primary-foreground text-xl font-bold">{initials}</AvatarFallback>
-            )}
-          </Avatar>
-          
+          <div className="relative shrink-0">
+            <Avatar className="h-24 w-24 border-2 border-primary/20 p-1">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={name} className="h-full w-full rounded-full object-cover" />
+              ) : (
+                <AvatarFallback className="bg-primary text-primary-foreground text-xl font-bold">{initials}</AvatarFallback>
+              )}
+            </Avatar>
+            <button
+              type="button"
+              onClick={() => avatarFileRef.current?.click()}
+              disabled={uploading}
+              aria-label="Alterar foto de perfil"
+              className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md ring-2 ring-background transition hover:scale-105 disabled:opacity-60"
+            >
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+            </button>
+            <input
+              ref={avatarFileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
+          </div>
+
           <div className="grid flex-1 gap-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome Completo</Label>
-                <Input 
-                  id="name" 
-                  placeholder="Seu nome" 
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)} 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="avatar">Link da Foto (URL)</Label>
-                <div className="relative">
-                  <Input 
-                    id="avatar" 
-                    placeholder="https://exemplo.com/foto.jpg" 
-                    value={avatarUrl} 
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    className="pl-9"
-                  />
-                  <LinkIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                </div>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome Completo</Label>
+              <Input
+                id="name"
+                placeholder="Seu nome"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Clique no ícone da câmera para enviar uma nova foto (máx. 2MB).
+              </p>
             </div>
 
             <div className="flex justify-end">
