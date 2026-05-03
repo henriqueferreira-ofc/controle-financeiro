@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Camera, Database, Download, Globe, Loader2, LogOut, RefreshCw, Upload, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/_app/perfil")({
   head: () => ({
