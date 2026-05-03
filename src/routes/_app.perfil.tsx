@@ -136,13 +136,13 @@ function PerfilPage() {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-6 md:px-8 md:py-8">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Meu Perfil</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Configurações da conta e preferências do AxisPay.</p>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("prof.title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("prof.subtitle")}</p>
       </div>
 
       <Card className="border-border/60 shadow-[var(--shadow-card)]">
         <CardHeader>
-          <CardTitle className="text-base">Informações da conta</CardTitle>
+          <CardTitle className="text-base">{t("prof.account")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-6 sm:flex-row sm:items-start">
           <div className="relative shrink-0">
@@ -157,7 +157,7 @@ function PerfilPage() {
               type="button"
               onClick={() => avatarFileRef.current?.click()}
               disabled={uploading}
-              aria-label="Alterar foto de perfil"
+              aria-label={t("prof.photoHint")}
               className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md ring-2 ring-background transition hover:scale-105 disabled:opacity-60"
             >
               {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
@@ -173,28 +173,28 @@ function PerfilPage() {
 
           <div className="grid flex-1 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome Completo</Label>
+              <Label htmlFor="name">{t("prof.name")}</Label>
               <Input
                 id="name"
-                placeholder="Seu nome"
+                placeholder={t("prof.namePh")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Clique no ícone da câmera para enviar uma nova foto (máx. 2MB).
+                {t("prof.photoHint")}
               </p>
             </div>
 
             <div className="flex justify-end">
               <Button onClick={handleSaveProfile} disabled={saving} className="w-full sm:w-auto">
-                {saving ? "Salvando..." : "Salvar Perfil"}
+                {saving ? t("common.saving") : t("prof.save")}
               </Button>
             </div>
 
             <div className="grid gap-3 pt-4 border-t border-border/40 sm:grid-cols-2 lg:grid-cols-3">
-              <Info label="Email" value={user?.email || "—"} />
-              <Info icon={<Wallet className="h-3.5 w-3.5" />} label="Moeda" value="R$ BRL" />
-              <Info icon={<Globe className="h-3.5 w-3.5" />} label="Fuso horário" value="pt-BR (UTC−03:00)" />
+              <Info label={t("prof.email")} value={user?.email || "—"} />
+              <Info icon={<Wallet className="h-3.5 w-3.5" />} label={t("prof.currency")} value="R$ BRL" />
+              <Info icon={<Globe className="h-3.5 w-3.5" />} label={t("prof.timezone")} value="pt-BR (UTC−03:00)" />
             </div>
           </div>
         </CardContent>
@@ -202,34 +202,34 @@ function PerfilPage() {
 
       <Card className="border-border/60 shadow-[var(--shadow-card)]">
         <CardHeader>
-          <CardTitle className="text-base">Gerenciamento de Dados</CardTitle>
+          <CardTitle className="text-base">{t("prof.data")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <Action
             icon={<Database className="h-4 w-4" />}
-            title="Carregar dados de exemplo"
-            description="Insere transações fictícias para testes."
-            action={<Button variant="outline" onClick={handleReseed} disabled={reseeding}><RefreshCw className="mr-1 h-4 w-4" /> {reseeding ? "Carregando..." : "Carregar demo"}</Button>}
+            title={t("prof.demo.title")}
+            description={t("prof.demo.desc")}
+            action={<Button variant="outline" onClick={handleReseed} disabled={reseeding}><RefreshCw className="mr-1 h-4 w-4" /> {reseeding ? t("prof.loading") : t("prof.demo.btn")}</Button>}
           />
           <Action
             icon={<Download className="h-4 w-4" />}
-            title="Exportar dados (JSON)"
-            description="Baixa um backup de segurança."
-            action={<Button variant="outline" onClick={exportJSON}><Download className="mr-1 h-4 w-4" /> Exportar</Button>}
+            title={t("prof.export.title")}
+            description={t("prof.export.desc")}
+            action={<Button variant="outline" onClick={exportJSON}><Download className="mr-1 h-4 w-4" /> {t("common.export")}</Button>}
           />
           <Action
             icon={<Upload className="h-4 w-4" />}
-            title="Importar dados (JSON)"
-            description="Restaurar a partir de um backup."
+            title={t("prof.import.title")}
+            description={t("prof.import.desc")}
             action={
               <>
                 <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={handleImport} />
-                <Button variant="outline" onClick={() => fileRef.current?.click()}><Upload className="mr-1 h-4 w-4" /> Importar</Button>
+                <Button variant="outline" onClick={() => fileRef.current?.click()}><Upload className="mr-1 h-4 w-4" /> {t("common.import")}</Button>
               </>
             }
           />
           <Button variant="ghost" size="sm" onClick={refresh} className="text-xs text-muted-foreground hover:text-primary">
-            Sincronizar com servidor
+            {t("prof.sync")}
           </Button>
         </CardContent>
       </Card>
@@ -237,11 +237,11 @@ function PerfilPage() {
       <Card className="border-destructive/30 bg-destructive/5">
         <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="font-medium">Sair da conta</p>
-            <p className="text-sm text-muted-foreground">Encerra sua sessão atual com segurança.</p>
+            <p className="font-medium">{t("prof.signout.title")}</p>
+            <p className="text-sm text-muted-foreground">{t("prof.signout.desc")}</p>
           </div>
           <Button variant="destructive" onClick={() => signOut()}>
-            <LogOut className="mr-1 h-4 w-4" /> Logout
+            <LogOut className="mr-1 h-4 w-4" /> {t("common.signout")}
           </Button>
         </CardContent>
       </Card>
