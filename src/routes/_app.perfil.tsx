@@ -35,19 +35,17 @@ function PerfilPage() {
   useEffect(() => {
     if (!user) return;
     
-    // Carregar nome do perfil
+    // Carregar nome e foto do perfil (sincronizado entre dispositivos)
     supabase
       .from("profiles")
-      .select("name")
+      .select("name, avatar_url")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
         if (data?.name) setName(data.name);
+        if ((data as any)?.avatar_url) setAvatarUrl((data as any).avatar_url);
+        else if (user.user_metadata?.avatar_url) setAvatarUrl(user.user_metadata.avatar_url);
       });
-
-    // Carregar foto dos metadados do usuário (padrão Supabase/Lovable)
-    const metadata = user.user_metadata;
-    if (metadata?.avatar_url) setAvatarUrl(metadata.avatar_url);
   }, [user]);
 
   const initials = (name || user?.email || "U").slice(0, 2).toUpperCase();
