@@ -368,14 +368,14 @@ function DashboardPage() {
           <Card className="border-dashed">
             <CardContent className="flex items-center justify-between gap-4 p-6">
               <div>
-                <p className="font-medium">Nenhum insight disponível</p>
+                <p className="font-medium">{t("dash.insights.empty.title")}</p>
                 <p className="text-sm text-muted-foreground">
-                  Adicione registros para receber recomendações inteligentes.
+                  {t("dash.insights.empty.desc")}
                 </p>
               </div>
               <Button asChild>
                 <Link to="/registros">
-                  <Plus className="mr-1 h-4 w-4" /> Adicionar registro
+                  <Plus className="mr-1 h-4 w-4" /> {t("dash.empty.addRecord")}
                 </Link>
               </Button>
             </CardContent>
