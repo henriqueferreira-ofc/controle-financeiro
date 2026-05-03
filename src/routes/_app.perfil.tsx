@@ -35,19 +35,17 @@ function PerfilPage() {
   useEffect(() => {
     if (!user) return;
     
-    // Carregar nome do perfil
+    // Carregar nome e foto do perfil (sincronizado entre dispositivos)
     supabase
       .from("profiles")
-      .select("name")
+      .select("name, avatar_url")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
         if (data?.name) setName(data.name);
+        if ((data as any)?.avatar_url) setAvatarUrl((data as any).avatar_url);
+        else if (user.user_metadata?.avatar_url) setAvatarUrl(user.user_metadata.avatar_url);
       });
-
-    // Carregar foto dos metadados do usuário (padrão Supabase/Lovable)
-    const metadata = user.user_metadata;
-    if (metadata?.avatar_url) setAvatarUrl(metadata.avatar_url);
   }, [user]);
 
   const initials = (name || user?.email || "U").slice(0, 2).toUpperCase();
@@ -56,13 +54,16 @@ function PerfilPage() {
     if (!user) return;
     setSaving(true);
     try {
-      // 1. Atualizar nome na tabela profiles
-      const { error: profileError } = await supabase.from("profiles").update({ name } as any).eq("id", user.id);
+      // Persiste nome + avatar_url na tabela profiles (sincroniza entre dispositivos)
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ name, avatar_url: avatarUrl } as any)
+        .eq("id", user.id);
       if (profileError) throw profileError;
 
-      // 2. Atualizar avatar nos metadata do Auth (funciona sempre no Lovable)
+      // Espelha no auth metadata para acesso rápido em todas as telas
       const { error: authError } = await supabase.auth.updateUser({
-        data: { avatar_url: avatarUrl }
+        data: { avatar_url: avatarUrl, name },
       });
       if (authError) throw authError;
 
@@ -99,6 +100,9 @@ function PerfilPage() {
         data: { avatar_url: publicUrl },
       });
       if (authErr) throw authErr;
+
+      // Persiste na tabela profiles → sincroniza em qualquer dispositivo/login
+      await supabase.from("profiles").update({ avatar_url: publicUrl } as any).eq("id", user.id);
 
       setAvatarUrl(publicUrl);
       toast.success("Foto atualizada!");
