@@ -9,6 +9,7 @@ import { useFinwise } from "@/store/finwise-store";
 import type { Transaction } from "@/store/types";
 import { todayISO, brl } from "@/lib/format";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n/I18nProvider";
 
 interface TransactionDialogProps {
   open: boolean;
@@ -19,6 +20,7 @@ interface TransactionDialogProps {
 
 export function TransactionDialog({ open, onOpenChange, initial, mode }: TransactionDialogProps) {
   const { categories, addTransaction, updateTransaction } = useFinwise();
+  const { t } = useI18n();
   const [type, setType] = React.useState<"entrada" | "despesa">("despesa");
   const [date, setDate] = React.useState(todayISO());
   const [categoryId, setCategoryId] = React.useState<string>("");
@@ -59,10 +61,10 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errors: string[] = [];
-    if (!description.trim()) errors.push("Descrição é obrigatória.");
-    if (!date) errors.push("Data é obrigatória.");
-    if (!amount || isNaN(numericAmount) || numericAmount <= 0) errors.push("Valor deve ser maior que zero.");
-    if (type === "despesa" && !categoryId) errors.push("Categoria é obrigatória para despesas.");
+    if (!description.trim()) errors.push(t("tx.errDescription"));
+    if (!date) errors.push(t("tx.errDate"));
+    if (!amount || isNaN(numericAmount) || numericAmount <= 0) errors.push(t("tx.errAmount"));
+    if (type === "despesa" && !categoryId) errors.push(t("tx.errCategory"));
     if (errors.length > 0) {
       toast.error(errors.join(" "));
       return;
@@ -77,16 +79,16 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
       essential,
       fixed,
       paymentMethod: paymentMethod || undefined,
-      tags: tags.split(",").map(t => t.trim()).filter(Boolean),
+      tags: tags.split(",").map(tg => tg.trim()).filter(Boolean),
     };
 
     try {
       if (mode === "edit" && initial) {
         await updateTransaction(initial.id, payload);
-        toast.success("Registro atualizado com sucesso.");
+        toast.success(t("tx.updated"));
       } else {
         await addTransaction(payload);
-        toast.success("Registro criado com sucesso.");
+        toast.success(t("tx.created"));
       }
       onOpenChange(false);
     } catch {
@@ -98,37 +100,37 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] w-[calc(100vw-1.5rem)] max-w-[480px] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{mode === "edit" ? "Editar registro" : "Novo registro"}</DialogTitle>
+          <DialogTitle>{mode === "edit" ? t("tx.edit") : t("tx.new")}</DialogTitle>
           <DialogDescription>
-            Preencha os campos para {mode === "edit" ? "atualizar" : "registrar"} sua movimentação.
+            {mode === "edit" ? t("tx.subtitleEdit") : t("tx.subtitle")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="grid gap-4 py-2">
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <Label>Tipo</Label>
+              <Label>{t("tx.type")}</Label>
               <Select value={type} onValueChange={(v) => { setType(v as "entrada" | "despesa"); setCategoryId(""); }}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="despesa">Despesa</SelectItem>
-                  <SelectItem value="entrada">Entrada</SelectItem>
+                  <SelectItem value="despesa">{t("tx.expense")}</SelectItem>
+                  <SelectItem value="entrada">{t("tx.income")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="date">Data</Label>
+              <Label htmlFor="date">{t("tx.date")}</Label>
               <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </div>
           </div>
 
           <div className="grid gap-2">
-            <Label>Categoria {type === "despesa" && <span className="text-destructive">*</span>}</Label>
+            <Label>{t("tx.category")} {type === "despesa" && <span className="text-destructive">*</span>}</Label>
             <Select value={categoryId} onValueChange={setCategoryId}>
               <SelectTrigger>
-                <SelectValue placeholder={type === "entrada" ? "Opcional" : "Selecione"} />
+                <SelectValue placeholder={type === "entrada" ? t("tx.categoryOptional") : t("tx.categorySelect")} />
               </SelectTrigger>
               <SelectContent>
                 {availableCategories.map((c) => (
@@ -144,12 +146,12 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="desc">Descrição</Label>
-            <Input id="desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex: Mercado da semana" />
+            <Label htmlFor="desc">{t("tx.description")}</Label>
+            <Input id="desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("tx.descriptionPh")} />
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="amount">Valor</Label>
+            <Label htmlFor="amount">{t("tx.amount")}</Label>
             <Input
               id="amount"
               inputMode="decimal"
@@ -158,22 +160,22 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
               placeholder="0,00"
             />
             {numericAmount > 0 && (
-              <span className="text-xs text-muted-foreground">Preview: {brl(numericAmount)}</span>
+              <span className="text-xs text-muted-foreground">{t("tx.preview", { v: brl(numericAmount) })}</span>
             )}
           </div>
 
           <div className="grid grid-cols-1 gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 sm:grid-cols-2">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <Label htmlFor="essential" className="cursor-pointer">Essencial</Label>
-                <p className="text-xs text-muted-foreground">Necessária para o seu dia a dia</p>
+                <Label htmlFor="essential" className="cursor-pointer">{t("tx.essential")}</Label>
+                <p className="text-xs text-muted-foreground">{t("tx.essentialHint")}</p>
               </div>
               <Switch id="essential" checked={essential} onCheckedChange={setEssential} />
             </div>
             <div className="flex items-center justify-between gap-2">
               <div>
-                <Label htmlFor="fixed" className="cursor-pointer">Fixa</Label>
-                <p className="text-xs text-muted-foreground">Repete todo período</p>
+                <Label htmlFor="fixed" className="cursor-pointer">{t("tx.fixed")}</Label>
+                <p className="text-xs text-muted-foreground">{t("tx.fixedHint")}</p>
               </div>
               <Switch id="fixed" checked={fixed} onCheckedChange={setFixed} />
             </div>
@@ -181,32 +183,32 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label>Método de Pagamento</Label>
+              <Label>{t("tx.payment")}</Label>
               <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue placeholder={t("tx.categorySelect")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="money">Dinheiro</SelectItem>
-                  <SelectItem value="pix">PIX</SelectItem>
-                  <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
-                  <SelectItem value="debit_card">Cartão de Débito</SelectItem>
-                  <SelectItem value="transfer">Transferência</SelectItem>
-                  <SelectItem value="other">Outro</SelectItem>
+                  <SelectItem value="money">{t("pay.money")}</SelectItem>
+                  <SelectItem value="pix">{t("pay.pix")}</SelectItem>
+                  <SelectItem value="credit_card">{t("pay.credit_card")}</SelectItem>
+                  <SelectItem value="debit_card">{t("pay.debit_card")}</SelectItem>
+                  <SelectItem value="transfer">{t("pay.transfer")}</SelectItem>
+                  <SelectItem value="other">{t("pay.other")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="tags">Tags (separadas por vírgula)</Label>
-              <Input id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="ex: viagem, presente" />
+              <Label htmlFor="tags">{t("tx.tags")}</Label>
+              <Input id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder={t("tx.tagsPh")} />
             </div>
           </div>
 
           <DialogFooter className="flex-col-reverse gap-2 sm:flex-row">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
-              Cancelar
+              {t("common.cancel")}
             </Button>
-            <Button type="submit" className="w-full sm:w-auto">{mode === "edit" ? "Salvar alterações" : "Adicionar"}</Button>
+            <Button type="submit" className="w-full sm:w-auto">{mode === "edit" ? t("common.save") : t("common.add")}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
