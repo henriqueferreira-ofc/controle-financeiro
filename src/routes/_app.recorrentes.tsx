@@ -101,12 +101,12 @@ function RecurringPage() {
                     {/* Fase 1.1 — badge de pausa temporária */}
                     {r.pausedUntil && (
                       <Badge variant="secondary" className="gap-1 text-[10px] sm:text-xs">
-                        <Pause className="h-3 w-3" /> Pausada até {formatDateBR(r.pausedUntil)}
+                        <Pause className="h-3 w-3" /> {t("recurring.pausedUntil", { d: formatDateBR(r.pausedUntil) })}
                       </Badge>
                     )}
                     {(r.skipDates?.length ?? 0) > 0 && (
                       <Badge variant="outline" className="text-[10px] sm:text-xs">
-                        {r.skipDates!.length} pulada{r.skipDates!.length > 1 ? "s" : ""}
+                        {t("recurring.skipped", { n: r.skipDates!.length })}
                       </Badge>
                     )}
                     {cat && (
@@ -139,7 +139,7 @@ function RecurringPage() {
                         <DropdownMenuContent align="end" className="w-52">
                           {r.pausedUntil ? (
                             <DropdownMenuItem onClick={() => resumeRecurring(r.id)}>
-                              <PlayCircle className="mr-2 h-4 w-4" /> Retomar agora
+                              <PlayCircle className="mr-2 h-4 w-4" /> {t("recurring.resumeNow")}
                             </DropdownMenuItem>
                           ) : (
                             <>
@@ -150,7 +150,7 @@ function RecurringPage() {
                                   pauseRecurring(r.id, d.toISOString().slice(0, 10));
                                 }}
                               >
-                                <Pause className="mr-2 h-4 w-4" /> Pausar por 1 mês
+                                <Pause className="mr-2 h-4 w-4" /> {t("recurring.pause1m")}
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => {
@@ -159,7 +159,7 @@ function RecurringPage() {
                                   pauseRecurring(r.id, d.toISOString().slice(0, 10));
                                 }}
                               >
-                                <Pause className="mr-2 h-4 w-4" /> Pausar por 3 meses
+                                <Pause className="mr-2 h-4 w-4" /> {t("recurring.pause3m")}
                               </DropdownMenuItem>
                             </>
                           )}
@@ -168,10 +168,10 @@ function RecurringPage() {
                             onClick={() => {
                               const next = nextOccurrences(r, 1)[0];
                               if (next) skipNext(r.id, next);
-                              else toast.info("Nenhuma próxima ocorrência para pular.");
+                              else toast.info(t("recurring.noNextSkip"));
                             }}
                           >
-                            <SkipForward className="mr-2 h-4 w-4" /> Pular próxima ocorrência
+                            <SkipForward className="mr-2 h-4 w-4" /> {t("recurring.skipNext")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -325,7 +325,7 @@ function RecurringDialog({
           </div>
           <div className="space-y-2">
             <Label>{t("recurring.description")}</Label>
-            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex.: Aluguel" />
+            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("recurring.descPh")} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
