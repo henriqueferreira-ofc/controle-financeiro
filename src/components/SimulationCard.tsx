@@ -19,6 +19,7 @@ import { useFinwise } from "@/store/finwise-store";
 import { runSimulation, type Adjustment } from "@/store/simulation";
 import { brl } from "@/lib/format";
 import { Beaker, Plus, Trash2, TrendingDown, TrendingUp } from "lucide-react";
+import { useI18n } from "@/i18n/I18nProvider";
 import {
   CartesianGrid,
   Line,
@@ -34,6 +35,7 @@ type AdjType = "cut-category" | "extra-income" | "pause-recurring";
 
 function SimulationCardInner() {
   const { transactions, categories, recurrings } = useFinwise();
+  const { t } = useI18n();
   const [horizon, setHorizon] = useState<30 | 60 | 90>(30);
   const [adjustments, setAdjustments] = useState<Adjustment[]>([]);
 
@@ -78,7 +80,7 @@ function SimulationCardInner() {
       if (!v || v <= 0) return;
       setAdjustments((prev) => [
         ...prev,
-        { kind: "extra-income", monthlyAmount: v, description: "Receita extra" },
+        { kind: "extra-income", monthlyAmount: v, description: t("sim.extraIncome") },
       ]);
       setDraftIncome("");
     } else if (draftType === "pause-recurring") {
@@ -97,13 +99,13 @@ function SimulationCardInner() {
   const labelFor = (a: Adjustment): string => {
     if (a.kind === "cut-category") {
       const cat = categories.find((c) => c.id === a.categoryId);
-      return `Cortar ${a.percent}% de ${cat?.name ?? "categoria"}`;
+      return t("sim.cutLabel", { p: a.percent, name: cat?.name ?? t("sim.expenseCat") });
     }
     if (a.kind === "extra-income") {
-      return `+ ${brl(a.monthlyAmount)}/mês de renda extra`;
+      return t("sim.incomeLabel", { v: brl(a.monthlyAmount) });
     }
     const rec = recurrings.find((r) => r.id === a.recurringId);
-    return `Pausar "${rec?.description ?? "recorrência"}"`;
+    return t("sim.pauseLabel", { name: rec?.description ?? "" });
   };
 
   const deltaPositive = result.delta >= 0;
@@ -113,7 +115,7 @@ function SimulationCardInner() {
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle className="flex items-center gap-2 text-base">
           <Beaker className="h-4 w-4 text-primary" />
-          Simulações — "E se..."
+          {t("sim.title")}
         </CardTitle>
         <ToggleGroup
           type="single"
@@ -137,9 +139,9 @@ function SimulationCardInner() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="cut-category">Cortar % de categoria</SelectItem>
-                <SelectItem value="extra-income">Adicionar renda extra</SelectItem>
-                <SelectItem value="pause-recurring">Pausar recorrente</SelectItem>
+                <SelectItem value="cut-category">{t("sim.cutCategory")}</SelectItem>
+                <SelectItem value="extra-income">{t("sim.extraIncome")}</SelectItem>
+                <SelectItem value="pause-recurring">{t("sim.pauseRecurring")}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -147,7 +149,7 @@ function SimulationCardInner() {
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <Select value={draftCat} onValueChange={setDraftCat}>
                   <SelectTrigger className="h-9 flex-1 text-sm">
-                    <SelectValue placeholder="Categoria de despesa" />
+                    <SelectValue placeholder={t("sim.expenseCat")} />
                   </SelectTrigger>
                   <SelectContent>
                     {expenseCats.map((c) => (
@@ -176,7 +178,7 @@ function SimulationCardInner() {
               <Input
                 type="number"
                 inputMode="decimal"
-                placeholder="Valor mensal (R$)"
+                placeholder={t("sim.monthlyAmount")}
                 value={draftIncome}
                 onChange={(e) => setDraftIncome(e.target.value)}
                 className="h-9 text-sm"
@@ -186,12 +188,12 @@ function SimulationCardInner() {
             {draftType === "pause-recurring" && (
               <Select value={draftRecId} onValueChange={setDraftRecId}>
                 <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder="Selecionar recorrente" />
+                  <SelectValue placeholder={t("sim.selectRecurring")} />
                 </SelectTrigger>
                 <SelectContent>
                   {activeRecs.length === 0 ? (
                     <div className="p-2 text-xs text-muted-foreground">
-                      Nenhuma recorrência ativa.
+                      {t("sim.noActiveRec")}
                     </div>
                   ) : (
                     activeRecs.map((r) => (
@@ -206,7 +208,7 @@ function SimulationCardInner() {
 
             <Button size="sm" onClick={addAdjustment} className="h-9">
               <Plus className="h-4 w-4 sm:mr-1" />
-              <span className="hidden sm:inline">Adicionar</span>
+              <span className="hidden sm:inline">{t("sim.add")}</span>
             </Button>
           </div>
 
@@ -219,7 +221,7 @@ function SimulationCardInner() {
                     <button
                       onClick={() => removeAt(i)}
                       className="ml-1 rounded p-0.5 hover:bg-muted"
-                      aria-label="Remover"
+                      aria-label={t("sim.remove")}
                     >
                       <Trash2 className="h-3 w-3" />
                     </button>
@@ -232,10 +234,10 @@ function SimulationCardInner() {
 
         {/* Resultado */}
         <div className="grid gap-3 sm:grid-cols-3">
-          <ResultMini label="Saldo base" value={result.base.projectedBalance} />
-          <ResultMini label="Saldo simulado" value={result.simulated.projectedBalance} highlight />
+          <ResultMini label={t("sim.baseBalance")} value={result.base.projectedBalance} />
+          <ResultMini label={t("sim.simBalance")} value={result.simulated.projectedBalance} highlight />
           <ResultMini
-            label="Diferença"
+            label={t("sim.delta")}
             value={result.delta}
             tone={deltaPositive ? "success" : "destructive"}
             icon={deltaPositive ? TrendingUp : TrendingDown}
@@ -262,13 +264,13 @@ function SimulationCardInner() {
                   fontSize: 12,
                 }}
                 formatter={(v) => (typeof v === "number" ? brl(v) : "—")}
-                labelFormatter={(l) => `Dia ${l}`}
+                labelFormatter={(l) => t("sim.day", { n: l })}
               />
               <ReferenceLine y={0} stroke="oklch(0.5 0.014 250)" strokeDasharray="3 3" />
               <Line
                 type="monotone"
                 dataKey="base"
-                name="Base"
+                name={t("sim.base")}
                 stroke="oklch(0.7 0.015 250)"
                 strokeWidth={2}
                 dot={false}
@@ -277,7 +279,7 @@ function SimulationCardInner() {
               <Line
                 type="monotone"
                 dataKey="sim"
-                name="Simulado"
+                name={t("sim.simulated")}
                 stroke="oklch(0.78 0.16 165)"
                 strokeWidth={2.5}
                 dot={false}
@@ -289,7 +291,7 @@ function SimulationCardInner() {
 
         {adjustments.length === 0 && (
           <p className="text-center text-xs text-muted-foreground">
-            Adicione um ou mais ajustes acima para comparar cenários sem alterar seus dados reais.
+            {t("sim.hint")}
           </p>
         )}
       </CardContent>
