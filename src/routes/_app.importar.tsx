@@ -64,7 +64,7 @@ function ImportarPage() {
     return set;
   }, [transactions]);
 
-  const headers = hasHeader && rows.length > 0 ? rows[0] : rows[0]?.map((_, i) => `Coluna ${i + 1}`) ?? [];
+  const headers = hasHeader && rows.length > 0 ? rows[0] : rows[0]?.map((_, i) => t("imp.col", { n: i + 1 })) ?? [];
 
   const onFile = async (f: File) => {
     setFileName(f.name);
@@ -97,7 +97,7 @@ function ImportarPage() {
 
   const goToPreview = () => {
     if (mapping.date === null || mapping.description === null || mapping.amount === null) {
-      toast.error("Mapeie data, descrição e valor.");
+      toast.error(t("imp.errMap"));
       return;
     }
     const result = processRows(rows, mapping, hasHeader, existingHashes);
@@ -177,11 +177,11 @@ function ImportarPage() {
         if (error) throw error;
       }
 
-      toast.success(`${rowsToInsert.length} registro(s) importado(s).`);
+      toast.success(t("imp.success", { n: rowsToInsert.length }));
       await refresh();
       setStep("done");
     } catch (e: any) {
-      toast.error("Erro na importação: " + (e?.message ?? "desconhecido"));
+      toast.error(t("imp.errImport", { m: e?.message ?? "—" }));
     } finally {
       setImporting(false);
     }
@@ -201,7 +201,7 @@ function ImportarPage() {
       <header>
         <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{t("imp.title")}</h1>
         <p className="text-sm text-muted-foreground">
-          Importe extratos bancários com mapeamento automático, deduplicação e categorização inteligente.
+          {t("imp.subtitleLong")}
         </p>
       </header>
 
@@ -213,7 +213,7 @@ function ImportarPage() {
             variant={step === s ? "default" : "outline"}
             className="capitalize"
           >
-            {i + 1}. {s === "upload" ? "Arquivo" : s === "mapping" ? "Mapear colunas" : s === "preview" ? "Revisar" : "Concluído"}
+            {i + 1}. {s === "upload" ? t("imp.steps.upload") : s === "mapping" ? t("imp.steps.mapping") : s === "preview" ? t("imp.steps.preview") : t("imp.steps.done")}
           </Badge>
         ))}
       </div>
@@ -221,17 +221,17 @@ function ImportarPage() {
       {step === "upload" && (
         <Card>
           <CardHeader>
-            <CardTitle>Selecione o arquivo CSV</CardTitle>
+            <CardTitle>{t("imp.selectTitle")}</CardTitle>
             <CardDescription>
-              Suportamos CSV de bancos brasileiros (separador automático: vírgula, ponto-e-vírgula, tab).
+              {t("imp.selectDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border p-10 hover:bg-accent/30">
               <Upload className="h-10 w-10 text-muted-foreground" />
               <div className="text-center">
-                <p className="font-medium">Clique para selecionar ou arraste um arquivo</p>
-                <p className="text-xs text-muted-foreground">.csv até ~5MB</p>
+                <p className="font-medium">{t("imp.dropCta")}</p>
+                <p className="text-xs text-muted-foreground">{t("imp.dropHint")}</p>
               </div>
               <input
                 type="file"
@@ -254,13 +254,13 @@ function ImportarPage() {
               <FileSpreadsheet className="h-5 w-5" /> {fileName}
             </CardTitle>
             <CardDescription>
-              {rows.length} linha(s) detectada(s). Configure as colunas abaixo.
+              {t("imp.detected", { n: rows.length })}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 gap-6 border-b pb-6 md:grid-cols-2">
               <div className="space-y-3">
-                <Label className="text-primary font-semibold">Configuração Rápida (Banco)</Label>
+                <Label className="text-primary font-semibold">{t("imp.bankPreset")}</Label>
                 <Select 
                   onValueChange={(v: BankPreset) => {
                     const p = BANK_PRESETS[v];
@@ -271,7 +271,7 @@ function ImportarPage() {
                   }}
                 >
                   <SelectTrigger className="w-full border-primary/40 bg-primary/5">
-                    <SelectValue placeholder="Selecione seu banco para auto-mapear" />
+                    <SelectValue placeholder={t("imp.bankPh")} />
                   </SelectTrigger>
                   <SelectContent>
                     {Object.entries(BANK_PRESETS).map(([id, p]) => (
@@ -280,20 +280,20 @@ function ImportarPage() {
                   </SelectContent>
                 </Select>
                 <p className="text-[10px] text-muted-foreground italic">
-                  * Selecionar um banco irá preencher automaticamente os campos abaixo.
+                  {t("imp.bankNote")}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Separador Manual</Label>
+                  <Label>{t("imp.sepManual")}</Label>
                   <Select value={separator} onValueChange={reparseSeparator}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value=",">Vírgula (,)</SelectItem>
-                      <SelectItem value=";">Ponto-e-vírgula (;)</SelectItem>
-                      <SelectItem value={"\t"}>Tab</SelectItem>
-                      <SelectItem value="|">Pipe (|)</SelectItem>
+                      <SelectItem value=",">{t("imp.sepComma")}</SelectItem>
+                      <SelectItem value=";">{t("imp.sepSemi")}</SelectItem>
+                      <SelectItem value={"\t"}>{t("imp.sepTab")}</SelectItem>
+                      <SelectItem value="|">{t("imp.sepPipe")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -304,7 +304,7 @@ function ImportarPage() {
                       checked={hasHeader}
                       onCheckedChange={(v) => setHasHeader(!!v)}
                     />
-                    <Label htmlFor="hasHeader" className="cursor-pointer text-xs">Cabeçalho</Label>
+                    <Label htmlFor="hasHeader" className="cursor-pointer text-xs">{t("imp.header")}</Label>
                   </div>
                 </div>
               </div>
@@ -314,7 +314,7 @@ function ImportarPage() {
               {(["date", "description", "amount", "type", "category"] as const).map((field) => (
                 <div key={field}>
                   <Label className="capitalize text-xs">
-                    {field === "date" ? "Data *" : field === "description" ? "Descrição *" : field === "amount" ? "Valor *" : field === "type" ? "Tipo (opcional)" : "Categoria (opcional)"}
+                    {field === "date" ? t("imp.fieldDate") : field === "description" ? t("imp.fieldDesc") : field === "amount" ? t("imp.fieldAmount") : field === "type" ? t("imp.fieldType") : t("imp.fieldCat")}
                   </Label>
                   <Select
                     value={mapping[field] === null ? "none" : String(mapping[field])}
@@ -322,11 +322,11 @@ function ImportarPage() {
                       setMapping((m) => ({ ...m, [field]: v === "none" ? null : parseInt(v, 10) }))
                     }
                   >
-                    <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger className="h-9"><SelectValue placeholder={t("tx.categorySelect")} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">— Nenhuma —</SelectItem>
+                      <SelectItem value="none">{t("imp.none")}</SelectItem>
                       {headers.map((h, i) => (
-                        <SelectItem key={i} value={String(i)}>{h || `Coluna ${i + 1}`}</SelectItem>
+                        <SelectItem key={i} value={String(i)}>{h || t("imp.col", { n: i + 1 })}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -340,7 +340,7 @@ function ImportarPage() {
                 <thead className="bg-muted/40">
                   <tr>
                     {headers.map((h, i) => (
-                      <th key={i} className="px-2 py-1 text-left font-medium">{h || `Col ${i + 1}`}</th>
+                      <th key={i} className="px-2 py-1 text-left font-medium">{h || t("imp.col", { n: i + 1 })}</th>
                     ))}
                   </tr>
                 </thead>
@@ -357,8 +357,8 @@ function ImportarPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={reset}>Cancelar</Button>
-              <Button onClick={goToPreview}>Continuar para revisão</Button>
+              <Button variant="outline" onClick={reset}>{t("common.cancel")}</Button>
+              <Button onClick={goToPreview}>{t("imp.continue")}</Button>
             </div>
           </CardContent>
         </Card>
@@ -367,17 +367,17 @@ function ImportarPage() {
       {step === "preview" && (
         <>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-            <Card><CardContent className="p-3"><div className="text-xs text-muted-foreground">Total</div><div className="text-xl font-bold">{stats.total}</div></CardContent></Card>
-            <Card><CardContent className="p-3"><div className="text-xs text-muted-foreground">A importar</div><div className="text-xl font-bold text-green-600">{stats.toImport}</div></CardContent></Card>
-            <Card><CardContent className="p-3"><div className="text-xs text-muted-foreground">Duplicados</div><div className="text-xl font-bold text-amber-600">{stats.dupes}</div></CardContent></Card>
-            <Card><CardContent className="p-3"><div className="text-xs text-muted-foreground">Inválidos</div><div className="text-xl font-bold text-destructive">{stats.invalid}</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-xs text-muted-foreground">{t("imp.statTotal")}</div><div className="text-xl font-bold">{stats.total}</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-xs text-muted-foreground">{t("imp.statImport")}</div><div className="text-xl font-bold text-green-600">{stats.toImport}</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-xs text-muted-foreground">{t("imp.statDupes")}</div><div className="text-xl font-bold text-amber-600">{stats.dupes}</div></CardContent></Card>
+            <Card><CardContent className="p-3"><div className="text-xs text-muted-foreground">{t("imp.statInvalid")}</div><div className="text-xl font-bold text-destructive">{stats.invalid}</div></CardContent></Card>
           </div>
 
           {stats.dupes > 0 && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                {stats.dupes} registro(s) já existem (mesma data + valor + descrição) e foram desmarcados.
+                {t("imp.dupeAlert", { n: stats.dupes })}
               </AlertDescription>
             </Alert>
           )}
@@ -385,8 +385,8 @@ function ImportarPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <div>
-                <CardTitle>Revisar e ajustar</CardTitle>
-                <CardDescription>Edite categoria/tipo se necessário. Desmarque o que não quer importar.</CardDescription>
+                <CardTitle>{t("imp.reviewTitle")}</CardTitle>
+                <CardDescription>{t("imp.reviewDesc")}</CardDescription>
               </div>
               <Button 
                 variant="outline" 
@@ -396,11 +396,11 @@ function ImportarPage() {
                     const suggested = suggestCategory(r.description);
                     return suggested ? { ...r, categoryName: suggested.category, type: suggested.type } : r;
                   }));
-                  toast.success("Categorização inteligente aplicada!");
+                  toast.success(t("imp.aiOk"));
                 }}
                 className="gap-2 border-primary/40 text-primary"
               >
-                <Sparkles className="h-4 w-4" /> Categorização IA
+                <Sparkles className="h-4 w-4" /> {t("imp.aiCat")}
               </Button>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -409,11 +409,11 @@ function ImportarPage() {
                   <thead className="bg-muted/40 text-xs">
                     <tr>
                       <th className="w-8 px-2 py-2"></th>
-                      <th className="px-2 py-2 text-left">Data</th>
-                      <th className="px-2 py-2 text-left">Descrição</th>
-                      <th className="px-2 py-2 text-left">Tipo</th>
-                      <th className="px-2 py-2 text-left">Categoria</th>
-                      <th className="px-2 py-2 text-right">Valor</th>
+                      <th className="px-2 py-2 text-left">{t("imp.tblDate")}</th>
+                      <th className="px-2 py-2 text-left">{t("imp.tblDesc")}</th>
+                      <th className="px-2 py-2 text-left">{t("imp.tblType")}</th>
+                      <th className="px-2 py-2 text-left">{t("imp.tblCat")}</th>
+                      <th className="px-2 py-2 text-right">{t("imp.tblAmount")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -434,7 +434,7 @@ function ImportarPage() {
                         </td>
                         <td className="px-2 py-1.5 whitespace-nowrap">{r.date || "—"}</td>
                         <td className="px-2 py-1.5">
-                          <div className="max-w-[260px] truncate">{r.description || <span className="text-destructive">vazio</span>}</div>
+                          <div className="max-w-[260px] truncate">{r.description || <span className="text-destructive">{t("imp.empty")}</span>}</div>
                           {r.errors.length > 0 && (
                             <div className="text-xs text-destructive">{r.errors.join(", ")}</div>
                           )}
@@ -446,8 +446,8 @@ function ImportarPage() {
                           >
                             <SelectTrigger className="h-7 w-[110px] text-xs"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="entrada">Entrada</SelectItem>
-                              <SelectItem value="despesa">Despesa</SelectItem>
+                              <SelectItem value="entrada">{t("tx.income")}</SelectItem>
+                              <SelectItem value="despesa">{t("tx.expense")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </td>
@@ -473,10 +473,10 @@ function ImportarPage() {
           </Card>
 
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => setStep("mapping")}>Voltar</Button>
+            <Button variant="outline" onClick={() => setStep("mapping")}>{t("imp.back")}</Button>
             <Button onClick={doImport} disabled={importing || stats.toImport === 0}>
               <Wand2 className="mr-2 h-4 w-4" />
-              {importing ? "Importando..." : `Importar ${stats.toImport} registro(s)`}
+              {importing ? t("imp.importing") : t("imp.importBtn", { n: stats.toImport })}
             </Button>
           </div>
         </>
@@ -486,9 +486,9 @@ function ImportarPage() {
         <Card>
           <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
             <CheckCircle2 className="h-12 w-12 text-green-600" />
-            <h2 className="text-xl font-bold">Importação concluída!</h2>
-            <p className="text-sm text-muted-foreground">Seus registros já estão disponíveis no Dashboard.</p>
-            <Button onClick={reset}>Importar outro arquivo</Button>
+            <h2 className="text-xl font-bold">{t("imp.doneTitle")}</h2>
+            <p className="text-sm text-muted-foreground">{t("imp.doneDesc")}</p>
+            <Button onClick={reset}>{t("imp.another")}</Button>
           </CardContent>
         </Card>
       )}
