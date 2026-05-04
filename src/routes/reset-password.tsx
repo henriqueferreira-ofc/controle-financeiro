@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Wallet } from "lucide-react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -22,15 +23,14 @@ export const Route = createFileRoute("/reset-password")({
 function ResetPasswordPage() {
   const navigate = useNavigate();
   const { updatePassword } = useAuth();
+  const { t } = useI18n();
   const [ready, setReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    // Supabase places the recovery token in the URL hash and triggers PASSWORD_RECOVERY event
     const { data } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
     });
-    // Also check existing session
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) setReady(true);
     });
@@ -42,15 +42,15 @@ function ResetPasswordPage() {
     const fd = new FormData(e.currentTarget);
     const password = String(fd.get("password") || "");
     const confirm = String(fd.get("confirm") || "");
-    if (password.length < 6) return toast.error("Mínimo 6 caracteres.");
-    if (password !== confirm) return toast.error("As senhas não coincidem.");
+    if (password.length < 6) return toast.error(t("reset.errMin"));
+    if (password !== confirm) return toast.error(t("reset.errMatch"));
     setSubmitting(true);
     const { error } = await updatePassword(password);
     setSubmitting(false);
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Senha redefinida com sucesso!");
+      toast.success(t("reset.success"));
       navigate({ to: "/" });
     }
   };
@@ -66,26 +66,24 @@ function ResetPasswordPage() {
         </div>
         <Card className="border-border/60 shadow-[var(--shadow-card)]">
           <CardHeader>
-            <CardTitle className="text-lg">Nova senha</CardTitle>
-            <CardDescription>Escolha uma senha forte com pelo menos 6 caracteres.</CardDescription>
+            <CardTitle className="text-lg">{t("reset.title")}</CardTitle>
+            <CardDescription>{t("reset.desc")}</CardDescription>
           </CardHeader>
           <CardContent>
             {!ready ? (
-              <p className="text-sm text-muted-foreground">
-                Aguardando link de recuperação válido. Verifique se você abriu o link enviado por email.
-              </p>
+              <p className="text-sm text-muted-foreground">{t("reset.waiting")}</p>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-3">
                 <div className="grid gap-2">
-                  <Label htmlFor="np">Nova senha</Label>
+                  <Label htmlFor="np">{t("reset.new")}</Label>
                   <Input id="np" name="password" type="password" minLength={6} required />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="cp">Confirmar nova senha</Label>
+                  <Label htmlFor="cp">{t("reset.confirm")}</Label>
                   <Input id="cp" name="confirm" type="password" minLength={6} required />
                 </div>
                 <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? "Salvando..." : "Redefinir senha"}
+                  {submitting ? t("reset.saving") : t("reset.submit")}
                 </Button>
               </form>
             )}
