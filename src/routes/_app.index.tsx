@@ -271,7 +271,7 @@ function DashboardPage() {
                     <XAxis dataKey="name" stroke="oklch(0.7 0.015 250)" fontSize={11} />
                     <YAxis stroke="oklch(0.7 0.015 250)" fontSize={12} />
                     <Tooltip content={<ChartTooltip />} cursor={{ fill: "oklch(0.3 0.02 250 / 0.4)" }} />
-                    <Bar dataKey="total" name="Total" radius={[6, 6, 0, 0]}>
+                    <Bar dataKey="total" name={t("period.all")} radius={[6, 6, 0, 0]}>
                       {data.perCategory.map((c) => (
                         <Cell key={c.id} fill={c.color} />
                       ))}
@@ -395,8 +395,8 @@ function DashboardPage() {
                       <PiggyBank className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{ins.title}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">{ins.text}</p>
+                      <p className="text-sm font-medium">{t(ins.title)}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{t(ins.text, ins.params)}</p>
                     </div>
                   </CardContent>
                 </Card>

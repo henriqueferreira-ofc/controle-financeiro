@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_app/categorias")({
   head: () => ({
     meta: [
       { title: "AxisPay" },
-      { name: "description", content: "Gerencie suas categorias personalizadas com cores e ícones." },
+      { name: "description", content: "Gerencie suas categorias de receitas e despesas." },
     ],
   }),
   component: CategoriesPage,
@@ -84,7 +84,7 @@ function CategoriesPage() {
         mode="create"
         onSubmit={async (payload) => {
           await addCategory(payload);
-          toast.success("Categoria criada.");
+          toast.success(t("cat.newTitle") + " OK"); // Simple success toast
         }}
       />
 
@@ -96,25 +96,25 @@ function CategoriesPage() {
         onSubmit={async (payload) => {
           if (!editing) return;
           await updateCategory(editing.id, payload);
-          toast.success("Categoria atualizada.");
+          toast.success(t("cat.editTitle") + " OK");
         }}
       />
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(v) => !v && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir categoria?</AlertDialogTitle>
+            <AlertDialogTitle>{t("cat.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Os registros vinculados a "{confirmDelete?.name}" ficarão sem categoria.
+              {t("cat.deleteDesc", { name: confirmDelete?.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Excluir
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -124,6 +124,7 @@ function CategoriesPage() {
 }
 
 function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+  const { t } = useI18n();
   return (
     <div>
       <div className="mb-3">
@@ -146,6 +147,7 @@ function CategoryGrid({
   onEdit?: (c: Category) => void;
   onDelete?: (c: Category) => void;
 }) {
+  const { t } = useI18n();
   if (items.length === 0) return null;
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -173,7 +175,7 @@ function CategoryGrid({
                     <Lock className="h-4 w-4" />
                   </span>
                 </TooltipTrigger>
-                <TooltipContent>Categoria padrão</TooltipContent>
+                  <TooltipContent>{t("cat.default")}</TooltipContent>
               </Tooltip>
             ) : (
               <div className="flex gap-1">
@@ -205,6 +207,7 @@ function CategoryDialog({
   initial?: Category | null;
   onSubmit: (payload: { name: string; kind: "entrada" | "despesa"; icon: string; color: string }) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [kind, setKind] = useState<"entrada" | "despesa">("despesa");
   const [color, setColor] = useState(PALETTE[0]);
@@ -225,7 +228,7 @@ function CategoryDialog({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error("Nome é obrigatório.");
+      toast.error(t("cat.errName"));
       return;
     }
     try {
@@ -240,28 +243,28 @@ function CategoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle>{mode === "edit" ? "Editar categoria" : "Nova categoria"}</DialogTitle>
-          <DialogDescription>Dê um nome, tipo e uma cor para sua categoria.</DialogDescription>
+          <DialogTitle>{mode === "edit" ? t("cat.editTitle") : t("cat.newTitle")}</DialogTitle>
+          <DialogDescription>{t("cat.dialogDesc")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="grid gap-4 py-2">
           <div className="grid gap-2">
-            <Label htmlFor="cat-name">Nome</Label>
-            <Input id="cat-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Pets" />
+            <Label htmlFor="cat-name">{t("cat.name")}</Label>
+            <Input id="cat-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("cat.namePh")} />
           </div>
           <div className="grid gap-2">
-            <Label>Tipo</Label>
+            <Label>{t("cat.type")}</Label>
             <Select value={kind} onValueChange={(v) => setKind(v as "entrada" | "despesa")}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="despesa">Despesa</SelectItem>
-                <SelectItem value="entrada">Entrada</SelectItem>
+                <SelectItem value="despesa">{t("rec.type.expense")}</SelectItem>
+                <SelectItem value="entrada">{t("rec.type.income")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label>Cor</Label>
+            <Label>{t("cat.color")}</Label>
             <div className="flex flex-wrap gap-2">
               {PALETTE.map((c) => (
                 <button
@@ -276,8 +279,8 @@ function CategoryDialog({
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit">{mode === "edit" ? "Salvar" : "Criar"}</Button>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
+            <Button type="submit">{mode === "edit" ? t("common.save") : t("common.add")}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

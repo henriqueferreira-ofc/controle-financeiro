@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_app/orcamentos")({
   head: () => ({
     meta: [
       { title: "AxisPay" },
-      { name: "description", content: "Defina limites mensais ou semanais por categoria e acompanhe o progresso." },
+      { name: "description", content: "bud.meta.desc" },
     ],
   }),
   component: BudgetsPage,
@@ -39,6 +39,7 @@ function BudgetCard({
   onDelete?: () => void;
   isHistory?: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <Card className={`relative overflow-hidden ${over ? "border-destructive/30 bg-destructive/5" : ""}`}>
       <CardContent className="p-5 space-y-3">
@@ -46,10 +47,10 @@ function BudgetCard({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full" style={{ background: category?.color || "#64748b" }} />
-              <p className="font-medium truncate">{category?.name || "Categoria removida"}</p>
+              <p className="font-medium truncate">{category?.name || t("cat.removed")}</p>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {budget.period === "monthly" ? "Mensal" : "Semanal"}
+              {budget.period === "monthly" ? t("bud.monthly") : t("bud.weekly")}
             </p>
           </div>
           {!isHistory && onEdit && onDelete && (
@@ -72,16 +73,16 @@ function BudgetCard({
           <Progress value={pct} className={over ? "[&>div]:bg-destructive" : ""} />
           <div className="flex justify-between text-xs">
             <span className={over ? "text-destructive font-medium" : "text-muted-foreground"}>
-              {pct.toFixed(0)}% utilizado
+              {t("bud.usedPct", { p: pct.toFixed(0) })}
             </span>
             {over && (
               <Badge variant="destructive" className="h-5 gap-1 px-1.5 text-[10px]">
-                <AlertTriangle className="h-3 w-3" /> Excedido
+                <AlertTriangle className="h-3 w-3" /> {t("bud.exceeded")}
               </Badge>
             )}
             {!over && isHistory && (
               <Badge variant="outline" className="h-5 border-success/40 text-success bg-success/5 text-[10px]">
-                No limite
+                {t("common.withinLimit")}
               </Badge>
             )}
           </div>
@@ -97,6 +98,12 @@ function BudgetsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Budget | null>(null);
   const [confirmDel, setConfirmDel] = useState<Budget | null>(null);
+
+  const months = [
+    t("month.0"), t("month.1"), t("month.2"), t("month.3"), 
+    t("month.4"), t("month.5"), t("month.6"), t("month.7"), 
+    t("month.8"), t("month.9"), t("month.10"), t("month.11")
+  ];
 
   const despesaCats = categories.filter((c) => c.kind === "despesa");
 
@@ -143,10 +150,13 @@ function BudgetsPage() {
   const historyOptions = useMemo(() => {
     const opts = [];
     const now = new Date();
+    const localeMap: Record<string, string> = { pt: "pt-BR", en: "en-US", es: "es-ES" };
+    const currentLocale = localeMap[localStorage.getItem("axispay-locale") || "pt"];
+
     for (let i = 1; i <= 12; i++) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       opts.push({
-        label: d.toLocaleString("pt-BR", { month: "long", year: "numeric" }),
+        label: d.toLocaleString(currentLocale, { month: "long", year: "numeric" }),
         value: d.toISOString().slice(0, 7),
       });
     }
@@ -158,10 +168,10 @@ function BudgetsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("bud.title")}</h1>
-          <p className="text-sm text-muted-foreground">Defina limites por categoria e acompanhe gastos.</p>
+          <p className="text-sm text-muted-foreground">{t("bud.subtitle")}</p>
         </div>
         <Button onClick={() => { setEditing(null); setOpen(true); }} className="shrink-0">
-          <Plus className="mr-1 h-4 w-4" /> Novo orçamento
+          <Plus className="mr-1 h-4 w-4" /> {t("bud.newBtn")}
         </Button>
       </div>
 
@@ -169,10 +179,10 @@ function BudgetsPage() {
         <div className="flex items-center justify-between border-b pb-1">
           <TabsList className="bg-transparent h-auto p-0 gap-6">
             <TabsTrigger value="current" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-2 text-sm font-medium">
-              Mês atual
+              {t("bud.tab.current")}
             </TabsTrigger>
             <TabsTrigger value="history" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-2 text-sm font-medium">
-              Histórico
+              {t("bud.tab.history")}
             </TabsTrigger>
           </TabsList>
 
@@ -195,7 +205,7 @@ function BudgetsPage() {
             <Card>
               <CardContent className="p-8 text-center text-muted-foreground">
                 <Wallet className="mx-auto mb-3 h-10 w-10 opacity-50" />
-                Nenhum orçamento criado. Comece definindo um limite para uma categoria.
+                {t("bud.empty")}
               </CardContent>
             </Card>
           ) : (
@@ -254,10 +264,10 @@ function BudgetsPage() {
         onSave={async (payload) => {
           if (editing) {
             await updateBudget(editing.id, payload);
-            toast.success("Orçamento atualizado.");
+            toast.success(t("bud.toast.updated"));
           } else {
             await addBudget(payload);
-            toast.success("Orçamento criado.");
+            toast.success(t("bud.toast.created"));
           }
           setOpen(false);
           setEditing(null);
@@ -267,8 +277,8 @@ function BudgetsPage() {
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir orçamento?</AlertDialogTitle>
-            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogTitle>{t("bud.delete.title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("bud.delete.desc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -276,12 +286,12 @@ function BudgetsPage() {
               onClick={async () => {
                 if (confirmDel) {
                   await deleteBudget(confirmDel.id);
-                  toast.success("Orçamento excluído.");
+                  toast.success(t("bud.toast.deleted"));
                   setConfirmDel(null);
                 }
               }}
             >
-              Excluir
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -300,6 +310,7 @@ function BudgetDialog({
   existing: Budget[];
   onSave: (b: Omit<Budget, "id">) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [categoryId, setCategoryId] = useState(editing?.categoryId || "");
   const [amount, setAmount] = useState(editing?.amount?.toString() || "");
   const [period, setPeriod] = useState<"monthly" | "weekly">(editing?.period || "monthly");
@@ -314,12 +325,12 @@ function BudgetDialog({
   }, [open, editing]);
 
   const submit = async () => {
-    if (!categoryId) return toast.error("Selecione uma categoria.");
+    if (!categoryId) return toast.error(t("bud.errCategory"));
     const n = Number(amount);
-    if (!n || n <= 0) return toast.error("Informe um valor válido.");
+    if (!n || n <= 0) return toast.error(t("bud.errAmount"));
     if (!editing) {
       const dup = existing.find((b) => b.categoryId === categoryId && b.period === period);
-      if (dup) return toast.error("Já existe um orçamento para esta categoria e período.");
+      if (dup) return toast.error(t("bud.errExists"));
     }
     await onSave({ categoryId, amount: n, period });
   };
@@ -328,36 +339,36 @@ function BudgetDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editing ? "Editar orçamento" : "Novo orçamento"}</DialogTitle>
+          <DialogTitle>{editing ? t("common.edit") : t("bud.new")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Categoria</Label>
+            <Label>{t("bud.category")}</Label>
             <Select value={categoryId} onValueChange={setCategoryId} disabled={!!editing}>
-              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("common.search")} /></SelectTrigger>
               <SelectContent>
                 {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Limite (R$)</Label>
-            <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" />
+            <Label>{t("bud.amount")}</Label>
+            <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
           </div>
           <div className="space-y-2">
-            <Label>Período</Label>
+            <Label>{t("bud.period")}</Label>
             <Select value={period} onValueChange={(v) => setPeriod(v as "monthly" | "weekly")}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="monthly">Mensal</SelectItem>
-                <SelectItem value="weekly">Semanal</SelectItem>
+                <SelectItem value="monthly">{t("bud.monthly")}</SelectItem>
+                <SelectItem value="weekly">{t("bud.weekly")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button onClick={submit}>Salvar</Button>
+          <Button variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button onClick={submit}>{t("common.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

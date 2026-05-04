@@ -50,7 +50,7 @@ export const Route = createFileRoute("/_app/inteligencia")({
       { title: "AxisPay" },
       {
         name: "description",
-        content: "Score financeiro, detecção de anomalias, forecast e insights com IA.",
+        content: "int.meta.desc",
       },
     ],
   }),
@@ -91,7 +91,7 @@ function IntelligencePage() {
 
   const fetchAI = async () => {
     if (transactions.length === 0) {
-      toast.info("Adicione registros para gerar insights.");
+      toast.info(t("ai.errNoData") || "Add records to generate insights.");
       return;
     }
     setAiLoading(true);
@@ -104,9 +104,9 @@ function IntelligencePage() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setAiInsights(data.insights || []);
-      toast.success("Insights gerados.");
+      toast.success(t("int.toast.aiSuccess"));
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erro ao gerar insights";
+      const msg = e instanceof Error ? e.message : t("int.toast.aiError");
       toast.error(msg);
     } finally {
       setAiLoading(false);
@@ -141,12 +141,12 @@ function IntelligencePage() {
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("int.title")}</h1>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Score, anomalias, projeções e insights gerados por IA.
+            {t("int.subtitle")}
           </p>
         </div>
         <Button onClick={fetchAI} disabled={aiLoading} className="shrink-0">
           <Sparkles className="mr-1 h-4 w-4" />
-          {aiLoading ? "Analisando..." : aiInsights ? "Atualizar insights IA" : "Gerar insights IA"}
+          {aiLoading ? t("int.btn.loading") : aiInsights ? t("int.btn.update") : t("int.btn.generate")}
         </Button>
       </div>
 
@@ -177,6 +177,7 @@ function IntelligencePage() {
 
 /* ---------------- LOCAL INSIGHTS (Fase 2.3) ---------------- */
 function LocalInsightsSection({ insights }: { insights: LocalInsight[] }) {
+  const { t } = useI18n();
   if (insights.length === 0) return null;
   const sevMap = {
     positivo: { color: "text-success", bg: "bg-success/15", border: "border-success/30", icon: CheckCircle2 },
@@ -190,7 +191,7 @@ function LocalInsightsSection({ insights }: { insights: LocalInsight[] }) {
       <div className="mb-3 flex items-center gap-2">
         <Lightbulb className="h-4 w-4 text-primary" />
         <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          Insights acionáveis
+          {t("ai.insights") || "Insights acionáveis"}
         </h2>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -210,11 +211,11 @@ function LocalInsightsSection({ insights }: { insights: LocalInsight[] }) {
                     <Icon className="h-4 w-4" />
                   </div>
                   <div className="flex-1 space-y-1.5">
-                    <p className="text-sm font-semibold leading-snug">{ins.title}</p>
-                    <p className="text-sm text-muted-foreground">{ins.description}</p>
-                    {ins.ctaLabel && ins.ctaTo && (
+                    <p className="text-sm font-semibold leading-snug">{t(ins.titleKey, ins.params)}</p>
+                    <p className="text-sm text-muted-foreground">{t(ins.descriptionKey, ins.params)}</p>
+                    {ins.ctaLabelKey && ins.ctaTo && (
                       <Link to={ins.ctaTo} className="inline-flex items-center gap-1 pt-1 text-xs font-medium text-primary hover:underline">
-                        {ins.ctaLabel}
+                        {t(ins.ctaLabelKey)}
                         <ArrowRight className="h-3 w-3" />
                       </Link>
                     )}
@@ -231,6 +232,7 @@ function LocalInsightsSection({ insights }: { insights: LocalInsight[] }) {
 
 /* ---------------- SCORE CARD ---------------- */
 function ScoreCard({ score }: { score: ReturnType<typeof calculateScore> }) {
+  const { t } = useI18n();
   const colors: Record<string, string> = {
     Crítico: "oklch(0.65 0.21 25)",
     Atenção: "oklch(0.78 0.15 75)",
@@ -244,7 +246,7 @@ function ScoreCard({ score }: { score: ReturnType<typeof calculateScore> }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Zap className="h-4 w-4 text-primary" />
-          Score financeiro
+          {t("int.score")}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -254,7 +256,7 @@ function ScoreCard({ score }: { score: ReturnType<typeof calculateScore> }) {
             className="text-xs"
             style={{ background: `${color}25`, color }}
           >
-            {score.level}
+            {t(`score.level.${score.level}`) || score.level}
           </Badge>
         </div>
 
@@ -262,13 +264,13 @@ function ScoreCard({ score }: { score: ReturnType<typeof calculateScore> }) {
           {score.components.map((c) => (
             <div key={c.label}>
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium">{c.label}</span>
+                <span className="font-medium">{t(c.label) || c.label}</span>
                 <span className="text-muted-foreground">
                   {c.value}/{c.max}
                 </span>
               </div>
               <Progress value={(c.value / c.max) * 100} className="mt-1 h-1.5" />
-              <p className="mt-1 text-[11px] text-muted-foreground">{c.description}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">{t(c.description) || c.description}</p>
             </div>
           ))}
         </div>
@@ -278,6 +280,7 @@ function ScoreCard({ score }: { score: ReturnType<typeof calculateScore> }) {
 }
 
 function ScoreRing({ value, color }: { value: number; color: string }) {
+  const { t } = useI18n();
   const size = 160;
   const stroke = 12;
   const r = (size - stroke) / 2;
@@ -311,7 +314,7 @@ function ScoreRing({ value, color }: { value: number; color: string }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-4xl font-bold tabular-nums">{value}</span>
-        <span className="text-xs text-muted-foreground">de 100</span>
+        <span className="text-xs text-muted-foreground">{t("common.of") || "de"} 100</span>
       </div>
     </div>
   );
@@ -327,6 +330,7 @@ function ForecastCard({
   horizon: 30 | 60 | 90;
   setHorizon: (h: 30 | 60 | 90) => void;
 }) {
+  const { t } = useI18n();
   const isPositive = forecast.avgDailyNet >= 0;
   return (
     <Card className="border-border/60 shadow-[var(--shadow-card)] lg:col-span-2">
@@ -337,7 +341,7 @@ function ForecastCard({
           ) : (
             <TrendingDown className="h-4 w-4 text-destructive" />
           )}
-          Previsão de saldo ({horizon} dias)
+          {t("int.forecast")} ({horizon} {t("common.days") || "dias"})
         </CardTitle>
         <div className="flex items-center gap-2">
           <ToggleGroup
@@ -353,12 +357,12 @@ function ForecastCard({
           </ToggleGroup>
           <Badge variant="outline" className="hidden sm:inline-flex">
             {isPositive ? "+" : ""}
-            {brl(forecast.avgDailyNet)}/dia
+            {brl(forecast.avgDailyNet)}{t("int.forecast.perDay")}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground">{forecast.message}</p>
+        <p className="text-sm text-muted-foreground">{t(forecast.messageKey, forecast.messageParams)}</p>
         <div className="h-[200px] w-full sm:h-[240px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
@@ -385,13 +389,13 @@ function ForecastCard({
                   fontSize: 12,
                 }}
                 formatter={(v) => (typeof v === "number" ? brl(v) : "—")}
-                labelFormatter={(l) => `Dia ${l}`}
+                labelFormatter={(l) => t("int.forecast.day", { d: l })}
               />
               <ReferenceLine y={0} stroke="oklch(0.5 0.014 250)" strokeDasharray="3 3" />
               <Line
                 type="monotone"
                 dataKey="saldoReal"
-                name="Histórico"
+                name={t("dash.legend.history") || "Histórico"}
                 stroke="oklch(0.78 0.16 165)"
                 strokeWidth={2.5}
                 dot={false}
@@ -401,7 +405,7 @@ function ForecastCard({
               <Line
                 type="monotone"
                 dataKey="saldoProj"
-                name="Projeção"
+                name={t("int.forecast") || "Projeção"}
                 stroke="oklch(0.78 0.16 165)"
                 strokeWidth={2.5}
                 strokeDasharray="4 4"
@@ -414,10 +418,10 @@ function ForecastCard({
         </div>
         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="h-0.5 w-4 bg-primary" /> Histórico
+            <span className="h-0.5 w-4 bg-primary" /> {t("dash.legend.history")}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-0.5 w-4 border-t-2 border-dashed border-primary" /> Projeção
+            <span className="h-0.5 w-4 border-t-2 border-dashed border-primary" /> {t("int.forecast")}
           </span>
         </div>
       </CardContent>
@@ -431,12 +435,13 @@ function AnomaliesSection({
 }: {
   anomalies: ReturnType<typeof detectAnomalies>;
 }) {
+  const { t } = useI18n();
   return (
     <Card className="border-border/60 shadow-[var(--shadow-card)]">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <AlertTriangle className="h-4 w-4 text-warning" />
-          Detecção de anomalias
+          {t("int.anomalies")}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -444,7 +449,7 @@ function AnomaliesSection({
           <div className="flex items-center gap-3 rounded-lg border border-dashed border-border/60 p-4 text-sm text-muted-foreground">
             <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
             <span>
-              Nenhum gasto fora do padrão detectado nos últimos 60 dias. Continue assim!
+              {t("int.anomalies.emptyLong") || "Nenhum gasto fora do padrão detectado nos últimos 60 dias. Continue assim!"}
             </span>
           </div>
         ) : (
@@ -459,9 +464,9 @@ function AnomaliesSection({
               >
                 <div
                   className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                    a.severity === "alta"
+                    a.severity === "high"
                       ? "bg-destructive/15 text-destructive"
-                      : a.severity === "média"
+                      : a.severity === "medium"
                         ? "bg-warning/15 text-warning"
                         : "bg-primary/15 text-primary"
                   }`}
@@ -480,7 +485,7 @@ function AnomaliesSection({
                     {a.category && ` · ${a.category}`}
                     {" · "}
                     <span className="font-medium text-foreground">
-                      {a.ratio.toFixed(1)}x acima da média
+                      {t("int.anomalies.ratio", { n: a.ratio.toFixed(1) }) || `${a.ratio.toFixed(1)}x acima da média`}
                     </span>
                   </p>
                 </div>
@@ -503,12 +508,13 @@ function AIInsightsSection({
   loading: boolean;
   hasData: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <div>
       <div className="mb-3 flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-primary" />
         <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          Insights gerados por IA
+          {t("int.ai.title")}
         </h2>
       </div>
 
@@ -527,11 +533,11 @@ function AIInsightsSection({
             <div className="flex-1">
               <p className="font-medium">
                 {hasData
-                  ? "Clique em 'Gerar insights IA' para análise inteligente"
-                  : "Adicione registros para gerar insights"}
+                  ? t("int.ai.empty")
+                  : t("int.ai.noData") || "Adicione registros para gerar insights"}
               </p>
               <p className="text-sm text-muted-foreground">
-                A IA analisa seu padrão de gastos e gera recomendações práticas.
+                {t("int.ai.desc") || "A IA analisa seu padrão de gastos e gera recomendações práticas."}
               </p>
             </div>
           </CardContent>
@@ -539,7 +545,7 @@ function AIInsightsSection({
       ) : insights.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-center text-sm text-muted-foreground">
-            Nenhum insight retornado. Tente novamente em alguns instantes.
+            {t("int.ai.error") || "Nenhum insight retornado. Tente novamente em alguns instantes."}
           </CardContent>
         </Card>
       ) : (
@@ -554,6 +560,7 @@ function AIInsightsSection({
 }
 
 function InsightCard({ insight, delay }: { insight: AIInsight; delay: number }) {
+  const { t } = useI18n();
   const sevMap = {
     positivo: { color: "text-success", bg: "bg-success/15", icon: CheckCircle2 },
     neutro: { color: "text-primary", bg: "bg-primary/15", icon: Info },
@@ -581,7 +588,7 @@ function InsightCard({ insight, delay }: { insight: AIInsight; delay: number }) 
             <p className="text-sm text-muted-foreground">{insight.descricao}</p>
             <div className="mt-2 rounded-md border border-border/60 bg-muted/40 p-2.5">
               <p className="text-xs">
-                <span className="font-medium text-foreground">Recomendação: </span>
+                <span className="font-medium text-foreground">{t("int.ai.recommendation") || "Recomendação"}: </span>
                 <span className="text-muted-foreground">{insight.recomendacao}</span>
               </p>
             </div>

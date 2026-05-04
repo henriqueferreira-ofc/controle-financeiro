@@ -151,10 +151,10 @@ function RegistrosPage() {
               </Select>
               <Select value={filters.tag} onValueChange={(v) => setFilters((f) => ({ ...f, tag: v }))}>
                 <SelectTrigger className="w-full md:w-[150px]">
-                  <SelectValue placeholder="Tags" />
+                  <SelectValue placeholder={tr("common.tags")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas as Tags</SelectItem>
+                  <SelectItem value="all">{tr("common.allTags")}</SelectItem>
                   {Array.from(new Set(transactions.flatMap(t => t.tags || []))).map(tag => (
                     <SelectItem key={tag} value={tag}>{tag}</SelectItem>
                   ))}
@@ -162,16 +162,16 @@ function RegistrosPage() {
               </Select>
               <Select value={filters.paymentMethod} onValueChange={(v) => setFilters((f) => ({ ...f, paymentMethod: v }))}>
                 <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Método" />
+                  <SelectValue placeholder={tr("common.method")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os Métodos</SelectItem>
-                  <SelectItem value="money">Dinheiro</SelectItem>
-                  <SelectItem value="pix">PIX</SelectItem>
-                  <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
-                  <SelectItem value="debit_card">Cartão de Débito</SelectItem>
-                  <SelectItem value="transfer">Transferência</SelectItem>
-                  <SelectItem value="other">Outro</SelectItem>
+                  <SelectItem value="all">{tr("common.allMethods")}</SelectItem>
+                  <SelectItem value="money">{tr("pay.money")}</SelectItem>
+                  <SelectItem value="pix">{tr("pay.pix")}</SelectItem>
+                  <SelectItem value="credit_card">{tr("pay.credit_card")}</SelectItem>
+                  <SelectItem value="debit_card">{tr("pay.debit_card")}</SelectItem>
+                  <SelectItem value="transfer">{tr("pay.transfer")}</SelectItem>
+                  <SelectItem value="other">{tr("pay.other")}</SelectItem>
                 </SelectContent>
               </Select>
               <Button 
@@ -180,7 +180,7 @@ function RegistrosPage() {
                 className="h-9 px-2 text-muted-foreground"
                 onClick={() => setFilters({ search: "", type: "all", categoryId: "all", tag: "all", paymentMethod: "all", period: "all" })}
               >
-                Limpar
+                {tr("common.clear")}
               </Button>
               </div>
             </div>
@@ -195,16 +195,16 @@ function RegistrosPage() {
                   <Inbox className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="font-medium">Nenhum registro encontrado</p>
+                  <p className="font-medium">{tr("rec.empty")}</p>
                   <p className="text-sm text-muted-foreground">
                     {transactions.length === 0
-                      ? "Comece adicionando sua primeira movimentação."
-                      : "Ajuste os filtros para visualizar mais resultados."}
+                      ? tr("rec.empty.first")
+                      : tr("rec.empty.filters")}
                   </p>
                 </div>
                 {transactions.length === 0 && (
                   <Button onClick={() => setCreateOpen(true)}>
-                    <Plus className="mr-1 h-4 w-4" /> Adicionar primeiro registro
+                    <Plus className="mr-1 h-4 w-4" /> {tr("rec.addFirst")}
                   </Button>
                 )}
               </div>
@@ -269,13 +269,13 @@ function RegistrosPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead className="hidden lg:table-cell">Categoria</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead className="hidden xl:table-cell">Tags</TableHead>
-                        <TableHead className="text-right">Valor</TableHead>
-                        <TableHead className="w-[140px] text-right">Ações</TableHead>
+                        <TableHead>{tr("rec.col.date")}</TableHead>
+                        <TableHead>{tr("rec.col.description")}</TableHead>
+                        <TableHead className="hidden lg:table-cell">{tr("rec.col.category")}</TableHead>
+                        <TableHead>{tr("rec.type")}</TableHead>
+                        <TableHead className="hidden xl:table-cell">{tr("common.tags")}</TableHead>
+                        <TableHead className="text-right">{tr("rec.col.amount")}</TableHead>
+                        <TableHead className="w-[140px] text-right">{tr("rec.col.actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -297,14 +297,14 @@ function RegistrosPage() {
                 {filtered.length > 50 && (
                   <div className="flex items-center justify-between border-t border-border/60 px-3 py-3 text-sm sm:px-4">
                     <span className="text-muted-foreground">
-                      Página {page} de {totalPages}
+                      {tr("common.pageOf", { current: page, total: totalPages })}
                     </span>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-                        Anterior
+                        {tr("common.prev")}
                       </Button>
                       <Button size="sm" variant="outline" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>
-                        Próxima
+                        {tr("common.next")}
                       </Button>
                     </div>
                   </div>
@@ -318,7 +318,7 @@ function RegistrosPage() {
         <Button
           onClick={() => setCreateOpen(true)}
           size="icon"
-          aria-label="Novo registro"
+          aria-label={tr("rec.new")}
           className="fixed bottom-5 right-5 z-40 h-14 w-14 rounded-full shadow-lg md:hidden"
         >
           <Plus className="h-6 w-6" />
@@ -340,16 +340,16 @@ function RegistrosPage() {
       <Dialog open={!!viewing} onOpenChange={(v) => !v && setViewing(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Detalhes do registro</DialogTitle>
+            <DialogTitle>{tr("rec.details")}</DialogTitle>
           </DialogHeader>
           {viewing && (
             <div className="grid gap-3 py-2 text-sm">
-              <Row label="Tipo" value={viewing.type === "entrada" ? "Entrada" : "Despesa"} />
-              <Row label="Data" value={formatDateBR(viewing.date)} />
-              <Row label="Descrição" value={viewing.description} />
-              <Row label="Categoria" value={getCategoryName(viewing.categoryId)} />
+              <Row label={tr("rec.type")} value={viewing.type === "entrada" ? tr("rec.type.income") : tr("rec.type.expense")} />
+              <Row label={tr("rec.col.date")} value={formatDateBR(viewing.date)} />
+              <Row label={tr("rec.col.description")} value={viewing.description} />
+              <Row label={tr("rec.col.category")} value={getCategoryName(viewing.categoryId)} />
               <Row
-                label="Valor"
+                label={tr("rec.col.amount")}
                 value={brl(viewing.amount)}
                 valueClass={viewing.type === "entrada" ? "text-success" : "text-foreground"}
               />
@@ -362,18 +362,18 @@ function RegistrosPage() {
       <AlertDialog open={!!confirmDelete} onOpenChange={(v) => !v && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir registro?</AlertDialogTitle>
+            <AlertDialogTitle>{tr("rec.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. O registro "{confirmDelete?.description}" será removido permanentemente.
+              {tr("rec.deleteDescLong")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{tr("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Excluir
+              {tr("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -403,6 +403,7 @@ interface RowProps {
 }
 
 const TransactionRow = React.memo(({ t, getCategoryName, brl, formatDateBR, onView, onEdit, onDelete }: RowProps) => {
+  const { t: tr } = useI18n();
   return (
     <TableRow className="group transition-colors hover:bg-muted/30">
       <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
@@ -415,11 +416,11 @@ const TransactionRow = React.memo(({ t, getCategoryName, brl, formatDateBR, onVi
       <TableCell>
         {t.type === "entrada" ? (
           <Badge className="border-success/30 bg-success/15 text-success hover:bg-success/20">
-            <ArrowUpRight className="mr-1 h-3 w-3" /> Entrada
+            <ArrowUpRight className="mr-1 h-3 w-3" /> {tr("rec.type.income")}
           </Badge>
         ) : (
           <Badge className="border-destructive/30 bg-destructive/15 text-destructive hover:bg-destructive/20">
-            <ArrowDownRight className="mr-1 h-3 w-3" /> Despesa
+            <ArrowDownRight className="mr-1 h-3 w-3" /> {tr("rec.type.expense")}
           </Badge>
         )}
       </TableCell>
@@ -443,7 +444,7 @@ const TransactionRow = React.memo(({ t, getCategoryName, brl, formatDateBR, onVi
                 <Eye className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Ver detalhes</TooltipContent>
+            <TooltipContent>{tr("rec.view")}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -451,7 +452,7 @@ const TransactionRow = React.memo(({ t, getCategoryName, brl, formatDateBR, onVi
                 <Pencil className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Editar</TooltipContent>
+            <TooltipContent>{tr("common.edit")}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -459,7 +460,7 @@ const TransactionRow = React.memo(({ t, getCategoryName, brl, formatDateBR, onVi
                 <Trash2 className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Excluir</TooltipContent>
+            <TooltipContent>{tr("common.delete")}</TooltipContent>
           </Tooltip>
         </div>
       </TableCell>

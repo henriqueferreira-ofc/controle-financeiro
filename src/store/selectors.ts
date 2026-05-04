@@ -150,38 +150,42 @@ export function dashboardData(transactions: Transaction[], categories: Category[
   const cur = monthAgg(yCur, mCur);
   const prv = monthAgg(yPrev, mPrev);
   const monthCompare = [
-    { label: "Mês anterior", entrada: prv.entrada, despesa: prv.despesa },
-    { label: "Mês atual", entrada: cur.entrada, despesa: cur.despesa },
+    { label: "dash.compare.prev", entrada: prv.entrada, despesa: prv.despesa },
+    { label: "dash.compare.cur", entrada: cur.entrada, despesa: cur.despesa },
   ];
 
-  const insights: { title: string; text: string }[] = [];
+  const insights: { title: string; text: string; params?: any }[] = [];
   if (topCat && totalSaidas > 0) {
     const pct = (topCat.total / totalSaidas) * 100;
     insights.push({
-      title: "Categoria dominante",
-      text: `A categoria ${topCat.name} representou ${pct.toFixed(1)}% das suas despesas no período.`,
+      title: "ins.dom.title",
+      text: "ins.dom.text",
+      params: { name: topCat.name, pct: pct.toFixed(1) },
     });
   }
   if (perDay.length > 0) {
     const peak = perDay.reduce((a, b) => (b.despesa > a.despesa ? b : a));
     if (peak.despesa > 0) {
       insights.push({
-        title: "Pico de gasto",
-        text: `Seu maior gasto diário foi de R$ ${peak.despesa.toFixed(2)} em ${peak.label}.`,
+        title: "ins.peak.title",
+        text: "ins.peak.text",
+        params: { amount: peak.despesa.toFixed(2), date: peak.label },
       });
     }
   }
   if (topCat && topCat.total > 0) {
     insights.push({
-      title: "Economia potencial",
-      text: `Reduzindo 10% em ${topCat.name}, você economiza cerca de R$ ${(topCat.total * 0.1).toFixed(2)} neste período.`,
+      title: "ins.save.title",
+      text: "ins.save.text",
+      params: { name: topCat.name, amount: (topCat.total * 0.1).toFixed(2) },
     });
   }
   if (totalEntradas > 0 && totalSaidas > 0) {
     const ratio = (totalSaidas / totalEntradas) * 100;
     insights.push({
-      title: "Comprometimento de receita",
-      text: `Suas despesas representam ${ratio.toFixed(1)}% das suas entradas no período.`,
+      title: "ins.ratio.title",
+      text: "ins.ratio.text",
+      params: { ratio: ratio.toFixed(1) },
     });
   }
 

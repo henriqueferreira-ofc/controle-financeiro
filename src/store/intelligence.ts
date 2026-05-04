@@ -5,7 +5,7 @@ import { occurrencesBetween } from "./recurring-engine";
 
 export type FinancialScore = {
   score: number; // 0-100
-  level: "Crítico" | "Atenção" | "Bom" | "Excelente";
+  level: "score.level.critical" | "score.level.warning" | "score.level.good" | "score.level.excellent";
   components: { label: string; value: number; max: number; description: string }[];
 };
 
@@ -16,7 +16,7 @@ export type Anomaly = {
   amount: number;
   category?: string;
   ratio: number; // multiplier vs average
-  severity: "alta" | "média" | "baixa";
+  severity: "high" | "medium" | "low";
 };
 
 export type ForecastPoint = { date: string; label: string; saldo: number; projetado?: boolean };
@@ -128,21 +128,21 @@ export function calculateScore(
   const total = Math.round(poupancaComp + controleComp + orcComp + recComp + metasComp + anomComp);
   const score = Math.max(0, Math.min(100, total));
 
-  let level: FinancialScore["level"] = "Crítico";
-  if (score >= 80) level = "Excelente";
-  else if (score >= 60) level = "Bom";
-  else if (score >= 40) level = "Atenção";
+  let level: FinancialScore["level"] = "score.level.critical";
+  if (score >= 80) level = "score.level.excellent";
+  else if (score >= 60) level = "score.level.good";
+  else if (score >= 40) level = "score.level.warning";
 
   return {
     score,
     level,
     components: [
-      { label: "Poupança", value: Math.round(poupancaComp), max: 30, description: "% da renda que sobra (30d)" },
-      { label: "Controle", value: Math.round(controleComp), max: 20, description: "Essenciais vs supérfluos" },
-      { label: "Orçamentos", value: Math.round(orcComp), max: 20, description: "Limites respeitados no mês" },
-      { label: "Recorrências", value: Math.round(recComp), max: 10, description: "Ativas e em dia" },
-      { label: "Metas", value: Math.round(metasComp), max: 15, description: "Progresso médio" },
-      { label: "Estabilidade", value: anomComp, max: 5, description: "Sem gastos atípicos graves" },
+      { label: "int.score.saving", value: Math.round(poupancaComp), max: 30, description: "int.score.saving.desc" },
+      { label: "int.score.control", value: Math.round(controleComp), max: 20, description: "int.score.control.desc" },
+      { label: "int.score.budgets", value: Math.round(orcComp), max: 20, description: "int.score.budgets.desc" },
+      { label: "int.score.recurrings", value: Math.round(recComp), max: 10, description: "int.score.recurrings.desc" },
+      { label: "int.score.goals", value: Math.round(metasComp), max: 15, description: "int.score.goals.desc" },
+      { label: "int.score.stability", value: anomComp, max: 5, description: "int.score.stability.desc" },
     ],
   };
 }
@@ -183,9 +183,9 @@ export function detectAnomalies(transactions: Transaction[], categories: Categor
       // Critério: ratio >= 2.5 OU z >= 2
       if (ratio >= 2.5 || z >= 2) {
         const cat = categories.find((c) => c.id === catId);
-        let severity: Anomaly["severity"] = "baixa";
-        if (ratio >= 5 || z >= 3.5) severity = "alta";
-        else if (ratio >= 3.5 || z >= 2.5) severity = "média";
+        let severity: Anomaly["severity"] = "low";
+        if (ratio >= 5 || z >= 3.5) severity = "high";
+        else if (ratio >= 3.5 || z >= 2.5) severity = "medium";
         anomalies.push({
           id: t.id,
           date: t.date,
@@ -283,15 +283,18 @@ export function buildForecast(
     });
   }
 
-  let message = "Sem histórico suficiente para projeção.";
+  let messageKey = "int.forecast.msg.empty";
+  let messageParams = {};
+
   if (last30.length > 0) {
     const sign = avgDailyNet >= 0 ? "+" : "";
-    const projFmt = proj.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-    const dailyFmt = Math.abs(avgDailyNet).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-    message =
-      avgDailyNet >= 0
-        ? `Mantendo o ritmo (${sign}${dailyFmt}/dia), seu saldo será ${projFmt} em ${daysAhead} dias.`
-        : `Atenção: você está perdendo ${dailyFmt}/dia. Em ${daysAhead} dias seu saldo será ${projFmt}.`;
+    messageKey = avgDailyNet >= 0 ? "int.forecast.msg.ok" : "int.forecast.msg.warn";
+    messageParams = {
+      sign,
+      daily: Math.abs(avgDailyNet).toFixed(2),
+      proj: proj.toFixed(2),
+      days: daysAhead,
+    };
   }
 
   return {
@@ -299,7 +302,8 @@ export function buildForecast(
     projectedBalance: Number(proj.toFixed(2)),
     daysAhead,
     avgDailyNet: Number(avgDailyNet.toFixed(2)),
-    message,
+    messageKey,
+    messageParams,
   };
 }
 
@@ -308,10 +312,11 @@ export function buildForecast(
 */
 export type LocalInsight = {
   id: string;
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
+  params?: Record<string, any>;
   severity: "positivo" | "neutro" | "atencao" | "critico";
-  ctaLabel?: string;
+  ctaLabelKey?: string;
   ctaTo?: string;
   priority: number; // maior = mais importante
 };
@@ -332,14 +337,20 @@ export function buildInsights(
   const startISO = ymd(start30);
   const last30 = transactions.filter((t) => t.date >= startISO);
 
+  const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
   // 1. Saldo projetado negativo
   if (forecast.projectedBalance < 0) {
     out.push({
-      id: "forecast-negative",
-      title: "Saldo projetado negativo",
-      description: `Em ${forecast.daysAhead} dias seu saldo será ${forecast.projectedBalance.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}. Reagende despesas ou antecipe entradas.`,
+      id: `forecast-negative-${ym}`,
+      titleKey: "ins.forecast.neg.title",
+      descriptionKey: "ins.forecast.neg.desc",
+      params: { 
+        days: forecast.daysAhead, 
+        amount: forecast.projectedBalance.toFixed(2) 
+      },
       severity: "critico",
-      ctaLabel: "Ver recorrências",
+      ctaLabelKey: "nav.recurring",
       ctaTo: "/recorrentes",
       priority: 100,
     });
@@ -353,46 +364,48 @@ export function buildInsights(
       .reduce((a, x) => a + x.amount, 0);
     if (spent > b.amount) {
       out.push({
-        id: `budget-over-${b.id}`,
-        title: `Orçamento estourado: ${cat?.name ?? "—"}`,
-        description: `Gasto ${spent.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} de ${b.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} no mês.`,
+        id: `budget-over-${b.id}-${ym}`,
+        titleKey: "ins.bud.over.title",
+        params: { name: cat?.name ?? "—", spent: spent.toFixed(2), limit: b.amount.toFixed(2) },
+        descriptionKey: "ins.bud.over.desc",
         severity: "critico",
-        ctaLabel: "Revisar orçamentos",
+        ctaLabelKey: "nav.budgets",
         ctaTo: "/orcamentos",
         priority: 90,
       });
     } else if (spent / b.amount >= 0.8) {
       out.push({
-        id: `budget-near-${b.id}`,
-        title: `Próximo do limite: ${cat?.name ?? "—"}`,
-        description: `Você já usou ${Math.round((spent / b.amount) * 100)}% do orçamento da categoria.`,
+        id: `budget-near-${b.id}-${ym}`,
+        titleKey: "ins.bud.near.title",
+        params: { name: cat?.name ?? "—", pct: Math.round((spent / b.amount) * 100) },
+        descriptionKey: "ins.bud.near.desc",
         severity: "atencao",
-        ctaLabel: "Ver orçamentos",
+        ctaLabelKey: "nav.budgets",
         ctaTo: "/orcamentos",
         priority: 70,
       });
     }
   }
 
-  // 3. Categoria com gasto bem acima da média (Fase 4 — perf: indexa por (catId, ano-mes) em uma passada)
+  // 3. Categoria com gasto bem acima da média
   const byCatNow = new Map<string, number>();
   for (const t of last30.filter((t) => t.type === "despesa" && t.categoryId)) {
     byCatNow.set(t.categoryId!, (byCatNow.get(t.categoryId!) || 0) + t.amount);
   }
-  // pré-indexa despesas por (catId|YYYY-MM) — evita varrer transactions N vezes
   const catMonthTotals = new Map<string, number>();
   for (const t of transactions) {
     if (t.type !== "despesa" || !t.categoryId) continue;
     const key = `${t.categoryId}|${t.date.slice(0, 7)}`;
     catMonthTotals.set(key, (catMonthTotals.get(key) || 0) + t.amount);
   }
+
   for (const [catId, atual] of byCatNow.entries()) {
     let soma = 0;
     let meses = 0;
     for (let k = 1; k <= 3; k++) {
       const ref = new Date(now.getFullYear(), now.getMonth() - k, 1);
-      const ym = `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`;
-      const total = catMonthTotals.get(`${catId}|${ym}`) ?? 0;
+      const ymRef = `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`;
+      const total = catMonthTotals.get(`${catId}|${ymRef}`) ?? 0;
       if (total > 0) {
         soma += total;
         meses++;
@@ -404,11 +417,12 @@ export function buildInsights(
       const cat = categories.find((c) => c.id === catId);
       const pct = Math.round(((atual - media) / media) * 100);
       out.push({
-        id: `cat-spike-${catId}`,
-        title: `${cat?.name ?? "Categoria"} acima da média`,
-        description: `Você gastou ${pct}% a mais que sua média de 3 meses nesta categoria.`,
+        id: `cat-spike-${catId}-${ym}`,
+        titleKey: "ins.cat.spike.title",
+        params: { name: cat?.name ?? "Categoria", pct },
+        descriptionKey: "ins.cat.spike.desc",
         severity: "atencao",
-        ctaLabel: "Ver registros",
+        ctaLabelKey: "nav.records",
         ctaTo: "/registros",
         priority: 60,
       });
@@ -422,21 +436,23 @@ export function buildInsights(
     const taxa = (ent - desp) / ent;
     if (taxa >= 0.2) {
       out.push({
-        id: "savings-good",
-        title: "Boa taxa de poupança",
-        description: `Você está poupando ${Math.round(taxa * 100)}% das suas entradas nos últimos 30 dias. Considere alocar em uma meta.`,
+        id: `savings-good-${ym}`,
+        titleKey: "ins.sav.good.title",
+        params: { pct: Math.round(taxa * 100) },
+        descriptionKey: "ins.sav.good.desc",
         severity: "positivo",
-        ctaLabel: "Minhas metas",
+        ctaLabelKey: "nav.goals",
         ctaTo: "/metas",
         priority: 40,
       });
     } else if (taxa < 0) {
       out.push({
-        id: "savings-negative",
-        title: "Você está gastando mais do que ganha",
-        description: `Suas saídas superaram entradas em ${Math.abs(Math.round(taxa * 100))}% nos últimos 30 dias.`,
+        id: `savings-negative-${ym}`,
+        titleKey: "ins.sav.neg.title",
+        params: { pct: Math.abs(Math.round(taxa * 100)) },
+        descriptionKey: "ins.sav.neg.desc",
         severity: "critico",
-        ctaLabel: "Ver registros",
+        ctaLabelKey: "nav.records",
         ctaTo: "/registros",
         priority: 95,
       });
@@ -447,11 +463,12 @@ export function buildInsights(
   const pausadas = recurrings.filter((r) => r.active && r.pausedUntil);
   if (pausadas.length >= 2) {
     out.push({
-      id: "rec-paused",
-      title: `${pausadas.length} recorrências pausadas`,
-      description: "Revise se ainda fazem sentido ou retome para manter projeções precisas.",
+      id: `rec-paused-${ym}`,
+      titleKey: "ins.rec.paused.title",
+      params: { n: pausadas.length },
+      descriptionKey: "ins.rec.paused.desc",
       severity: "neutro",
-      ctaLabel: "Revisar",
+      ctaLabelKey: "common.edit",
       ctaTo: "/recorrentes",
       priority: 30,
     });
@@ -463,11 +480,12 @@ export function buildInsights(
     const pct = g.currentAmount / Math.max(1, g.targetAmount);
     if (pct >= 0.8 && pct < 1) {
       out.push({
-        id: `goal-near-${g.id}`,
-        title: `Meta "${g.name}" quase lá`,
-        description: `Você está em ${Math.round(pct * 100)}% da sua meta. Falta pouco!`,
+        id: `goal-near-${g.id}-${ym}`,
+        titleKey: "ins.goal.near.title",
+        params: { name: g.name, pct: Math.round(pct * 100) },
+        descriptionKey: "ins.goal.near.desc",
         severity: "positivo",
-        ctaLabel: "Ver meta",
+        ctaLabelKey: "nav.goals",
         ctaTo: "/metas",
         priority: 50,
       });
@@ -482,11 +500,12 @@ export function buildInsights(
     const pct = superfluos / desp;
     if (pct > 0.45) {
       out.push({
-        id: "superfluos-high",
-        title: "Gastos supérfluos elevados",
-        description: `${Math.round(pct * 100)}% das suas despesas foram não-essenciais nos últimos 30 dias.`,
+        id: `superfluos-high-${ym}`,
+        titleKey: "ins.super.high.title",
+        params: { pct: Math.round(pct * 100) },
+        descriptionKey: "ins.super.high.desc",
         severity: "atencao",
-        ctaLabel: "Ver registros",
+        ctaLabelKey: "nav.records",
         ctaTo: "/registros",
         priority: 55,
       });
@@ -498,11 +517,12 @@ export function buildInsights(
   if (hasCreditCard) {
     const totalCC = last30.filter(t => t.paymentMethod === "credit_card").reduce((a, b) => a + b.amount, 0);
     out.push({
-      id: "credit-card-alert",
-      title: "Monitoramento de Cartão",
-      description: `Você possui ${brl(totalCC)} em gastos no cartão de crédito este mês. Verifique o fechamento da fatura.`,
+      id: `credit-card-alert-${ym}`,
+      titleKey: "ins.cc.title",
+      descriptionKey: "ins.cc.desc",
+      params: { amount: totalCC.toFixed(2) },
       severity: "atencao",
-      ctaLabel: "Ver registros",
+      ctaLabelKey: "nav.records",
       ctaTo: "/registros",
       priority: 85,
     });
