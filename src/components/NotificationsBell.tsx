@@ -1,7 +1,4 @@
 // Fase 3.1 — Centro de notificações inteligentes
-// Critérios cobertos:
-// - 3.1.1: Bell com badge contendo nº de itens críticos/atenção
-// - 3.1.2: Painel lateral (Sheet) com notificações priorizadas + CTA navegável
 import { memo, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { Bell, AlertTriangle, CheckCircle2, Info, ArrowRight } from "lucide-react";
@@ -16,9 +13,11 @@ import {
 } from "@/components/ui/sheet";
 import { useFinwise } from "@/store/finwise-store";
 import { buildForecast, buildInsights } from "@/store/intelligence";
+import { useI18n } from "@/i18n/I18nProvider";
 
 function NotificationsBellInner() {
   const { transactions, categories, budgets, goals, recurrings, loading } = useFinwise();
+  const { t } = useI18n();
 
   const insights = useMemo(() => {
     if (loading) return [];
@@ -37,7 +36,7 @@ function NotificationsBellInner() {
           variant="ghost"
           size="icon"
           className="relative h-9 w-9 text-muted-foreground hover:text-foreground"
-          aria-label="Notificações"
+          aria-label={t("notif.aria")}
         >
           <Bell className="h-4 w-4" />
           {urgentCount > 0 && (
@@ -51,14 +50,14 @@ function NotificationsBellInner() {
         <SheetHeader className="mb-4">
           <SheetTitle className="flex items-center gap-2">
             <Bell className="h-4 w-4 text-primary" />
-            Notificações
+            {t("notif.title")}
           </SheetTitle>
         </SheetHeader>
 
         {insights.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border/60 p-6 text-center text-sm text-muted-foreground">
             <CheckCircle2 className="mx-auto mb-2 h-8 w-8 text-success" />
-            Tudo em ordem por aqui!
+            {t("notif.empty")}
           </div>
         ) : (
           <ul className="space-y-2">
@@ -90,7 +89,7 @@ function NotificationsBellInner() {
                         )}
                       </div>
                       <Badge variant="outline" className="shrink-0 text-[9px] uppercase">
-                        {ins.severity}
+                        {t(`sev.${ins.severity}`)}
                       </Badge>
                     </div>
                   </div>

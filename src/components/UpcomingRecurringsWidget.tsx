@@ -1,11 +1,11 @@
-// Fase 1.1 — Widget "Próximas 4 semanas"
-// Lista as próximas ocorrências de recorrências com data exata de disparo.
+// Fase 1.1 — Widget "Próximas N semanas"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowDownCircle, ArrowUpCircle, CalendarRange } from "lucide-react";
 import { brl, formatDateBR } from "@/lib/format";
 import { upcomingOccurrences } from "@/store/projection";
 import type { Category, Recurring } from "@/store/types";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export function UpcomingRecurringsWidget({
   recurrings,
@@ -16,6 +16,7 @@ export function UpcomingRecurringsWidget({
   categories: Category[];
   weeks?: number;
 }) {
+  const { t } = useI18n();
   const items = upcomingOccurrences(recurrings, weeks).slice(0, 12);
 
   return (
@@ -23,13 +24,13 @@ export function UpcomingRecurringsWidget({
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <CalendarRange className="h-4 w-4 text-primary" />
-          Próximas {weeks} semanas
+          {t("upcoming.title", { n: weeks })}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            Nenhuma recorrência agendada para o período.
+            {t("upcoming.empty")}
           </p>
         ) : (
           <ul className="divide-y divide-border/50">
