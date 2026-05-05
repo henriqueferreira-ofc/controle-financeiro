@@ -4,8 +4,22 @@ import { Badge } from "@/components/ui/badge";
 import { brl, formatDateBR } from "@/lib/format";
 import { AlertTriangle, CalendarClock, TrendingDown, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
+import { useMemo } from "react";
 import type { WeekPoint } from "@/store/projection";
 import { useI18n } from "@/i18n/I18nProvider";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceLine } from "recharts";
+
+const CustomTooltip = ({ active, payload, label, brl }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-lg border border-border bg-popover p-2 text-[10px] shadow-lg">
+        <p className="font-medium">{label}</p>
+        <p className="text-primary font-bold">{brl(payload[0].value)}</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export function WeekProjectionCard({
   points,
@@ -21,7 +35,26 @@ export function WeekProjectionCard({
   const { t } = useI18n();
   const projected = Number((currentBalance + totalIncome - totalExpense).toFixed(2));
   const negative = projected < 0;
-  const max = Math.max(1, ...points.map((p) => p.amount + p.income));
+  const maxBar = Math.max(1, ...points.map((p) => p.amount + p.income));
+
+  const chartData = useMemo(() => {
+    let balance = currentBalance;
+    return points.map((p) => {
+      balance = balance + p.income - p.amount;
+      return {
+        name: p.label,
+        balance: balance,
+        date: formatDateBR(p.date)
+      };
+    });
+  }, [points, currentBalance]);
+
+  const minBalance = Math.min(...chartData.map(d => d.balance));
+  const healthScore = useMemo(() => {
+    if (negative) return { label: "Crítico", color: "text-red-500", bg: "bg-red-500/10" };
+    if (minBalance < currentBalance * 0.2) return { label: "Alerta", color: "text-amber-500", bg: "bg-amber-500/10" };
+    return { label: "Saudável", color: "text-green-500", bg: "bg-green-500/10" };
+  }, [negative, minBalance, currentBalance]);
 
   return (
     <Card className={`border-border/60 shadow-[var(--shadow-card)] ${negative ? "border-destructive/50 bg-destructive/5" : ""}`}>
@@ -62,10 +95,10 @@ export function WeekProjectionCard({
 
         <div>
           <p className="mb-2 text-[10px] uppercase tracking-wide text-muted-foreground">{t("week.timeline")}</p>
-          <div className="flex items-end gap-1.5">
+          <div className="flex items-end gap-1.5 h-14">
             {points.map((p) => {
               const total = p.amount + p.income;
-              const h = total > 0 ? Math.max(8, (total / max) * 56) : 4;
+              const h = total > 0 ? Math.max(8, (total / maxBar) * 56) : 4;
               const hasMovement = total > 0;
               return (
                 <div key={p.date} className="flex flex-1 flex-col items-center gap-1">
@@ -85,6 +118,42 @@ export function WeekProjectionCard({
               );
             })}
           </div>
+        </div>
+
+        <div className="pt-4 border-t border-border/40">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Projeção de Fluxo de Caixa</p>
+            <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${healthScore.bg} ${healthScore.color}`}>
+              {healthScore.label}
+            </div>
+          </div>
+          <div className="h-[180px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9 }} />
+                <Tooltip content={<CustomTooltip brl={brl} />} />
+                <ReferenceLine y={0} stroke="#ef4444" strokeDasharray="3 3" />
+                <Area 
+                  type="monotone" 
+                  dataKey="balance" 
+                  stroke="var(--primary)" 
+                  strokeWidth={2}
+                  fillOpacity={1} 
+                  fill="url(#colorBalance)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="mt-2 text-[9px] text-muted-foreground text-center italic">
+            * O gráfico mostra a evolução estimada do seu saldo dia a dia.
+          </p>
         </div>
       </CardContent>
     </Card>
