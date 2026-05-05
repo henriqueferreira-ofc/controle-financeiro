@@ -366,3 +366,120 @@ function ContasPage() {
     </div>
   );
 }
+
+// ─────────────────────────────────────────────────────────────
+// Bank Selection Modal (Open Finance-style picker)
+// ─────────────────────────────────────────────────────────────
+type Bank = {
+  id: string;
+  name: string;
+  color: string;
+  initial: string;
+  url: string;
+};
+
+const BANKS: Bank[] = [
+  { id: "santander", name: "Santander", color: "#EC0000", initial: "S", url: "https://www.santander.com.br" },
+  { id: "nubank", name: "Nubank", color: "#820AD1", initial: "N", url: "https://nubank.com.br" },
+  { id: "bb", name: "Banco do Brasil", color: "#FAE128", initial: "BB", url: "https://www.bb.com.br" },
+  { id: "caixa", name: "Caixa", color: "#0070AF", initial: "C", url: "https://www.caixa.gov.br" },
+  { id: "itau", name: "Itaú", color: "#EC7000", initial: "I", url: "https://www.itau.com.br" },
+  { id: "bradesco", name: "Bradesco", color: "#CC092F", initial: "B", url: "https://www.bradesco.com.br" },
+  { id: "inter", name: "Banco Inter", color: "#FF7A00", initial: "BI", url: "https://www.bancointer.com.br" },
+  { id: "btg", name: "BTG Pactual", color: "#0A2240", initial: "BT", url: "https://www.btgpactual.com" },
+  { id: "c6", name: "C6 Bank", color: "#1A1A1A", initial: "C6", url: "https://www.c6bank.com.br" },
+  { id: "next", name: "Next", color: "#00FF5F", initial: "Nx", url: "https://next.me" },
+  { id: "neon", name: "Neon", color: "#00E0B5", initial: "Ne", url: "https://neon.com.br" },
+  { id: "original", name: "Banco Original", color: "#00A859", initial: "O", url: "https://www.original.com.br" },
+  { id: "safra", name: "Safra", color: "#003DA5", initial: "Sf", url: "https://www.safra.com.br" },
+  { id: "sicoob", name: "Sicoob", color: "#003641", initial: "Sc", url: "https://www.sicoob.com.br" },
+  { id: "sicredi", name: "Sicredi", color: "#3FA535", initial: "Sr", url: "https://www.sicredi.com.br" },
+  { id: "pan", name: "Banco Pan", color: "#00A1E0", initial: "P", url: "https://www.bancopan.com.br" },
+  { id: "mercadopago", name: "Mercado Pago", color: "#00B1EA", initial: "MP", url: "https://www.mercadopago.com.br" },
+  { id: "picpay", name: "PicPay", color: "#21C25E", initial: "Pp", url: "https://www.picpay.com" },
+  { id: "willbank", name: "Will Bank", color: "#FFBF1A", initial: "W", url: "https://www.willbank.com.br" },
+  { id: "xp", name: "XP Investimentos", color: "#000000", initial: "XP", url: "https://www.xpi.com.br" },
+];
+
+function BankSelectionModal({ onClose }: { onClose: () => void }) {
+  const [search, setSearch] = useState("");
+  const filtered = BANKS.filter((b) => b.name.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm sm:items-center"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        className="my-8 w-full max-w-lg rounded-2xl border border-border bg-card shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between border-b border-border/50 p-5">
+          <h2 className="pr-4 text-lg font-semibold leading-snug">
+            Qual é a instituição financeira da conta que você quer adicionar?
+          </h2>
+          <button
+            onClick={onClose}
+            className="-mt-1 -mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Fechar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="border-b border-border/50 px-5 py-3">
+          <div className="flex items-center gap-2 border-b border-border/60 pb-2">
+            <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              autoFocus
+              placeholder="Buscar por nome"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none"
+            />
+          </div>
+        </div>
+
+        {/* Bank list */}
+        <div className="max-h-[60vh] overflow-y-auto">
+          {filtered.length === 0 ? (
+            <div className="p-8 text-center text-sm text-muted-foreground">
+              Nenhuma instituição encontrada.
+            </div>
+          ) : (
+            filtered.map((bank) => (
+              <a
+                key={bank.id}
+                href={bank.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between gap-3 border-b border-border/30 px-5 py-3 transition-colors hover:bg-muted/40"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm"
+                    style={{ backgroundColor: bank.color }}
+                  >
+                    {bank.initial}
+                  </div>
+                  <span className="text-sm font-medium">{bank.name}</span>
+                </div>
+                <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            ))
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
