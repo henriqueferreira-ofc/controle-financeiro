@@ -51,10 +51,10 @@ export function WeekProjectionCard({
 
   const minBalance = Math.min(...chartData.map(d => d.balance));
   const healthScore = useMemo(() => {
-    if (negative) return { label: "Crítico", color: "text-red-500", bg: "bg-red-500/10" };
-    if (minBalance < currentBalance * 0.2) return { label: "Alerta", color: "text-amber-500", bg: "bg-amber-500/10" };
-    return { label: "Saudável", color: "text-green-500", bg: "bg-green-500/10" };
-  }, [negative, minBalance, currentBalance]);
+    if (negative) return { label: t("week.health.critical"), color: "text-red-500", bg: "bg-red-500/10" };
+    if (minBalance < currentBalance * 0.2) return { label: t("week.health.warning"), color: "text-amber-500", bg: "bg-amber-500/10" };
+    return { label: t("week.health.healthy"), color: "text-green-500", bg: "bg-green-500/10" };
+  }, [negative, minBalance, currentBalance, t]);
 
   return (
     <Card className={`border-border/60 shadow-[var(--shadow-card)] ${negative ? "border-destructive/50 bg-destructive/5" : ""}`}>
@@ -122,7 +122,7 @@ export function WeekProjectionCard({
 
         <div className="pt-4 border-t border-border/40">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Projeção de Fluxo de Caixa</p>
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{t("week.flowProjection")}</p>
             <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${healthScore.bg} ${healthScore.color}`}>
               {healthScore.label}
             </div>
@@ -152,7 +152,7 @@ export function WeekProjectionCard({
             </ResponsiveContainer>
           </div>
           <p className="mt-2 text-[9px] text-muted-foreground text-center italic">
-            * O gráfico mostra a evolução estimada do seu saldo dia a dia.
+            {t("week.chartHint")}
           </p>
         </div>
       </CardContent>
