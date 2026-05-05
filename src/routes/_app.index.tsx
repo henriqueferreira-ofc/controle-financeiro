@@ -234,15 +234,15 @@ function DashboardPage() {
               <div className="h-[260px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data.perDay} margin={{ top: 10, right: 12, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.014 250)" />
-                    <XAxis dataKey="label" stroke="oklch(0.7 0.015 250)" fontSize={12} />
-                    <YAxis stroke="oklch(0.7 0.015 250)" fontSize={12} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="label" stroke="var(--muted-foreground)" fontSize={12} />
+                    <YAxis stroke="var(--muted-foreground)" fontSize={12} />
                     <Tooltip content={<ChartTooltip />} />
                     <Line
                       type="monotone"
                       dataKey="despesa"
                       name={t("dash.legend.expense")}
-                      stroke="oklch(0.65 0.21 25)"
+                      stroke="var(--destructive)"
                       strokeWidth={2.5}
                       dot={{ r: 3 }}
                       activeDot={{ r: 5 }}
@@ -267,10 +267,10 @@ function DashboardPage() {
               <div className="h-[260px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.perCategory} margin={{ top: 10, right: 12, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.014 250)" />
-                    <XAxis dataKey="name" stroke="oklch(0.7 0.015 250)" fontSize={11} />
-                    <YAxis stroke="oklch(0.7 0.015 250)" fontSize={12} />
-                    <Tooltip content={<ChartTooltip />} cursor={{ fill: "oklch(0.3 0.02 250 / 0.4)" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={11} />
+                    <YAxis stroke="var(--muted-foreground)" fontSize={12} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: "var(--muted)", fillOpacity: 0.4 }} />
                     <Bar dataKey="total" name={t("period.all")} radius={[6, 6, 0, 0]}>
                       {data.perCategory.map((c) => (
                         <Cell key={c.id} fill={c.color} />
@@ -299,15 +299,15 @@ function DashboardPage() {
               <div className="h-[260px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data.cumulative} margin={{ top: 10, right: 12, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.014 250)" />
-                    <XAxis dataKey="label" stroke="oklch(0.7 0.015 250)" fontSize={12} />
-                    <YAxis stroke="oklch(0.7 0.015 250)" fontSize={12} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="label" stroke="var(--muted-foreground)" fontSize={12} />
+                    <YAxis stroke="var(--muted-foreground)" fontSize={12} />
                     <Tooltip content={<ChartTooltip />} />
                     <Line
                       type="monotone"
                       dataKey="saldo"
                       name={t("dash.kpi.balance")}
-                      stroke="oklch(0.78 0.16 165)"
+                      stroke="var(--primary)"
                       strokeWidth={2.5}
                       dot={{ r: 3 }}
                       activeDot={{ r: 5 }}
@@ -330,13 +330,13 @@ function DashboardPage() {
               <div className="h-[260px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.monthCompare} margin={{ top: 10, right: 12, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.014 250)" />
-                    <XAxis dataKey="label" stroke="oklch(0.7 0.015 250)" fontSize={12} />
-                    <YAxis stroke="oklch(0.7 0.015 250)" fontSize={12} />
-                    <Tooltip content={<ChartTooltip />} cursor={{ fill: "oklch(0.3 0.02 250 / 0.4)" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="label" stroke="var(--muted-foreground)" fontSize={12} />
+                    <YAxis stroke="var(--muted-foreground)" fontSize={12} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: "var(--muted)", fillOpacity: 0.4 }} />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="entrada" name={t("dash.legend.income")} fill="oklch(0.78 0.16 165)" radius={[6, 6, 0, 0]} />
-                    <Bar dataKey="despesa" name={t("dash.legend.expense")} fill="oklch(0.65 0.21 25)" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="entrada" name={t("dash.legend.income")} fill="var(--primary)" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="despesa" name={t("dash.legend.expense")} fill="var(--destructive)" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

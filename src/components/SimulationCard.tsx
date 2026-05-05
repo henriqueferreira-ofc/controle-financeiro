@@ -248,30 +248,30 @@ function SimulationCardInner() {
         <div className="h-[200px] w-full sm:h-[240px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 10, right: 12, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.014 250)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis
                 dataKey="label"
-                stroke="oklch(0.7 0.015 250)"
+                stroke="var(--muted-foreground)"
                 fontSize={11}
                 interval="preserveStartEnd"
               />
-              <YAxis stroke="oklch(0.7 0.015 250)" fontSize={11} />
+              <YAxis stroke="var(--muted-foreground)" fontSize={11} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "oklch(0.22 0.014 250)",
-                  border: "1px solid oklch(0.3 0.014 250)",
+                  backgroundColor: "var(--popover)",
+                  border: "1px solid var(--border)",
                   borderRadius: 8,
                   fontSize: 12,
                 }}
                 formatter={(v) => (typeof v === "number" ? brl(v) : "—")}
                 labelFormatter={(l) => t("sim.day", { n: l })}
               />
-              <ReferenceLine y={0} stroke="oklch(0.5 0.014 250)" strokeDasharray="3 3" />
+              <ReferenceLine y={0} stroke="var(--muted-foreground)" strokeDasharray="3 3" />
               <Line
                 type="monotone"
                 dataKey="base"
                 name={t("sim.base")}
-                stroke="oklch(0.7 0.015 250)"
+                stroke="var(--muted-foreground)"
                 strokeWidth={2}
                 dot={false}
                 isAnimationActive={false}
@@ -280,7 +280,7 @@ function SimulationCardInner() {
                 type="monotone"
                 dataKey="sim"
                 name={t("sim.simulated")}
-                stroke="oklch(0.78 0.16 165)"
+                stroke="var(--primary)"
                 strokeWidth={2.5}
                 dot={false}
                 isAnimationActive={false}

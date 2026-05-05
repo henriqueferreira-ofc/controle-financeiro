@@ -234,12 +234,12 @@ function LocalInsightsSection({ insights }: { insights: LocalInsight[] }) {
 function ScoreCard({ score }: { score: ReturnType<typeof calculateScore> }) {
   const { t } = useI18n();
   const colors: Record<string, string> = {
-    "score.level.critical": "oklch(0.65 0.21 25)",
-    "score.level.warning": "oklch(0.78 0.15 75)",
-    "score.level.good": "oklch(0.7 0.18 200)",
-    "score.level.excellent": "oklch(0.78 0.16 165)",
+    "score.level.critical": "var(--destructive)",
+    "score.level.warning": "var(--warning)",
+    "score.level.good": "var(--chart-2)",
+    "score.level.excellent": "var(--primary)",
   };
-  const color = colors[score.level] || "oklch(0.7 0.18 200)";
+  const color = colors[score.level] || "var(--primary)";
 
   return (
     <Card className="border-border/60 shadow-[var(--shadow-card)] lg:col-span-1">
@@ -295,7 +295,7 @@ function ScoreRing({ value, color }: { value: number; color: string }) {
           cy={size / 2}
           r={r}
           fill="none"
-          stroke="oklch(0.3 0.014 250)"
+          stroke="var(--muted)"
           strokeWidth={stroke}
         />
         <motion.circle
@@ -373,30 +373,30 @@ function ForecastCard({
               }))}
               margin={{ top: 10, right: 12, left: -10, bottom: 0 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.014 250)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis
                 dataKey="label"
-                stroke="oklch(0.7 0.015 250)"
+                stroke="var(--muted-foreground)"
                 fontSize={11}
                 interval="preserveStartEnd"
               />
-              <YAxis stroke="oklch(0.7 0.015 250)" fontSize={11} />
+              <YAxis stroke="var(--muted-foreground)" fontSize={11} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "oklch(0.22 0.014 250)",
-                  border: "1px solid oklch(0.3 0.014 250)",
+                  backgroundColor: "var(--popover)",
+                  border: "1px solid var(--border)",
                   borderRadius: 8,
                   fontSize: 12,
                 }}
                 formatter={(v) => (typeof v === "number" ? brl(v) : "—")}
                 labelFormatter={(l) => t("int.forecast.day", { d: l })}
               />
-              <ReferenceLine y={0} stroke="oklch(0.5 0.014 250)" strokeDasharray="3 3" />
+              <ReferenceLine y={0} stroke="var(--muted-foreground)" strokeDasharray="3 3" />
               <Line
                 type="monotone"
                 dataKey="saldoReal"
                 name={t("dash.legend.history") || "Histórico"}
-                stroke="oklch(0.78 0.16 165)"
+                stroke="var(--primary)"
                 strokeWidth={2.5}
                 dot={false}
                 connectNulls
@@ -406,7 +406,7 @@ function ForecastCard({
                 type="monotone"
                 dataKey="saldoProj"
                 name={t("int.forecast") || "Projeção"}
-                stroke="oklch(0.78 0.16 165)"
+                stroke="var(--primary)"
                 strokeWidth={2.5}
                 strokeDasharray="4 4"
                 dot={false}
