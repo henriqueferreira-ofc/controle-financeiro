@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { format } from "date-fns";
 import { ptBR, enUS, es } from "date-fns/locale";
+import type { Locale } from "date-fns";
 
 export const Route = createFileRoute("/_app/contas")({
   head: () => ({
