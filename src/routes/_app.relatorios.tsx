@@ -3,7 +3,7 @@ import { useFinwise } from "@/store/finwise-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { brl } from "@/lib/format";
-import { ArrowDownRight, ArrowUpRight, BarChart3, Calendar, Wallet } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, BarChart3, Calendar, CheckCircle2, Circle, Wallet } from "lucide-react";
 import { useState, useMemo } from "react";
 import { KpiCard } from "@/components/KpiCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ptBR, enUS, es } from "date-fns/locale";
 import { useI18n } from "@/i18n/I18nProvider";
+import { cn } from "@/lib/utils";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from "recharts";
 
 export const Route = createFileRoute("/_app/relatorios")({
   head: () => ({
@@ -24,7 +26,7 @@ export const Route = createFileRoute("/_app/relatorios")({
 
 function RelatoriosPage() {
   const { t } = useI18n();
-  const { transactions, categories } = useFinwise();
+  const { transactions, categories, updateTransaction } = useFinwise();
 
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth().toString());
@@ -78,6 +80,25 @@ function RelatoriosPage() {
       balance: totalIn - totalOut,
     };
   }, [transactions, selectedMonth, selectedYear]);
+
+  const categoryChartData = useMemo(() => {
+    const expenses = filteredData.transactions.filter(t => t.type === 'despesa');
+    const grouped = new Map<string, { value: number; name: string; color: string }>();
+
+    for (const t of expenses) {
+      const cat = t.categoryId ? catById.get(t.categoryId) : undefined;
+      const catId = t.categoryId || 'none';
+      const current = grouped.get(catId) || { 
+        value: 0, 
+        name: cat?.name || t("cat.none"), 
+        color: cat?.color || '#94a3b8' 
+      };
+      current.value += Math.abs(t.amount);
+      grouped.set(catId, current);
+    }
+
+    return Array.from(grouped.values()).sort((a, b) => b.value - a.value);
+  }, [filteredData.transactions, catById, t]);
 
     const { locale } = useI18n();
     const dateLocales = { pt: ptBR, en: enUS, es: es };
@@ -139,6 +160,106 @@ function RelatoriosPage() {
         />
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-5">
+        <Card className="lg:col-span-2 border-border/60 shadow-[var(--shadow-card)]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-medium">{t("rep.chart.byCategory") || "Gastos por Categoria"}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {categoryChartData.length === 0 ? (
+              <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+                {t("rep.empty")}
+              </div>
+            ) : (
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {categoryChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                      formatter={(value: number) => brl(value)}
+                      contentStyle={{ 
+                        borderRadius: '8px', 
+                        border: 'none', 
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        fontSize: '12px'
+                      }}
+                    />
+                    <Legend 
+                      verticalAlign="bottom" 
+                      height={36}
+                      content={({ payload }) => (
+                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-4">
+                          {payload?.map((entry: any, index: number) => (
+                            <div key={`legend-${index}`} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                              <div className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                              <span>{entry.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-3 border-border/60 shadow-[var(--shadow-card)]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-medium">{t("rep.breakdown") || "Detalhamento de Gastos"}</CardTitle>
+          </CardHeader>
+          <CardContent className="px-2 sm:px-6">
+            <div className="space-y-4">
+              {categoryChartData.length === 0 ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">
+                  {t("rep.empty")}
+                </div>
+              ) : (
+                categoryChartData.map((item, index) => {
+                  const percentage = ((item.value / filteredData.totalOut) * 100).toFixed(1);
+                  return (
+                    <div key={index} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                          <span className="font-medium">{item.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2 tabular-nums">
+                          <span className="text-muted-foreground text-xs">{percentage}%</span>
+                          <span className="font-semibold">{brl(item.value)}</span>
+                        </div>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-muted/50">
+                        <div 
+                          className="h-full rounded-full transition-all duration-500" 
+                          style={{ 
+                            width: `${percentage}%`,
+                            backgroundColor: item.color
+                          }} 
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card className="border-border/60 shadow-[var(--shadow-card)]">
         <CardHeader className="flex flex-row items-center justify-between px-4 pb-2 pt-4 sm:px-6">
           <CardTitle className="text-base flex items-center gap-2">
@@ -180,8 +301,20 @@ function RelatoriosPage() {
                         </div>
                       </div>
                     </div>
-                    <div className={`text-sm font-bold tabular-nums ${isIncome ? 'text-success' : 'text-destructive'}`}>
-                      {isIncome ? '+' : '-'} {brl(Math.abs(t.amount))}
+                    <div className="flex items-center gap-3">
+                      <div className={`text-sm font-bold tabular-nums ${!isIncome && t.paid ? 'text-success' : isIncome ? 'text-success' : 'text-destructive'}`}>
+                        {isIncome ? '+' : '-'} {brl(Math.abs(t.amount))}
+                      </div>
+                      {!isIncome && (
+                        <button 
+                          onClick={() => updateTransaction(t.id, { paid: !t.paid })}
+                          className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+                            t.paid ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                          }`}
+                        >
+                          {t.paid ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -199,12 +332,13 @@ function RelatoriosPage() {
                     <TableHead className="px-4">{t("rec.col.description")}</TableHead>
                     <TableHead className="px-4">{t("rec.col.category")}</TableHead>
                     <TableHead className="text-right px-4">{t("rec.col.amount")}</TableHead>
+                    <TableHead className="w-20 px-4 text-center">{t("common.paid") || "Pago"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredData.transactions.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                         {t("rep.empty")}
                       </TableCell>
                     </TableRow>
@@ -213,11 +347,17 @@ function RelatoriosPage() {
                       const cat = t.categoryId ? catById.get(t.categoryId) : undefined;
                       const isIncome = t.type === 'entrada';
                       return (
-                        <TableRow key={t.id} className="hover:bg-muted/30">
+                        <TableRow 
+                          key={t.id} 
+                          className={cn(
+                            "hover:bg-muted/30 transition-colors",
+                            !isIncome && t.paid && "bg-success/5 hover:bg-success/10"
+                          )}
+                        >
                           <TableCell className="text-xs text-muted-foreground px-4">
                             {format(new Date(t.date + "T12:00:00"), "dd/MM/yy", { locale: dateLocale })}
                           </TableCell>
-                          <TableCell className="font-medium px-4">{t.description}</TableCell>
+                          <TableCell className={cn("font-medium px-4", !isIncome && t.paid && "text-success")}>{t.description}</TableCell>
                           <TableCell className="px-4">
                             <Badge variant="secondary" className="font-normal h-5" style={{
                               backgroundColor: cat?.color + '20',
@@ -227,8 +367,23 @@ function RelatoriosPage() {
                               {cat?.name || t("cat.none")}
                             </Badge>
                           </TableCell>
-                          <TableCell className={`text-right font-semibold tabular-nums px-4 ${isIncome ? 'text-success' : 'text-destructive'}`}>
+                          <TableCell className={`text-right font-semibold tabular-nums px-4 ${!isIncome && t.paid ? 'text-success' : isIncome ? 'text-success' : 'text-destructive'}`}>
                             {isIncome ? '+' : '-'} {brl(Math.abs(t.amount))}
+                          </TableCell>
+                          <TableCell className="px-4 text-center">
+                            {!isIncome && (
+                              <button 
+                                onClick={() => updateTransaction(t.id, { paid: !t.paid })}
+                                className={cn(
+                                  "mx-auto flex h-7 w-7 items-center justify-center rounded-full transition-all",
+                                  t.paid 
+                                    ? "bg-success text-success-foreground shadow-sm" 
+                                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                )}
+                              >
+                                {t.paid ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
+                              </button>
+                            )}
                           </TableCell>
                         </TableRow>
                       );

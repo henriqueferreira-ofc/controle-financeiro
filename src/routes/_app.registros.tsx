@@ -13,11 +13,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TransactionDialog } from "@/components/TransactionDialog";
 import { brl, formatDateBR } from "@/lib/format";
-import { ArrowDownRight, ArrowUpRight, Eye, Pencil, Plus, Search, Trash2, Inbox, Download } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Eye, Pencil, Plus, Search, Trash2, Inbox, Download, CheckCircle2, Circle } from "lucide-react";
 import { exportToCSV } from "@/lib/export";
 import { toast } from "sonner";
 import * as React from "react";
 import { useI18n } from "@/i18n/I18nProvider";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/registros")({
   head: () => ({
@@ -212,8 +213,16 @@ function RegistrosPage() {
               <>
                 {/* MOBILE: card list */}
                 <ul className="divide-y divide-border/60 md:hidden">
-                  {paginated.map((t) => (
-                    <li key={t.id} className="flex items-start gap-3 px-3 py-3 sm:px-4">
+                  {paginated.map((t) => {
+                    const isIncome = t.type === "entrada";
+                    return (
+                      <li 
+                        key={t.id} 
+                        className={cn(
+                          "flex items-start gap-3 px-3 py-3 sm:px-4 transition-colors",
+                          !isIncome && t.paid && "bg-success/5"
+                        )}
+                      >
                       <div
                         className={`mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
                           t.type === "entrada"
@@ -229,10 +238,10 @@ function RegistrosPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="truncate text-sm font-medium">{t.description}</p>
+                          <p className={cn("truncate text-sm font-medium", !isIncome && t.paid && "text-success")}>{t.description}</p>
                           <span
                             className={`shrink-0 text-sm font-semibold tabular-nums ${
-                              t.type === "entrada" ? "text-success" : "text-foreground"
+                              !isIncome && t.paid ? "text-success" : isIncome ? "text-success" : "text-foreground"
                             }`}
                           >
                             {t.type === "despesa" ? "-" : "+"} {brl(t.amount)}
@@ -261,7 +270,8 @@ function RegistrosPage() {
                         </div>
                       </div>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
 
                 {/* DESKTOP / TABLET: table */}
@@ -279,18 +289,22 @@ function RegistrosPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paginated.map((t) => (
-                        <TransactionRow
-                          key={t.id}
-                          t={t}
-                          getCategoryName={getCategoryName}
-                          brl={brl}
-                          formatDateBR={formatDateBR}
-                          onView={setViewing}
-                          onEdit={setEditing}
-                          onDelete={setConfirmDelete}
-                        />
-                      ))}
+                      {paginated.map((t) => {
+                        const isIncome = t.type === "entrada";
+                        return (
+                          <TransactionRow
+                            key={t.id}
+                            t={t}
+                            isIncome={isIncome}
+                            getCategoryName={getCategoryName}
+                            brl={brl}
+                            formatDateBR={formatDateBR}
+                            onView={setViewing}
+                            onEdit={setEditing}
+                            onDelete={setConfirmDelete}
+                          />
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
@@ -394,6 +408,7 @@ function Row({ label, value, valueClass }: { label: string; value: string; value
 // Fase 4.1 — Memoized Row for Performance
 interface RowProps {
   t: Transaction;
+  isIncome: boolean;
   getCategoryName: (id?: string) => string;
   brl: (v: number) => string;
   formatDateBR: (d: string) => string;
@@ -402,14 +417,18 @@ interface RowProps {
   onDelete: (t: Transaction) => void;
 }
 
-const TransactionRow = React.memo(({ t, getCategoryName, brl, formatDateBR, onView, onEdit, onDelete }: RowProps) => {
+const TransactionRow = React.memo(({ t, isIncome, getCategoryName, brl, formatDateBR, onView, onEdit, onDelete }: RowProps) => {
   const { t: tr } = useI18n();
+  const { updateTransaction } = useFinwise();
   return (
-    <TableRow className="group transition-colors hover:bg-muted/30">
+    <TableRow className={cn(
+      "group transition-colors hover:bg-muted/30",
+      !isIncome && t.paid && "bg-success/5 hover:bg-success/10"
+    )}>
       <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
         {formatDateBR(t.date)}
       </TableCell>
-      <TableCell className="font-medium">{t.description}</TableCell>
+      <TableCell className={cn("font-medium", !isIncome && t.paid && "text-success")}>{t.description}</TableCell>
       <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">
         {getCategoryName(t.categoryId)}
       </TableCell>
@@ -433,11 +452,29 @@ const TransactionRow = React.memo(({ t, getCategoryName, brl, formatDateBR, onVi
           ))}
         </div>
       </TableCell>
-      <TableCell className={`text-right font-semibold tabular-nums ${t.type === "entrada" ? "text-success" : "text-foreground"}`}>
+      <TableCell className={`text-right font-semibold tabular-nums ${!isIncome && t.paid ? "text-success" : isIncome ? "text-success" : "text-foreground"}`}>
         {t.type === "despesa" ? "-" : "+"} {brl(t.amount)}
       </TableCell>
       <TableCell className="text-right">
         <div className="flex justify-end gap-1">
+          {!isIncome && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className={cn(
+                    "h-8 w-8 transition-all",
+                    t.paid ? "text-success hover:text-success hover:bg-success/20" : "text-muted-foreground"
+                  )}
+                  onClick={() => updateTransaction(t.id, { paid: !t.paid })}
+                >
+                  {t.paid ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t.paid ? tr("common.paid") : tr("common.pay") || "Marcar como pago"}</TooltipContent>
+            </Tooltip>
+          )}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onView(t)}>

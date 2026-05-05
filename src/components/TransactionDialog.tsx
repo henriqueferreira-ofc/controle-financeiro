@@ -30,6 +30,7 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
   const [fixed, setFixed] = React.useState(false);
   const [paymentMethod, setPaymentMethod] = React.useState<string>("");
   const [tags, setTags] = React.useState<string>("");
+  const [paid, setPaid] = React.useState(false);
 
   React.useEffect(() => {
     if (open && initial) {
@@ -42,6 +43,7 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
       setFixed(initial.fixed);
       setPaymentMethod(initial.paymentMethod || "");
       setTags(initial.tags?.join(", ") || "");
+      setPaid(initial.paid);
     } else if (open) {
       setType("despesa");
       setDate(todayISO());
@@ -52,6 +54,7 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
       setFixed(false);
       setPaymentMethod("");
       setTags("");
+      setPaid(false);
     }
   }, [open, initial]);
 
@@ -80,6 +83,7 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
       fixed,
       paymentMethod: paymentMethod || undefined,
       tags: tags.split(",").map(tg => tg.trim()).filter(Boolean),
+      paid,
     };
 
     try {
@@ -180,6 +184,16 @@ export function TransactionDialog({ open, onOpenChange, initial, mode }: Transac
               <Switch id="fixed" checked={fixed} onCheckedChange={setFixed} />
             </div>
           </div>
+
+          {type === "despesa" && (
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-success/30 bg-success/10 p-3">
+              <div>
+                <Label htmlFor="paid" className="cursor-pointer text-success font-semibold">{t("common.paid")}</Label>
+                <p className="text-xs text-success/80">{t("tx.paidHint") || "Marque se esta transação já foi liquidada"}</p>
+              </div>
+              <Switch id="paid" checked={paid} onCheckedChange={setPaid} className="data-[state=checked]:bg-success" />
+            </div>
+          )}
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="grid gap-2">

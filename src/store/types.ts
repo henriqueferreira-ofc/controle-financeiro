@@ -22,6 +22,7 @@ export type Transaction = {
   recurringId?: string | null;
   paymentMethod?: string;
   tags?: string[];
+  paid: boolean;
 };
 
 export type Filters = {
