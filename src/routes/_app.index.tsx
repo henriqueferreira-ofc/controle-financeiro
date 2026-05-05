@@ -162,6 +162,7 @@ function DashboardPage() {
               icon={Wallet}
               tone={data.saldo >= 0 ? "success" : "destructive"}
               delay={0}
+              to="/contas"
             />
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
@@ -171,6 +172,7 @@ function DashboardPage() {
               icon={ArrowUpRight}
               tone="success"
               delay={0}
+              to="/receitas"
             />
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} className="relative">
@@ -181,6 +183,7 @@ function DashboardPage() {
               tone="destructive"
               delay={0}
               extra={expenseDelta !== null && <MonthDeltaBadge delta={expenseDelta} />}
+              to="/despesas"
             />
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>

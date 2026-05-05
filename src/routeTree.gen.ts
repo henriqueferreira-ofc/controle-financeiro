@@ -16,11 +16,14 @@ import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppRelatoriosRouteImport } from './routes/_app.relatorios'
 import { Route as AppRegistrosRouteImport } from './routes/_app.registros'
 import { Route as AppRecorrentesRouteImport } from './routes/_app.recorrentes'
+import { Route as AppReceitasRouteImport } from './routes/_app.receitas'
 import { Route as AppPerfilRouteImport } from './routes/_app.perfil'
 import { Route as AppOrcamentosRouteImport } from './routes/_app.orcamentos'
 import { Route as AppMetasRouteImport } from './routes/_app.metas'
 import { Route as AppInteligenciaRouteImport } from './routes/_app.inteligencia'
 import { Route as AppImportarRouteImport } from './routes/_app.importar'
+import { Route as AppDespesasRouteImport } from './routes/_app.despesas'
+import { Route as AppContasRouteImport } from './routes/_app.contas'
 import { Route as AppCategoriasRouteImport } from './routes/_app.categorias'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -57,6 +60,11 @@ const AppRecorrentesRoute = AppRecorrentesRouteImport.update({
   path: '/recorrentes',
   getParentRoute: () => AppRoute,
 } as any)
+const AppReceitasRoute = AppReceitasRouteImport.update({
+  id: '/receitas',
+  path: '/receitas',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPerfilRoute = AppPerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
@@ -82,6 +90,16 @@ const AppImportarRoute = AppImportarRouteImport.update({
   path: '/importar',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDespesasRoute = AppDespesasRouteImport.update({
+  id: '/despesas',
+  path: '/despesas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContasRoute = AppContasRouteImport.update({
+  id: '/contas',
+  path: '/contas',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCategoriasRoute = AppCategoriasRouteImport.update({
   id: '/categorias',
   path: '/categorias',
@@ -93,11 +111,14 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/categorias': typeof AppCategoriasRoute
+  '/contas': typeof AppContasRoute
+  '/despesas': typeof AppDespesasRoute
   '/importar': typeof AppImportarRoute
   '/inteligencia': typeof AppInteligenciaRoute
   '/metas': typeof AppMetasRoute
   '/orcamentos': typeof AppOrcamentosRoute
   '/perfil': typeof AppPerfilRoute
+  '/receitas': typeof AppReceitasRoute
   '/recorrentes': typeof AppRecorrentesRoute
   '/registros': typeof AppRegistrosRoute
   '/relatorios': typeof AppRelatoriosRoute
@@ -106,11 +127,14 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/categorias': typeof AppCategoriasRoute
+  '/contas': typeof AppContasRoute
+  '/despesas': typeof AppDespesasRoute
   '/importar': typeof AppImportarRoute
   '/inteligencia': typeof AppInteligenciaRoute
   '/metas': typeof AppMetasRoute
   '/orcamentos': typeof AppOrcamentosRoute
   '/perfil': typeof AppPerfilRoute
+  '/receitas': typeof AppReceitasRoute
   '/recorrentes': typeof AppRecorrentesRoute
   '/registros': typeof AppRegistrosRoute
   '/relatorios': typeof AppRelatoriosRoute
@@ -122,11 +146,14 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_app/categorias': typeof AppCategoriasRoute
+  '/_app/contas': typeof AppContasRoute
+  '/_app/despesas': typeof AppDespesasRoute
   '/_app/importar': typeof AppImportarRoute
   '/_app/inteligencia': typeof AppInteligenciaRoute
   '/_app/metas': typeof AppMetasRoute
   '/_app/orcamentos': typeof AppOrcamentosRoute
   '/_app/perfil': typeof AppPerfilRoute
+  '/_app/receitas': typeof AppReceitasRoute
   '/_app/recorrentes': typeof AppRecorrentesRoute
   '/_app/registros': typeof AppRegistrosRoute
   '/_app/relatorios': typeof AppRelatoriosRoute
@@ -139,11 +166,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/categorias'
+    | '/contas'
+    | '/despesas'
     | '/importar'
     | '/inteligencia'
     | '/metas'
     | '/orcamentos'
     | '/perfil'
+    | '/receitas'
     | '/recorrentes'
     | '/registros'
     | '/relatorios'
@@ -152,11 +182,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/categorias'
+    | '/contas'
+    | '/despesas'
     | '/importar'
     | '/inteligencia'
     | '/metas'
     | '/orcamentos'
     | '/perfil'
+    | '/receitas'
     | '/recorrentes'
     | '/registros'
     | '/relatorios'
@@ -167,11 +200,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_app/categorias'
+    | '/_app/contas'
+    | '/_app/despesas'
     | '/_app/importar'
     | '/_app/inteligencia'
     | '/_app/metas'
     | '/_app/orcamentos'
     | '/_app/perfil'
+    | '/_app/receitas'
     | '/_app/recorrentes'
     | '/_app/registros'
     | '/_app/relatorios'
@@ -235,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRecorrentesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/receitas': {
+      id: '/_app/receitas'
+      path: '/receitas'
+      fullPath: '/receitas'
+      preLoaderRoute: typeof AppReceitasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/perfil': {
       id: '/_app/perfil'
       path: '/perfil'
@@ -270,6 +313,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppImportarRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/despesas': {
+      id: '/_app/despesas'
+      path: '/despesas'
+      fullPath: '/despesas'
+      preLoaderRoute: typeof AppDespesasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/contas': {
+      id: '/_app/contas'
+      path: '/contas'
+      fullPath: '/contas'
+      preLoaderRoute: typeof AppContasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/categorias': {
       id: '/_app/categorias'
       path: '/categorias'
@@ -282,11 +339,14 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppCategoriasRoute: typeof AppCategoriasRoute
+  AppContasRoute: typeof AppContasRoute
+  AppDespesasRoute: typeof AppDespesasRoute
   AppImportarRoute: typeof AppImportarRoute
   AppInteligenciaRoute: typeof AppInteligenciaRoute
   AppMetasRoute: typeof AppMetasRoute
   AppOrcamentosRoute: typeof AppOrcamentosRoute
   AppPerfilRoute: typeof AppPerfilRoute
+  AppReceitasRoute: typeof AppReceitasRoute
   AppRecorrentesRoute: typeof AppRecorrentesRoute
   AppRegistrosRoute: typeof AppRegistrosRoute
   AppRelatoriosRoute: typeof AppRelatoriosRoute
@@ -295,11 +355,14 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCategoriasRoute: AppCategoriasRoute,
+  AppContasRoute: AppContasRoute,
+  AppDespesasRoute: AppDespesasRoute,
   AppImportarRoute: AppImportarRoute,
   AppInteligenciaRoute: AppInteligenciaRoute,
   AppMetasRoute: AppMetasRoute,
   AppOrcamentosRoute: AppOrcamentosRoute,
   AppPerfilRoute: AppPerfilRoute,
+  AppReceitasRoute: AppReceitasRoute,
   AppRecorrentesRoute: AppRecorrentesRoute,
   AppRegistrosRoute: AppRegistrosRoute,
   AppRelatoriosRoute: AppRelatoriosRoute,
