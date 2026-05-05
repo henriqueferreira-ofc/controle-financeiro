@@ -1,17 +1,24 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { brl } from "@/lib/format";
-import { Plus, Search, Filter, ArrowUpCircle, ArrowDownCircle, BarChart2, ChevronLeft, ChevronRight, CheckCircle2, Circle } from "lucide-react";
+import {
+  Plus, Search, Filter, ArrowUpCircle, ArrowDownCircle, BarChart2,
+  ChevronLeft, ChevronRight, CheckCircle2, Circle, Pencil, X,
+} from "lucide-react";
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useFinwise } from "@/store/finwise-store";
+import type { Transaction } from "@/store/types";
 import { format } from "date-fns";
 import { ptBR, enUS, es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { TransactionDialog } from "@/components/TransactionDialog";
 
 export const Route = createFileRoute("/_app/receitas")({
   head: () => ({
@@ -30,10 +37,21 @@ function ReceitasPage() {
   const [currentMonth, setCurrentMonth] = useState(now.getMonth());
   const [currentYear, setCurrentYear] = useState(now.getFullYear());
 
-  const dateLocales = { pt: ptBR, en: enUS, es: es };
+  // UI state
+  const [showSearch, setShowSearch] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all"); // all | received | pending
+
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+
+  const dateLocales: Record<string, Locale> = { pt: ptBR, en: enUS, es: es };
   const dateLocale = dateLocales[locale] || ptBR;
 
-  // Navigate months
   const prevMonth = () => {
     if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(y => y - 1); }
     else setCurrentMonth(m => m - 1);
@@ -49,60 +67,193 @@ function ReceitasPage() {
     return m;
   }, [categories]);
 
-  // Filter only income transactions for the selected month
+  // Income categories only
+  const incomeCategories = useMemo(() => {
+    const prefix = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-`;
+    const usedCatIds = new Set(
+      transactions
+        .filter(tx => tx.type === "entrada" && tx.date.startsWith(prefix) && tx.categoryId)
+        .map(tx => tx.categoryId!)
+    );
+    return categories.filter(c => usedCatIds.has(c.id));
+  }, [transactions, categories, currentMonth, currentYear]);
+
   const filtered = useMemo(() => {
     const prefix = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-`;
     return transactions
-      .filter(t => t.type === "entrada" && t.date.startsWith(prefix))
+      .filter(tx => {
+        if (tx.type !== "entrada") return false;
+        if (!tx.date.startsWith(prefix)) return false;
+        if (searchQuery && !tx.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+        if (filterCategory !== "all" && tx.categoryId !== filterCategory) return false;
+        if (filterStatus === "received" && !tx.paid) return false;
+        if (filterStatus === "pending" && tx.paid) return false;
+        return true;
+      })
       .sort((a, b) => b.date.localeCompare(a.date));
-  }, [transactions, currentMonth, currentYear]);
+  }, [transactions, currentMonth, currentYear, searchQuery, filterCategory, filterStatus]);
 
   const totals = useMemo(() => {
-    const total = filtered.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const received = filtered.filter(t => t.paid).reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const pending = total - received;
-    return { total, received, pending };
-  }, [filtered]);
+    const prefix = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-`;
+    const all = transactions.filter(tx => tx.type === "entrada" && tx.date.startsWith(prefix));
+    const total = all.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+    const received = all.filter(tx => tx.paid).reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+    return { total, received, pending: total - received };
+  }, [transactions, currentMonth, currentYear]);
 
-  const monthLabel = format(new Date(currentYear, currentMonth, 1), "MMMM yyyy", { locale: dateLocale });
   const monthLabelShort = format(new Date(currentYear, currentMonth, 1), "MMM", { locale: dateLocale });
   const monthYear = format(new Date(currentYear, currentMonth, 1), "yyyy", { locale: dateLocale });
+
+  const hasActiveFilters = filterCategory !== "all" || filterStatus !== "all" || searchQuery !== "";
+
+  function openNew() {
+    setSelectedTx(null);
+    setDialogMode("create");
+    setDialogOpen(true);
+  }
+
+  function openEdit(tx: Transaction) {
+    setSelectedTx(tx);
+    setDialogMode("edit");
+    setDialogOpen(true);
+  }
+
+  function clearFilters() {
+    setSearchQuery("");
+    setFilterCategory("all");
+    setFilterStatus("all");
+  }
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5 px-3 py-4 sm:px-4 sm:py-6 md:px-8 md:py-8">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <Badge className="bg-success text-success-foreground px-4 py-1.5 text-sm font-semibold rounded-full cursor-default select-none">
-            ✓ {t("common.income") || "Receitas"}
-          </Badge>
-        </div>
+        <Badge className="w-fit bg-success text-success-foreground px-4 py-1.5 text-sm font-semibold rounded-full cursor-default select-none">
+          ✓ {t("common.income")}
+        </Badge>
         <div className="flex items-center gap-2">
-          <Button asChild className="gap-1.5 bg-success text-success-foreground hover:bg-success/90 shadow-sm">
-            <Link to="/registros">
-              <Plus className="h-4 w-4" />
-              {t("income.new") || "Nova Receita"}
-            </Link>
+          <Button className="gap-1.5 bg-success text-success-foreground hover:bg-success/90 shadow-sm" onClick={openNew}>
+            <Plus className="h-4 w-4" />
+            {t("income.new")}
           </Button>
-          <Button variant="outline" size="icon" className="h-9 w-9 rounded-full border-border/60">
+          <Button
+            variant="outline"
+            size="icon"
+            className={cn("h-9 w-9 rounded-full border-border/60 transition-colors", showSearch && "bg-primary/10 border-primary/40")}
+            onClick={() => { setShowSearch(s => !s); setShowFilter(false); }}
+          >
             <Search className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" className="h-9 w-9 rounded-full border-border/60">
+          <Button
+            variant="outline"
+            size="icon"
+            className={cn("h-9 w-9 rounded-full border-border/60 transition-colors", (showFilter || hasActiveFilters) && "bg-primary/10 border-primary/40")}
+            onClick={() => { setShowFilter(s => !s); setShowSearch(false); }}
+          >
             <Filter className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
+      {/* Search bar */}
+      <AnimatePresence>
+        {showSearch && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                autoFocus
+                placeholder={t("common.search") || "Buscar receitas..."}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-9 pr-9 rounded-full border-border/60"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Filter panel */}
+      <AnimatePresence>
+        {showFilter && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <Card className="border-border/60 border-dashed">
+              <CardContent className="flex flex-wrap items-center gap-3 p-4">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Filtros</span>
+                </div>
+
+                {/* Category filter */}
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="h-8 w-[180px] rounded-full text-xs">
+                    <SelectValue placeholder={t("common.allCategories")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("common.allCategories")}</SelectItem>
+                    {incomeCategories.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Status filter */}
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="h-8 w-[160px] rounded-full text-xs">
+                    <SelectValue placeholder="Situação" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="received">{t("income.received")}</SelectItem>
+                    <SelectItem value="pending">{t("income.pending")}</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs text-muted-foreground hover:text-foreground" onClick={clearFilters}>
+                    <X className="h-3 w-3" />
+                    Limpar
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* KPI Mini Cards */}
       <div className="grid gap-3 sm:grid-cols-3">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
-          <Card className="border-border/60 shadow-[var(--shadow-card)] cursor-pointer hover:border-success/40 transition-colors">
+          <Card
+            className="border-border/60 shadow-[var(--shadow-card)] hover:border-success/40 transition-colors cursor-pointer"
+            onClick={() => { setFilterStatus(filterStatus === "pending" ? "all" : "pending"); setShowFilter(true); }}
+          >
             <CardContent className="flex items-center gap-4 p-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success/15">
                 <ArrowUpCircle className="h-5 w-5 text-success" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground">{t("income.pending") || "Receitas pendentes"}</p>
+                <p className="text-xs text-muted-foreground">{t("income.pending")}</p>
                 <p className="text-lg font-bold tabular-nums text-success">{brl(totals.pending)}</p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
@@ -111,13 +262,16 @@ function ReceitasPage() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <Card className="border-border/60 shadow-[var(--shadow-card)] cursor-pointer hover:border-success/40 transition-colors">
+          <Card
+            className="border-border/60 shadow-[var(--shadow-card)] hover:border-success/40 transition-colors cursor-pointer"
+            onClick={() => { setFilterStatus(filterStatus === "received" ? "all" : "received"); setShowFilter(true); }}
+          >
             <CardContent className="flex items-center gap-4 p-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success/15">
                 <ArrowDownCircle className="h-5 w-5 text-success" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground">{t("income.received") || "Receitas recebidas"}</p>
+                <p className="text-xs text-muted-foreground">{t("income.received")}</p>
                 <p className="text-lg font-bold tabular-nums text-success">{brl(totals.received)}</p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
@@ -126,13 +280,13 @@ function ReceitasPage() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card className="border-border/60 shadow-[var(--shadow-card)] cursor-pointer hover:border-success/40 transition-colors">
+          <Card className="border-border/60 shadow-[var(--shadow-card)] hover:border-success/40 transition-colors">
             <CardContent className="flex items-center gap-4 p-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success/15">
                 <BarChart2 className="h-5 w-5 text-success" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground">{t("common.total") || "Total"}</p>
+                <p className="text-xs text-muted-foreground">{t("common.total")}</p>
                 <p className="text-lg font-bold tabular-nums text-success">{brl(totals.total)}</p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
@@ -141,43 +295,59 @@ function ReceitasPage() {
         </motion.div>
       </div>
 
+      {/* Active filter chips */}
+      {hasActiveFilters && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground">Filtrando:</span>
+          {searchQuery && (
+            <Badge variant="secondary" className="gap-1 text-xs">
+              "{searchQuery}"
+              <button onClick={() => setSearchQuery("")}><X className="h-3 w-3" /></button>
+            </Badge>
+          )}
+          {filterCategory !== "all" && (
+            <Badge variant="secondary" className="gap-1 text-xs">
+              {catById.get(filterCategory)?.name}
+              <button onClick={() => setFilterCategory("all")}><X className="h-3 w-3" /></button>
+            </Badge>
+          )}
+          {filterStatus !== "all" && (
+            <Badge variant="secondary" className="gap-1 text-xs">
+              {filterStatus === "received" ? t("income.received") : t("income.pending")}
+              <button onClick={() => setFilterStatus("all")}><X className="h-3 w-3" /></button>
+            </Badge>
+          )}
+          <span className="text-xs text-muted-foreground">{filtered.length} resultado(s)</span>
+        </div>
+      )}
+
       {/* Table Card */}
       <Card className="border-border/60 shadow-[var(--shadow-card)]">
-        {/* Month navigator */}
         <div className="flex items-center justify-center gap-4 border-b border-border/40 py-3">
-          <button
-            onClick={prevMonth}
-            className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted transition-colors"
-          >
+          <button onClick={prevMonth} className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted transition-colors">
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="rounded-full border border-success/60 bg-success/5 px-5 py-1 text-sm font-semibold text-success">
             <span className="capitalize">{monthLabelShort}</span>{" "}
             <span className="text-muted-foreground font-normal">{monthYear}</span>
           </span>
-          <button
-            onClick={nextMonth}
-            className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted transition-colors"
-          >
+          <button onClick={nextMonth} className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted transition-colors">
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="border-border/40">
                 <TableHead className="w-10 pl-4"><input type="checkbox" className="rounded" /></TableHead>
-                <TableHead>{t("rec.col.status") || "Situação"}</TableHead>
-                <TableHead className="flex items-center gap-1">
-                  {t("rec.col.date") || "Data"}
-                </TableHead>
-                <TableHead>{t("rec.col.description") || "Descrição"}</TableHead>
-                <TableHead>{t("rec.col.category") || "Categoria"}</TableHead>
-                <TableHead>{t("accounts.wallet") || "Conta"}</TableHead>
-                <TableHead className="text-right">{t("rec.col.amount") || "Valor"}</TableHead>
-                <TableHead className="text-right">{t("rec.col.actions") || "Ações"}</TableHead>
+                <TableHead>{t("rec.col.status")}</TableHead>
+                <TableHead>{t("rec.col.date")}</TableHead>
+                <TableHead>{t("rec.col.description")}</TableHead>
+                <TableHead>{t("rec.col.category")}</TableHead>
+                <TableHead>{t("accounts.wallet")}</TableHead>
+                <TableHead className="text-right">{t("rec.col.amount")}</TableHead>
+                <TableHead className="text-right">{t("rec.col.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -187,14 +357,17 @@ function ReceitasPage() {
                     <div className="flex flex-col items-center justify-center gap-4 py-12">
                       <div className="text-6xl">🔭</div>
                       <p className="text-sm text-muted-foreground font-medium">
-                        {t("rep.empty") || "Nenhum resultado"}
+                        {hasActiveFilters ? "Nenhum resultado para os filtros aplicados." : (t("rep.empty") || "Nenhum resultado")}
                       </p>
-                      <Button asChild size="sm" className="bg-success text-success-foreground hover:bg-success/90">
-                        <Link to="/registros">
-                          <Plus className="h-3.5 w-3.5 mr-1" />
-                          {t("income.new") || "Nova Receita"}
-                        </Link>
-                      </Button>
+                      {hasActiveFilters ? (
+                        <Button variant="outline" size="sm" onClick={clearFilters}>
+                          <X className="h-3.5 w-3.5 mr-1" /> Limpar filtros
+                        </Button>
+                      ) : (
+                        <Button className="bg-success text-success-foreground hover:bg-success/90" size="sm" onClick={openNew}>
+                          <Plus className="h-3.5 w-3.5 mr-1" />{t("income.new")}
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -224,19 +397,15 @@ function ReceitasPage() {
                           <Badge variant="secondary" className="font-normal" style={{ backgroundColor: cat.color + "20", color: cat.color }}>
                             {cat.name}
                           </Badge>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
+                        ) : <span className="text-xs text-muted-foreground">—</span>}
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {t("accounts.wallet") || "Carteira"}
-                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{t("accounts.wallet")}</TableCell>
                       <TableCell className="text-right font-semibold tabular-nums text-success">
                         + {brl(Math.abs(tx.amount))}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button asChild variant="ghost" size="sm" className="h-7 text-xs text-primary">
-                          <Link to="/registros">{t("common.view") || "Ver"}</Link>
+                        <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-primary hover:bg-primary/10" onClick={() => openEdit(tx)}>
+                          <Pencil className="h-3 w-3" />{t("common.view")}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -247,6 +416,8 @@ function ReceitasPage() {
           </Table>
         </div>
       </Card>
+
+      <TransactionDialog open={dialogOpen} onOpenChange={setDialogOpen} initial={selectedTx} mode={dialogMode} />
     </div>
   );
 }

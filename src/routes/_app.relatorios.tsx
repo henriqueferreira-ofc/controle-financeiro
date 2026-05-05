@@ -3,16 +3,19 @@ import { useFinwise } from "@/store/finwise-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { brl } from "@/lib/format";
-import { ArrowDownRight, ArrowUpRight, BarChart3, Calendar, CheckCircle2, Circle, Wallet } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, BarChart3, Calendar, CheckCircle2, Circle, Wallet, Pencil } from "lucide-react";
 import { useState, useMemo } from "react";
 import { KpiCard } from "@/components/KpiCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR, enUS, es } from "date-fns/locale";
 import { useI18n } from "@/i18n/I18nProvider";
 import { cn } from "@/lib/utils";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from "recharts";
+import { TransactionDialog } from "@/components/TransactionDialog";
+import type { Transaction } from "@/store/types";
 
 export const Route = createFileRoute("/_app/relatorios")({
   head: () => ({
@@ -27,6 +30,15 @@ export const Route = createFileRoute("/_app/relatorios")({
 function RelatoriosPage() {
   const { t } = useI18n();
   const { transactions, categories, updateTransaction } = useFinwise();
+
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+
+  function openEdit(tx: Transaction) {
+    setSelectedTx(tx);
+    setDialogOpen(true);
+  }
 
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth().toString());
@@ -333,6 +345,7 @@ function RelatoriosPage() {
                     <TableHead className="px-4">{t("rec.col.category")}</TableHead>
                     <TableHead className="text-right px-4">{t("rec.col.amount")}</TableHead>
                     <TableHead className="w-20 px-4 text-center">{t("common.paid") || "Pago"}</TableHead>
+                    <TableHead className="w-16 px-4 text-right">{t("rec.col.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -385,6 +398,17 @@ function RelatoriosPage() {
                               </button>
                             )}
                           </TableCell>
+                          <TableCell className="px-4 text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 gap-1 text-xs text-primary hover:bg-primary/10"
+                              onClick={() => openEdit(t)}
+                            >
+                              <Pencil className="h-3 w-3" />
+                              {t("common.view")}
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       );
                     })
@@ -395,6 +419,12 @@ function RelatoriosPage() {
           </div>
         </CardContent>
       </Card>
+      <TransactionDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        initial={selectedTx}
+        mode="edit"
+      />
     </div>
   );
 }
