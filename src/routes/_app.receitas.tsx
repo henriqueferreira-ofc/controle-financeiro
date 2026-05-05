@@ -17,6 +17,7 @@ import { useFinwise } from "@/store/finwise-store";
 import type { Transaction } from "@/store/types";
 import { format } from "date-fns";
 import { ptBR, enUS, es } from "date-fns/locale";
+import type { Locale } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TransactionDialog } from "@/components/TransactionDialog";
 
