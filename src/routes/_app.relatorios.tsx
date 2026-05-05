@@ -356,21 +356,21 @@ function RelatoriosPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredData.transactions.map((t) => {
-                      const cat = t.categoryId ? catById.get(t.categoryId) : undefined;
-                      const isIncome = t.type === 'entrada';
+                    filteredData.transactions.map((tx) => {
+                      const cat = tx.categoryId ? catById.get(tx.categoryId) : undefined;
+                      const isIncome = tx.type === 'entrada';
                       return (
                         <TableRow 
-                          key={t.id} 
+                          key={tx.id} 
                           className={cn(
                             "hover:bg-muted/30 transition-colors",
-                            !isIncome && t.paid && "bg-success/5 hover:bg-success/10"
+                            !isIncome && tx.paid && "bg-success/5 hover:bg-success/10"
                           )}
                         >
                           <TableCell className="text-xs text-muted-foreground px-4">
-                            {format(new Date(t.date + "T12:00:00"), "dd/MM/yy", { locale: dateLocale })}
+                            {format(new Date(tx.date + "T12:00:00"), "dd/MM/yy", { locale: dateLocale })}
                           </TableCell>
-                          <TableCell className={cn("font-medium px-4", !isIncome && t.paid && "text-success")}>{t.description}</TableCell>
+                          <TableCell className={cn("font-medium px-4", !isIncome && tx.paid && "text-success")}>{tx.description}</TableCell>
                           <TableCell className="px-4">
                             <Badge variant="secondary" className="font-normal h-5" style={{
                               backgroundColor: cat?.color + '20',
@@ -380,21 +380,21 @@ function RelatoriosPage() {
                               {cat?.name || t("cat.none")}
                             </Badge>
                           </TableCell>
-                          <TableCell className={`text-right font-semibold tabular-nums px-4 ${!isIncome && t.paid ? 'text-success' : isIncome ? 'text-success' : 'text-destructive'}`}>
-                            {isIncome ? '+' : '-'} {brl(Math.abs(t.amount))}
+                          <TableCell className={`text-right font-semibold tabular-nums px-4 ${!isIncome && tx.paid ? 'text-success' : isIncome ? 'text-success' : 'text-destructive'}`}>
+                            {isIncome ? '+' : '-'} {brl(Math.abs(tx.amount))}
                           </TableCell>
                           <TableCell className="px-4 text-center">
                             {!isIncome && (
                               <button 
-                                onClick={() => updateTransaction(t.id, { paid: !t.paid })}
+                                onClick={() => updateTransaction(tx.id, { paid: !tx.paid })}
                                 className={cn(
                                   "mx-auto flex h-7 w-7 items-center justify-center rounded-full transition-all",
-                                  t.paid 
+                                  tx.paid 
                                     ? "bg-success text-success-foreground shadow-sm" 
                                     : "bg-muted text-muted-foreground hover:bg-muted/80"
                                 )}
                               >
-                                {t.paid ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
+                                {tx.paid ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
                               </button>
                             )}
                           </TableCell>
@@ -403,7 +403,7 @@ function RelatoriosPage() {
                               variant="ghost"
                               size="sm"
                               className="h-7 gap-1 text-xs text-primary hover:bg-primary/10"
-                              onClick={() => openEdit(t)}
+                              onClick={() => openEdit(tx)}
                             >
                               <Pencil className="h-3 w-3" />
                               {t("common.view")}
