@@ -359,48 +359,9 @@ function ContasPage() {
       </AnimatePresence>
 
 
-      {/* New Account Modal */}
+      {/* New Account / Bank Selection Modal */}
       {showNewAccount && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-          onClick={() => setShowNewAccount(false)}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-            className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-semibold">{t("accounts.new")}</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">{t("accounts.newDesc")}</p>
-              </div>
-              <button onClick={() => setShowNewAccount(false)} className="text-muted-foreground hover:text-foreground">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {ACCOUNT_TYPES.map((type) => (
-                <button
-                  key={type.id}
-                  className="flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background p-4 text-center transition-all hover:border-primary/50 hover:bg-primary/5 hover:shadow-md"
-                  onClick={() => setShowNewAccount(false)}
-                >
-                  <span className="text-2xl">{type.icon}</span>
-                  <span className="text-xs font-medium">{type.label}</span>
-                </button>
-              ))}
-            </div>
-            <div className="mt-4 rounded-lg bg-muted/40 p-3 text-center">
-              <p className="text-xs text-muted-foreground">🚀 {t("accounts.featureWip")}</p>
-            </div>
-            <Button variant="outline" className="mt-4 w-full" onClick={() => setShowNewAccount(false)}>
-              {t("common.close")}
-            </Button>
-          </motion.div>
-        </div>
+        <BankSelectionModal onClose={() => setShowNewAccount(false)} />
       )}
     </div>
   );
