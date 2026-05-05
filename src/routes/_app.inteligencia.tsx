@@ -234,12 +234,12 @@ function LocalInsightsSection({ insights }: { insights: LocalInsight[] }) {
 function ScoreCard({ score }: { score: ReturnType<typeof calculateScore> }) {
   const { t } = useI18n();
   const colors: Record<string, string> = {
-    Crítico: "oklch(0.65 0.21 25)",
-    Atenção: "oklch(0.78 0.15 75)",
-    Bom: "oklch(0.7 0.18 200)",
-    Excelente: "oklch(0.78 0.16 165)",
+    "score.level.critical": "oklch(0.65 0.21 25)",
+    "score.level.warning": "oklch(0.78 0.15 75)",
+    "score.level.good": "oklch(0.7 0.18 200)",
+    "score.level.excellent": "oklch(0.78 0.16 165)",
   };
-  const color = colors[score.level];
+  const color = colors[score.level] || "oklch(0.7 0.18 200)";
 
   return (
     <Card className="border-border/60 shadow-[var(--shadow-card)] lg:col-span-1">
@@ -256,7 +256,7 @@ function ScoreCard({ score }: { score: ReturnType<typeof calculateScore> }) {
             className="text-xs"
             style={{ background: `${color}25`, color }}
           >
-            {t(`score.level.${score.level}`) || score.level}
+            {t(score.level)}
           </Badge>
         </div>
 
