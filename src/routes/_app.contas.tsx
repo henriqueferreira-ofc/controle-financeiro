@@ -403,7 +403,20 @@ const BANKS: Bank[] = [
 
 function BankSelectionModal({ onClose }: { onClose: () => void }) {
   const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Bank | null>(null);
   const filtered = BANKS.filter((b) => b.name.toLowerCase().includes(search.toLowerCase()));
+
+  const handleAutomatic = () => {
+    if (!selected) return;
+    // Open Finance Brasil — redirecionar para o portal oficial do banco
+    window.open(selected.url, "_blank", "noopener,noreferrer");
+    onClose();
+  };
+
+  const handleManual = () => {
+    onClose();
+    // Futuro: abrir TransactionDialog ou wizard de cadastro manual
+  };
 
   return (
     <div
@@ -411,74 +424,149 @@ function BankSelectionModal({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <motion.div
+        key={selected?.id || "list"}
         initial={{ opacity: 0, scale: 0.96, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.2 }}
         className="my-8 w-full max-w-lg rounded-2xl border border-border bg-card shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-start justify-between border-b border-border/50 p-5">
-          <h2 className="pr-4 text-lg font-semibold leading-snug">
-            Qual é a instituição financeira da conta que você quer adicionar?
-          </h2>
-          <button
-            onClick={onClose}
-            className="-mt-1 -mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Fechar"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* Search */}
-        <div className="border-b border-border/50 px-5 py-3">
-          <div className="flex items-center gap-2 border-b border-border/60 pb-2">
-            <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              autoFocus
-              placeholder="Buscar por nome"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none"
-            />
-          </div>
-        </div>
-
-        {/* Bank list */}
-        <div className="max-h-[60vh] overflow-y-auto">
-          {filtered.length === 0 ? (
-            <div className="p-8 text-center text-sm text-muted-foreground">
-              Nenhuma instituição encontrada.
-            </div>
-          ) : (
-            filtered.map((bank) => (
-              <a
-                key={bank.id}
-                href={bank.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between gap-3 border-b border-border/30 px-5 py-3 transition-colors hover:bg-muted/40"
+        {!selected ? (
+          <>
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-border/50 p-5">
+              <h2 className="pr-4 text-lg font-semibold leading-snug">
+                Qual é a instituição financeira da conta que você quer adicionar?
+              </h2>
+              <button
+                onClick={onClose}
+                className="-mt-1 -mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="Fechar"
               >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm"
-                    style={{ backgroundColor: bank.color }}
-                  >
-                    {bank.initial}
-                  </div>
-                  <span className="text-sm font-medium">{bank.name}</span>
-                </div>
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="border-b border-border/50 px-5 py-3">
+              <div className="flex items-center gap-2 border-b border-border/60 pb-2">
                 <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="Buscar por nome"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Bank list */}
+            <div className="max-h-[60vh] overflow-y-auto">
+              {filtered.length === 0 ? (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  Nenhuma instituição encontrada.
+                </div>
+              ) : (
+                filtered.map((bank) => (
+                  <button
+                    key={bank.id}
+                    type="button"
+                    onClick={() => setSelected(bank)}
+                    className="flex w-full items-center justify-between gap-3 border-b border-border/30 px-5 py-3 text-left transition-colors hover:bg-muted/40"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm"
+                        style={{ backgroundColor: bank.color }}
+                      >
+                        {bank.initial}
+                      </div>
+                      <span className="text-sm font-medium">{bank.name}</span>
+                    </div>
+                    <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                ))
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Header — step 2 */}
+            <div className="flex items-center justify-between p-5">
+              <button
+                onClick={() => setSelected(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="Voltar"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                onClick={onClose}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="Fechar"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Selected bank pill */}
+            <div className="mx-5 flex items-center gap-3 rounded-xl bg-muted/50 px-4 py-3">
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                style={{ backgroundColor: selected.color }}
+              >
+                {selected.initial}
+              </div>
+              <span className="text-sm font-semibold">{selected.name}</span>
+            </div>
+
+            {/* Question */}
+            <h3 className="px-5 pt-6 text-lg font-semibold">
+              De que forma você quer adicionar essa conta?
+            </h3>
+
+            {/* Options */}
+            <div className="px-5 pb-6 pt-4">
+              <button
+                onClick={handleAutomatic}
+                className="flex w-full items-start justify-between gap-4 border-b border-border/40 py-4 text-left transition-colors hover:bg-muted/30"
+              >
+                <div className="flex-1">
+                  <div className="text-base font-semibold">Automática</div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    As receitas e despesas serão atualizadas automaticamente uma vez ao dia, cabendo a você somente categorizá-las.
+                  </p>
+                </div>
+                <svg className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </a>
-            ))
-          )}
-        </div>
+              </button>
+
+              <button
+                onClick={handleManual}
+                className="flex w-full items-start justify-between gap-4 py-4 text-left transition-colors hover:bg-muted/30"
+              >
+                <div className="flex-1">
+                  <div className="text-base font-semibold">Manual</div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    As receitas, despesas e categorizações das transações terão que ser adicionadas manualmente.
+                  </p>
+                </div>
+                <svg className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </>
+        )}
       </motion.div>
     </div>
   );
