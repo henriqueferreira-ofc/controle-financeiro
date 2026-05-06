@@ -21,6 +21,7 @@ import { Route as AppPerfilRouteImport } from './routes/_app.perfil'
 import { Route as AppOrcamentosRouteImport } from './routes/_app.orcamentos'
 import { Route as AppMetasRouteImport } from './routes/_app.metas'
 import { Route as AppInteligenciaRouteImport } from './routes/_app.inteligencia'
+import { Route as AppImportarExtratoRouteImport } from './routes/_app.importar-extrato'
 import { Route as AppImportarRouteImport } from './routes/_app.importar'
 import { Route as AppDespesasRouteImport } from './routes/_app.despesas'
 import { Route as AppContasRouteImport } from './routes/_app.contas'
@@ -85,6 +86,11 @@ const AppInteligenciaRoute = AppInteligenciaRouteImport.update({
   path: '/inteligencia',
   getParentRoute: () => AppRoute,
 } as any)
+const AppImportarExtratoRoute = AppImportarExtratoRouteImport.update({
+  id: '/importar-extrato',
+  path: '/importar-extrato',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppImportarRoute = AppImportarRouteImport.update({
   id: '/importar',
   path: '/importar',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/contas': typeof AppContasRoute
   '/despesas': typeof AppDespesasRoute
   '/importar': typeof AppImportarRoute
+  '/importar-extrato': typeof AppImportarExtratoRoute
   '/inteligencia': typeof AppInteligenciaRoute
   '/metas': typeof AppMetasRoute
   '/orcamentos': typeof AppOrcamentosRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/contas': typeof AppContasRoute
   '/despesas': typeof AppDespesasRoute
   '/importar': typeof AppImportarRoute
+  '/importar-extrato': typeof AppImportarExtratoRoute
   '/inteligencia': typeof AppInteligenciaRoute
   '/metas': typeof AppMetasRoute
   '/orcamentos': typeof AppOrcamentosRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/_app/contas': typeof AppContasRoute
   '/_app/despesas': typeof AppDespesasRoute
   '/_app/importar': typeof AppImportarRoute
+  '/_app/importar-extrato': typeof AppImportarExtratoRoute
   '/_app/inteligencia': typeof AppInteligenciaRoute
   '/_app/metas': typeof AppMetasRoute
   '/_app/orcamentos': typeof AppOrcamentosRoute
@@ -169,6 +178,7 @@ export interface FileRouteTypes {
     | '/contas'
     | '/despesas'
     | '/importar'
+    | '/importar-extrato'
     | '/inteligencia'
     | '/metas'
     | '/orcamentos'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/contas'
     | '/despesas'
     | '/importar'
+    | '/importar-extrato'
     | '/inteligencia'
     | '/metas'
     | '/orcamentos'
@@ -203,6 +214,7 @@ export interface FileRouteTypes {
     | '/_app/contas'
     | '/_app/despesas'
     | '/_app/importar'
+    | '/_app/importar-extrato'
     | '/_app/inteligencia'
     | '/_app/metas'
     | '/_app/orcamentos'
@@ -306,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInteligenciaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/importar-extrato': {
+      id: '/_app/importar-extrato'
+      path: '/importar-extrato'
+      fullPath: '/importar-extrato'
+      preLoaderRoute: typeof AppImportarExtratoRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/importar': {
       id: '/_app/importar'
       path: '/importar'
@@ -342,6 +361,7 @@ interface AppRouteChildren {
   AppContasRoute: typeof AppContasRoute
   AppDespesasRoute: typeof AppDespesasRoute
   AppImportarRoute: typeof AppImportarRoute
+  AppImportarExtratoRoute: typeof AppImportarExtratoRoute
   AppInteligenciaRoute: typeof AppInteligenciaRoute
   AppMetasRoute: typeof AppMetasRoute
   AppOrcamentosRoute: typeof AppOrcamentosRoute
@@ -358,6 +378,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppContasRoute: AppContasRoute,
   AppDespesasRoute: AppDespesasRoute,
   AppImportarRoute: AppImportarRoute,
+  AppImportarExtratoRoute: AppImportarExtratoRoute,
   AppInteligenciaRoute: AppInteligenciaRoute,
   AppMetasRoute: AppMetasRoute,
   AppOrcamentosRoute: AppOrcamentosRoute,
@@ -379,3 +400,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
