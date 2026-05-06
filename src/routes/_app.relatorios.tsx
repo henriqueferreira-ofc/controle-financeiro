@@ -97,15 +97,15 @@ function RelatoriosPage() {
     const expenses = filteredData.transactions.filter(t => t.type === 'despesa');
     const grouped = new Map<string, { value: number; name: string; color: string }>();
 
-    for (const t of expenses) {
-      const cat = t.categoryId ? catById.get(t.categoryId) : undefined;
-      const catId = t.categoryId || 'none';
+    for (const tx of expenses) {
+      const cat = tx.categoryId ? catById.get(tx.categoryId) : undefined;
+      const catId = tx.categoryId || 'none';
       const current = grouped.get(catId) || { 
         value: 0, 
         name: cat?.name || t("cat.none"), 
         color: cat?.color || '#94a3b8' 
       };
-      current.value += Math.abs(t.amount);
+      current.value += Math.abs(tx.amount);
       grouped.set(catId, current);
     }
 
