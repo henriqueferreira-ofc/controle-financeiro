@@ -200,7 +200,7 @@ function RelatoriosPage() {
                       ))}
                     </Pie>
                     <RechartsTooltip 
-                      formatter={(value: number) => brl(value)}
+                      formatter={(value) => brl(Number(value))}
                       contentStyle={{ 
                         borderRadius: '8px', 
                         border: 'none', 
