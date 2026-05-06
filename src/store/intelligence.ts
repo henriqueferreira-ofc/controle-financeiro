@@ -123,7 +123,7 @@ export function calculateScore(
   }
 
   // 6. Ausência de anomalias graves (5)
-  const altas = anomalies.filter((a) => a.severity === "alta").length;
+  const altas = anomalies.filter((a) => a.severity === "high").length;
   const anomComp = Math.max(0, 5 - altas * 2);
 
   const total = Math.round(poupancaComp + controleComp + orcComp + recComp + metasComp + anomComp);
