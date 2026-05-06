@@ -21,6 +21,7 @@ export const translations: Record<Locale, Dict> = {
     "nav.recurring": "Recorrentes",
     "nav.reports": "Relatórios",
     "nav.import": "Importar CSV",
+    "nav.importStatement": "Importar Extrato",
     "nav.profile": "Meu Perfil",
 
     // Common
@@ -589,6 +590,7 @@ export const translations: Record<Locale, Dict> = {
     "nav.recurring": "Recurring",
     "nav.reports": "Reports",
     "nav.import": "Import CSV",
+    "nav.importStatement": "Import Statement",
     "nav.profile": "My Profile",
 
     "common.signout": "Sign out",
@@ -1134,6 +1136,7 @@ export const translations: Record<Locale, Dict> = {
     "nav.recurring": "Recurrentes",
     "nav.reports": "Reportes",
     "nav.import": "Importar CSV",
+    "nav.importStatement": "Importar Extracto",
     "nav.profile": "Mi Perfil",
 
     "common.signout": "Salir",

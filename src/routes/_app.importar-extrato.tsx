@@ -14,7 +14,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/auth/AuthProvider";
 import { parseStatementFile, type ParsedStatementTxn, type StatementFormat } from "@/store/statement-import";
+import { useFinwise } from "@/store/finwise-store";
 import { brl } from "@/lib/format";
+import { v4 as uuidv4 } from "uuid";
 
 export const Route = createFileRoute("/_app/importar-extrato")({
   head: () => ({
@@ -83,6 +85,8 @@ function ImportStatementPage() {
   const [parsed, setParsed] = useState<{ format: StatementFormat; txns: ParsedStatementTxn[] } | null>(null);
   const [parsing, setParsing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const { transactions, addTransaction } = useFinwise();
+  const [pendingImports, setPendingImports] = useState<any[]>([]);
 
   // New account inline
   const [newAccountOpen, setNewAccountOpen] = useState(false);
@@ -106,6 +110,14 @@ function ImportStatementPage() {
       .order("created_at", { ascending: false })
       .limit(20);
     setImports((imps as ImportRecord[]) || []);
+
+    const { data: pendings } = await supabase
+      .from("imported_transactions")
+      .select("*")
+      .in("status", ["pendente", "importada"])
+      .eq("user_id", user.id)
+      .order("date", { ascending: false });
+    setPendingImports(pendings || []);
   };
   useEffect(() => { reload(); }, [user]);
 
@@ -225,6 +237,46 @@ function ImportStatementPage() {
     reload();
   };
 
+  const handleConciliate = async (imp: any, matchId?: string) => {
+    if (!matchId) {
+      // Adicionar como novo
+      addTransaction({
+        id: uuidv4(),
+        type: imp.type,
+        amount: Math.abs(imp.amount),
+        date: imp.date,
+        description: imp.description,
+        categoryId: undefined,
+        paid: true,
+        essential: false,
+        fixed: false,
+      });
+    }
+
+    const { error } = await supabase
+      .from("imported_transactions")
+      .update({ status: "conciliada" })
+      .eq("id", imp.id);
+
+    if (error) {
+      toast.error("Erro ao conciliar.");
+      return;
+    }
+    toast.success("Transação conciliada!");
+    setPendingImports((prev) => prev.filter((p) => p.id !== imp.id));
+  };
+
+  const handleIgnore = async (impId: string) => {
+    const { error } = await supabase
+      .from("imported_transactions")
+      .update({ status: "ignorada" })
+      .eq("id", impId);
+    if (!error) {
+      setPendingImports((prev) => prev.filter((p) => p.id !== impId));
+      toast.success("Transação ignorada.");
+    }
+  };
+
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 md:px-8 md:py-8">
       <div>
@@ -244,8 +296,11 @@ function ImportStatementPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="upload">
+      <Tabs defaultValue="conciliation">
         <TabsList>
+          <TabsTrigger value="conciliation">
+            Conciliação {pendingImports.length > 0 && <Badge variant="secondary" className="ml-2 bg-primary/20 text-primary">{pendingImports.length}</Badge>}
+          </TabsTrigger>
           <TabsTrigger value="upload">Nova importação</TabsTrigger>
           <TabsTrigger value="history">Histórico ({imports.length})</TabsTrigger>
         </TabsList>
@@ -453,6 +508,93 @@ function ImportStatementPage() {
             <CheckCircle2 className="h-3 w-3 text-success" />
             Cada importação registra data, hora e o usuário responsável. Excluir remove todas as transações vinculadas.
           </div>
+        </TabsContent>
+
+        <TabsContent value="conciliation" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-primary" /> Conciliação Inteligente
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {pendingImports.length === 0 ? (
+                <div className="p-12 text-center text-muted-foreground text-sm">
+                  Nenhuma transação pendente de conciliação. Ótimo trabalho!
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Verifique as transações importadas e adicione-as ao sistema ou faça o match com lançamentos manuais já existentes.
+                  </p>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-24">Data</TableHead>
+                          <TableHead>Transação do Banco</TableHead>
+                          <TableHead className="text-right">Valor</TableHead>
+                          <TableHead>Sugestão de Match (Local)</TableHead>
+                          <TableHead className="text-right">Ação</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {pendingImports.map((imp) => {
+                          const possibleMatches = transactions.filter((t) => 
+                            t.date === imp.date && 
+                            Math.abs(t.amount) === Math.abs(imp.amount) &&
+                            t.type === imp.type
+                          );
+                          const isIncome = imp.type === "entrada";
+
+                          return (
+                            <TableRow key={imp.id}>
+                              <TableCell className="text-xs">{imp.date}</TableCell>
+                              <TableCell className="text-sm font-medium">
+                                <div className="flex items-center gap-2">
+                                  {imp.description}
+                                  {imp.is_pix && <Badge variant="outline" className="text-[9px]">PIX</Badge>}
+                                </div>
+                              </TableCell>
+                              <TableCell className={`text-right tabular-nums text-sm font-semibold ${isIncome ? "text-success" : "text-destructive"}`}>
+                                {isIncome ? "+" : "-"} {brl(Math.abs(imp.amount))}
+                              </TableCell>
+                              <TableCell>
+                                {possibleMatches.length > 0 ? (
+                                  <div className="flex flex-col gap-1">
+                                    {possibleMatches.map(m => (
+                                      <div key={m.id} className="flex items-center justify-between bg-muted/50 p-1.5 rounded-md text-xs border border-border/50">
+                                        <span className="truncate max-w-[150px]">{m.description}</span>
+                                        <Button size="sm" variant="secondary" className="h-6 text-[10px]" onClick={() => handleConciliate(imp, m.id)}>
+                                          Match
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground italic">Nenhum match exato encontrado.</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleIgnore(imp.id)}>
+                                    Ignorar
+                                  </Button>
+                                  <Button size="sm" className="h-7 text-xs bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => handleConciliate(imp)}>
+                                    Adicionar
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

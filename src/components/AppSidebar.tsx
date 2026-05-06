@@ -30,6 +30,7 @@ export function AppSidebar() {
     { title: t("nav.goals"), url: "/metas", icon: Target },
     { title: t("nav.recurring"), url: "/recorrentes", icon: Repeat },
     { title: t("nav.import"), url: "/importar", icon: Upload },
+    { title: t("nav.importStatement"), url: "/importar-extrato", icon: FileUp },
     { title: t("nav.reports"), url: "/relatorios", icon: BarChart3 },
   ];
 

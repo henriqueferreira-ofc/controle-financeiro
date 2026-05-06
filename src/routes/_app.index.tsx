@@ -11,6 +11,7 @@ import { KpiCard } from "@/components/KpiCard";
 import { WeekProjectionCard, MonthDeltaBadge } from "@/components/WeekProjectionCard";
 import { UpcomingRecurringsWidget } from "@/components/UpcomingRecurringsWidget";
 import { SimulationCard } from "@/components/SimulationCard";
+import { BankStatsWidget } from "@/components/BankStatsWidget";
 import { brl } from "@/lib/format";
 import { ArrowDownRight, ArrowUpRight, CalendarDays, Lightbulb, PiggyBank, Plus, Trophy, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -350,8 +351,9 @@ function DashboardPage() {
 
       {/* Fase 3.2 — Simulador "E se..." */}
       {!loading && (
-        <div className="mb-8 grid gap-6">
+        <div className="mb-8 grid gap-6 lg:grid-cols-2">
           <SimulationCard />
+          <BankStatsWidget />
         </div>
       )}
 
