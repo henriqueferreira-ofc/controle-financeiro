@@ -1,6 +1,6 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { Link, useLocation } from "@tanstack/react-router";
-import { BarChart3, Brain, LayoutDashboard, ListChecks, PiggyBank, Repeat, Tags, Target, Upload, User } from "lucide-react";
+import { BarChart3, Brain, FileUp, LayoutDashboard, ListChecks, PiggyBank, Repeat, Tags, Target, Upload, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AxispayLogo } from "@/components/AxispayLogo";
 import { useI18n } from "@/i18n/I18nProvider";
