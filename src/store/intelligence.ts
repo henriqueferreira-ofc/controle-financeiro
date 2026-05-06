@@ -26,7 +26,8 @@ export type Forecast = {
   projectedBalance: number;
   daysAhead: 30 | 60 | 90;
   avgDailyNet: number;
-  message: string;
+  messageKey: string;
+  messageParams: Record<string, string | number>;
 };
 
 const ymd = (d: Date) => {
@@ -122,7 +123,7 @@ export function calculateScore(
   }
 
   // 6. Ausência de anomalias graves (5)
-  const altas = anomalies.filter((a) => a.severity === "alta").length;
+  const altas = anomalies.filter((a) => a.severity === "high").length;
   const anomComp = Math.max(0, 5 - altas * 2);
 
   const total = Math.round(poupancaComp + controleComp + orcComp + recComp + metasComp + anomComp);

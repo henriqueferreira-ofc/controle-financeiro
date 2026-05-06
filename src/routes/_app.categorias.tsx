@@ -105,7 +105,7 @@ function CategoriesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("cat.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("cat.deleteDesc", { name: confirmDelete?.name })}
+              {t("cat.deleteDesc", { name: confirmDelete?.name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

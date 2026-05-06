@@ -14,6 +14,101 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_accounts: {
+        Row: {
+          agency: string | null
+          bank_code: string
+          bank_name: string
+          color: string | null
+          created_at: string
+          id: string
+          initial_balance: number
+          nickname: string | null
+          number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency?: string | null
+          bank_code: string
+          bank_name: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          initial_balance?: number
+          nickname?: string | null
+          number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency?: string | null
+          bank_code?: string
+          bank_name?: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          initial_balance?: number
+          nickname?: string | null
+          number?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      bank_imports: {
+        Row: {
+          account_id: string | null
+          authorized_at: string
+          bank_code: string | null
+          bank_name: string | null
+          created_at: string
+          duplicate_rows: number
+          filename: string
+          format: string
+          id: string
+          imported_rows: number
+          total_rows: number
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          authorized_at?: string
+          bank_code?: string | null
+          bank_name?: string | null
+          created_at?: string
+          duplicate_rows?: number
+          filename: string
+          format: string
+          id?: string
+          imported_rows?: number
+          total_rows?: number
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          authorized_at?: string
+          bank_code?: string | null
+          bank_name?: string | null
+          created_at?: string
+          duplicate_rows?: number
+          filename?: string
+          format?: string
+          id?: string
+          imported_rows?: number
+          total_rows?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_imports_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budgets: {
         Row: {
           amount: number
@@ -121,6 +216,78 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      imported_transactions: {
+        Row: {
+          account_id: string | null
+          amount: number
+          category_suggestion: string | null
+          created_at: string
+          date: string
+          dedup_hash: string
+          description: string
+          external_id: string | null
+          id: string
+          import_id: string
+          is_pix: boolean
+          matched_transaction_id: string | null
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          category_suggestion?: string | null
+          created_at?: string
+          date: string
+          dedup_hash: string
+          description: string
+          external_id?: string | null
+          id?: string
+          import_id: string
+          is_pix?: boolean
+          matched_transaction_id?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          category_suggestion?: string | null
+          created_at?: string
+          date?: string
+          dedup_hash?: string
+          description?: string
+          external_id?: string | null
+          id?: string
+          import_id?: string
+          is_pix?: boolean
+          matched_transaction_id?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imported_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imported_transactions_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "bank_imports"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

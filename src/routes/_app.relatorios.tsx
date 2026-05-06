@@ -97,15 +97,15 @@ function RelatoriosPage() {
     const expenses = filteredData.transactions.filter(t => t.type === 'despesa');
     const grouped = new Map<string, { value: number; name: string; color: string }>();
 
-    for (const t of expenses) {
-      const cat = t.categoryId ? catById.get(t.categoryId) : undefined;
-      const catId = t.categoryId || 'none';
+    for (const tx of expenses) {
+      const cat = tx.categoryId ? catById.get(tx.categoryId) : undefined;
+      const catId = tx.categoryId || 'none';
       const current = grouped.get(catId) || { 
         value: 0, 
         name: cat?.name || t("cat.none"), 
         color: cat?.color || '#94a3b8' 
       };
-      current.value += Math.abs(t.amount);
+      current.value += Math.abs(tx.amount);
       grouped.set(catId, current);
     }
 
@@ -200,7 +200,7 @@ function RelatoriosPage() {
                       ))}
                     </Pie>
                     <RechartsTooltip 
-                      formatter={(value: number) => brl(value)}
+                      formatter={(value) => brl(Number(value))}
                       contentStyle={{ 
                         borderRadius: '8px', 
                         border: 'none', 
@@ -290,11 +290,11 @@ function RelatoriosPage() {
                 {t("rep.empty")}
               </div>
             ) : (
-              filteredData.transactions.map((t) => {
-                const cat = t.categoryId ? catById.get(t.categoryId) : undefined;
-                const isIncome = t.type === 'entrada';
+              filteredData.transactions.map((tx) => {
+                const cat = tx.categoryId ? catById.get(tx.categoryId) : undefined;
+                const isIncome = tx.type === 'entrada';
                 return (
-                  <div key={t.id} className="flex items-center justify-between p-4 bg-card/30">
+                  <div key={tx.id} className="flex items-center justify-between p-4 bg-card/30">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                         isIncome ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
@@ -302,10 +302,10 @@ function RelatoriosPage() {
                         {isIncome ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{t.description}</p>
+                        <p className="text-sm font-medium truncate">{tx.description}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[10px] text-muted-foreground">
-                            {format(new Date(t.date + "T12:00:00"), "dd/MM/yy", { locale: dateLocale })}
+                            {format(new Date(tx.date + "T12:00:00"), "dd/MM/yy", { locale: dateLocale })}
                           </span>
                           <span className="text-xs font-medium" style={{ color: cat?.color }}>
                             {cat?.name || t("cat.none")}
@@ -314,17 +314,17 @@ function RelatoriosPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className={`text-sm font-bold tabular-nums ${!isIncome && t.paid ? 'text-success' : isIncome ? 'text-success' : 'text-destructive'}`}>
-                        {isIncome ? '+' : '-'} {brl(Math.abs(t.amount))}
+                      <div className={`text-sm font-bold tabular-nums ${!isIncome && tx.paid ? 'text-success' : isIncome ? 'text-success' : 'text-destructive'}`}>
+                        {isIncome ? '+' : '-'} {brl(Math.abs(tx.amount))}
                       </div>
                       {!isIncome && (
                         <button 
-                          onClick={() => updateTransaction(t.id, { paid: !t.paid })}
+                          onClick={() => updateTransaction(tx.id, { paid: !tx.paid })}
                           className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
-                            t.paid ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            tx.paid ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
                           }`}
                         >
-                          {t.paid ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+                          {tx.paid ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
                         </button>
                       )}
                     </div>
