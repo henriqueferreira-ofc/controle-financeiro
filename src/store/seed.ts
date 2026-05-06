@@ -12,8 +12,9 @@ const daysAgo = (n: number) => {
 
 // Seed transactions reference categories by NAME (resolved at insert time
 // against the user's available global+custom categories).
-export type SeedTransaction = Omit<AppState["transactions"][number], "id" | "categoryId"> & {
+export type SeedTransaction = Omit<AppState["transactions"][number], "id" | "categoryId" | "paid"> & {
   categoryName?: string;
+  paid?: boolean;
 };
 
 export const SEED_TRANSACTIONS: SeedTransaction[] = [
