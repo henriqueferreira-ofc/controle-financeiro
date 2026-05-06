@@ -275,7 +275,7 @@ function ContasPage() {
                         tickFormatter={(v) => `R$ ${v.toLocaleString("pt-BR")}`}
                       />
                       <Tooltip
-                        formatter={(value: number) => brl(value)}
+                        formatter={(value) => brl(Number(value))}
                         contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", fontSize: "12px" }}
                       />
                       <Area
