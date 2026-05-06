@@ -26,7 +26,8 @@ export type Forecast = {
   projectedBalance: number;
   daysAhead: 30 | 60 | 90;
   avgDailyNet: number;
-  message: string;
+  messageKey: string;
+  messageParams: Record<string, string | number>;
 };
 
 const ymd = (d: Date) => {
