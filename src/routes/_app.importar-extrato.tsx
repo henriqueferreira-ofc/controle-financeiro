@@ -241,7 +241,6 @@ function ImportStatementPage() {
     if (!matchId) {
       // Adicionar como novo
       addTransaction({
-        id: uuidv4(),
         type: imp.type,
         amount: Math.abs(imp.amount),
         date: imp.date,
