@@ -5,7 +5,7 @@
  */
 export function AnimatedAuthBackground() {
   return (
-    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-background">
+    <div className="pointer-events-none absolute inset-0 overflow-hidden bg-background">
       {/* Soft drifting aurora blobs */}
       <div className="absolute -top-1/3 -left-1/4 h-[60vmax] w-[60vmax] rounded-full bg-[radial-gradient(circle_at_center,oklch(0.78_0.16_165/0.18),transparent_60%)] blur-3xl animate-aurora-1" />
       <div className="absolute -bottom-1/3 -right-1/4 h-[55vmax] w-[55vmax] rounded-full bg-[radial-gradient(circle_at_center,oklch(0.7_0.18_200/0.16),transparent_60%)] blur-3xl animate-aurora-2" />
