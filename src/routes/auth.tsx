@@ -101,6 +101,7 @@ function AuthPage() {
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <AnimatedAuthBackground />
+      <div className="absolute right-3 top-3">
         <LanguageSwitcher />
       </div>
       <div className="w-full max-w-md">
