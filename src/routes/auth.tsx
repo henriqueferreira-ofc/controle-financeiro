@@ -11,6 +11,7 @@ import { z } from "zod";
 import { AxispayLogo } from "@/components/AxispayLogo";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useI18n } from "@/i18n/I18nProvider";
+import { AnimatedAuthBackground } from "@/components/AnimatedAuthBackground";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -99,6 +100,7 @@ function AuthPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background px-4 py-10">
+      <AnimatedAuthBackground />
       <div className="absolute right-3 top-3">
         <LanguageSwitcher />
       </div>
