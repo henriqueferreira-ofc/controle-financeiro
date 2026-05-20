@@ -11,6 +11,7 @@ import { z } from "zod";
 import { AxispayLogo } from "@/components/AxispayLogo";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useI18n } from "@/i18n/I18nProvider";
+import { AnimatedAuthBackground } from "@/components/AnimatedAuthBackground";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
